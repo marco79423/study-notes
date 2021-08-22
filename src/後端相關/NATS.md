@@ -32,3 +32,7 @@ Client 發現斷線後，如果有設定重連，就會自動重連，但預設�
 可以設定 ManualAck，因為有收到訊息不代表處理會成功，如果不成功我們需要 NATS 的重送機制，所以設定手動 Act，那麼 NATS 就會在超過時間沒有 Ack 的情況下自動重送。
 
 NATS Streaming 沒有 NACK 的方法，要等到之後的 JetStream 才有。
+
+### 重線重連
+
+雖然低層的 NATS 可以自動重連，但不代表 NATS Streaming 會重新訂閱，所以對 NATS Streaming 來說，重連這件事並不是透明的，必須要另外處理。
