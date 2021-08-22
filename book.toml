@@ -1,6 +1,6 @@
 [book]
-authors = ["marco79423"]
+title = "兩大類的學習筆記"
+author = "兩大類"
 language = "zh-tw"
 multilingual = false
 src = "src"
-title = "兩大類的學習筆記"
