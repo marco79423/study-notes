@@ -4,3 +4,7 @@ author = "兩大類"
 language = "zh-tw"
 multilingual = false
 src = "src"
+
+[output.html]
+google-analytics = "G-RXCZ2T0M9G"
+git-repository-url = "https://github.com/marco79423/study-notes"
