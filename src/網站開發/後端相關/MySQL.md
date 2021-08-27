@@ -627,6 +627,11 @@
             FLUSH PRIVILEGES;
             ```
 
+#### SQL 學習資源
+
+* Select Star SQL
+  * https://selectstarsql.com (待看)
+
 #### 事務控制語言 (TCL, Transaction Control Language)
 
 事務控制語言(如：commit、rollback)
