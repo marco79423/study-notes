@@ -30,7 +30,7 @@
 
 ### Cheat sheet
 
-![](https://i.imgur.com/XMVz9hn.png)
+![](./images/linux_unix-1.png)
 
 ### find
 

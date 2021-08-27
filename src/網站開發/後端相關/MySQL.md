@@ -656,7 +656,7 @@
                     * Transaction A 在交易中連續讀取了兩次 Alice’s balance，但是第一次讀的時候是 1000，但是在交易還沒完成前，另外一個 Transaction B 正好也在執行中，並且更改了
                   Alice’s balance 變成 700，但是這個交易還沒有 commit 時，Transaction A 再次讀取 Alice’s balance，數值卻讀取出尚未 commit 的數據
                   700，這個現象我們就稱為 Dirty Read
-                        ![](https://i.imgur.com/NUyEyS2.png)
+                        ![](./images/mysql-1.png)
             * 心得：一個事務讀到別的還沒 commit 的結果
         * 不可重覆讀 (Non-repeatable reads)
             * 如果你在同一個 transaction 裡面連續使用相同的 Query 讀取了多次資料，但是相同的 Query 卻回傳了不同的結果，這個現象稱為 Non-repeatable reads。
@@ -664,7 +664,7 @@
             * 例子
                 * Transaction A 第一次取得 Alice’s balance 時是 1000，當它還在執行時，Transaction B 修改了 Alice’s balance 成 700 並且 commit
               transaction。此時 Transaction A 再次讀取相同的數值時，卻變成 700，這就是 Non-repeatable reads。
-                    ![](https://i.imgur.com/V1YfzKX.png)
+                    ![](./images/mysql-2.png)
             * 心得：一個事務讀到別人已經 commit 的結果
         * 幻讀 (Phantom reads)
             * 當在同一個 transaction 連續兩次讀取時，讀取出來的筆數跟上次不同，這個情況稱為 Phantom reads。
@@ -672,7 +672,7 @@
             * 例子：
                 * 第一次讀取了帳戶裡面餘額介於 900–1000 這個範圍的帳戶，結果總共有兩筆：Alice 跟 Bob。在 Transaction A 還沒結束的同時，Transaction B 更新了 Alice’s
                 balance 為 700，這時如果 Transaction A 再次查詢相同條件時，筆數從原本的 2 筆變成 1 筆，這個情況就是 Phantom reads。
-                    ![](https://i.imgur.com/fiRruEG.png)
+                    ![](./images/mysql-3.png)
             * 心得：一個事務讀到別人還沒 commit 的結果 (但後來又讀到 commit 的結果，所以 gg)
     * 為了儘可能的高並發，事務的隔離性被分為四個級別：
         * 未提交讀（READ UNCOMMITTED）
@@ -690,7 +690,7 @@
         * 可串行化（SERIALIZABLE）
             * 當兩個事務間存在讀寫衝突時，數據庫通過加鎖強制事務串行執行，解決了前面所說的所有問題（髒讀、不可重複讀、幻讀）。是最高隔離的隔離級別。
             * 可以避免脏读、不可重复读和幻读
-                ![](https://i.imgur.com/NgtDoU5.png)
+                ![](./images/mysql-4.png)
     * 查詢 MySQL 當前的隔離級別
         ```sql
         SELECT @@global.tx_isolation,@@tx_isolation;

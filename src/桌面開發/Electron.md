@@ -6,7 +6,7 @@ Electron 基於 node 和 chromium 做 JS 邏輯的執行和頁面渲染，並且
 
 每個 BrowserWindow 窗口內的 JS 都跑在一個渲染進程，而 electron 有一個主進程，負責和各個窗口內的渲染進程通信。
 
-![](https://i.imgur.com/SwSO4RX.png)
+![](./images/electron-1.png)
 
 主進程可以使用 Node.js 的 API 和 Electron 自身提供給主進程的 API。渲染進程可以使用瀏覽器本身的 API 和 electron 提供給渲染進程的 api，除此以外，渲染進程還可以使用 html 和 css 來做頁面的佈局。
 
@@ -168,8 +168,7 @@ CodeWindow 是對 electron 的 BrowserWindow 的封裝，就是 vscode 的 windo
 
 **總結**
 
-![](https://i.imgur.com/ePhvza9.png)
-
+![](./images/electron-2.png)
 
 vscode 是基於 electron 做窗口的創建和進程通信的，應用啟動的時候會跑主進程，從 src/main 開始執行，然後創建 CodeMain 對象。
 

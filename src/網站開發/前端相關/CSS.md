@@ -20,7 +20,7 @@ css 是瀏覽器提供給開發者的描述界面的方式，而描述界面分�
 
 一個盒子中主要的屬性就5個：width、height、padding、border、margin。
 
-![](https://i.imgur.com/oTj8Ptc.png)
+![](./images/css-1.png)
 
     標準盒子模型和 IE 盒子模型不同，但我不管它
 
@@ -88,7 +88,7 @@ vscode 是上中下嵌套左中右的結構，窗口改變或者拖動都可以�
 
 ## vscode 是如何佈局的
 
-![](https://i.imgur.com/qCF4kNK.png)
+![](./images/css-2.png)
 
 vscode 分為了標題欄、狀態欄、內容區，是上中下結構，而內容區又分為了活動欄、側邊欄、編輯區，是左中右結構。窗口可以調整大小，而這個上中下嵌套左中右的結構是不變的。
 
@@ -98,10 +98,9 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 
 首先，最外層是上中下的結構，可以把每一塊設置為 absolute，然後分別設置 top 值，然後中間部分由分為了左中右，可以再分別設置左中右部分的 left 值，這樣就完成了每一塊的佈局。
 
-![](https://i.imgur.com/GgOmoXG.png)
+![](./images/css-3.png)
 
-![](https://i.imgur.com/bbuAzpP.png)
-
+![](./images/css-4.png)
 
 這是整體的佈局，每一塊內部則根據不同的佈局需求分別使用流式、彈性等不同的盒，配合絕對、相對等定位方式來佈局。
 
