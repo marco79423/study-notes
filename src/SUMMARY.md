@@ -29,6 +29,7 @@
   * [工具相關](通用技術/工具相關/README.md)
     * [Git](通用技術/工具相關/Git.md)
     * [Mercurial](通用技術/工具相關/Mercurial.md)
+    * [Jetbrains IDE](通用技術/工具相關/Jetbrains_IDE.md)
   * [雜項](通用技術/雜項/README.md) 
     * [Regex](通用技術/雜項/Regex.md) 
 
