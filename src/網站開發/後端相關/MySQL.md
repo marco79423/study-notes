@@ -1323,3 +1323,10 @@ Xtrabackup
     * Can I ORDER BY based on something I did in GROUP BY? (yes! ORDER BY is basically the last thing, you can ORDER BY
       based on anything!)
     * When does LIMIT happen? (at the very end!)
+
+## 待整理資料
+
+* DBA 推薦的學習參考書
+    * MySQL技術內幕︰InnoDB存儲引擎
+    * MySQL運維內參
+    * 高性能MySQL
