@@ -2,6 +2,48 @@
 
 > 沒有 CSS 的 HTML 是一個語義系統而不是 UI 系統。
 
+## 語法
+
+### 屬性的寫法
+
+方法有兩種，第一種寫小屬性；第二種寫綜合屬性，用空格隔開。
+
+* 小屬性的寫法：
+
+    ```css=
+    .a {
+        padding-top: 30px;
+        padding-right: 20px;
+        padding-bottom: 40px;
+        padding-left: 100px;
+    }
+    ```
+* 綜合屬性的寫法：(上、右、下、左)（順時針方向，用空格隔開）
+    ```css
+    .a {
+        padding:30px 20px 40px 100px;
+    }
+    ```
+    * 如果寫了四個值，則代表：上、右、下、左。
+    * 如果只寫了三個值，則代表：上、左右、下。
+    * 如果只寫了兩個值，則為：上下、左右
+
+* 後面會蓋前面
+
+    ```css
+    .a {
+        padding: 20px;  /*上、下、右為 20px */
+        padding-left: 30px; /* 左為 30px */
+    }
+
+    .a {
+        padding: 20px;  /*上、下、右為 20px */
+        padding-left: 30px; /* 左為 30px */
+    }
+
+    ```
+
+## 佈局相關
 
 css 是瀏覽器提供給開發者的描述界面的方式，而描述界面分為兩部分：
 
@@ -22,9 +64,45 @@ css 是瀏覽器提供給開發者的描述界面的方式，而描述界面分�
 
 ![](./images/css-1.png)
 
-    標準盒子模型和 IE 盒子模型不同，但我不管它
+補充 - CSS盒模型和IE盒模型的區別：
 
-參考資料： https://github.com/qianguyihao/Web/blob/master/02-CSS%E5%9F%BA%E7%A1%80/06-CSS%E7%9B%92%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3.md
+* 在 標准盒子模型中，width 和 height 指的是內容區域的寬度和高度。增加內邊距、邊框和外邊距不會影響內容區域的尺寸，但是會增加元素框的總尺寸。
+* IE盒子模型中，width 和 height 指的是內容區域+border+padding的寬度和高度。
+
+### `<body>` 標簽也有 margin
+
+整個網頁最大的盒子是 `<document>`，即瀏覽器，而 `<body>` 是 `<document>` 的兒子。瀏覽器給 `<body>` 默認的margin大小是8個像素，此時 `<body>` 佔據了整個頁面的一大部分區域，而不是全部區域。
+
+### 寬度計算
+
+```css=
+/* 長寬 302 * 302 */
+.box1 {
+    width: 100px;
+    height: 100px;
+    padding: 100px;
+    border: 1px solid red;
+}
+```
+
+* 真實佔有長度 = 上 border + 上 padding + height + 下 padding + 下 border
+* 真實佔有寬度 = 左 border + 左 padding + width + 右 padding + 右 border
+
+### padding 也有顏色
+
+padding 就是內邊距，padding的區域有背景顏色，並且背景顏色一定和內容區域的相同。
+
+```css=
+.a {
+    width: 100px;
+    height: 100px;
+    padding: 50px;
+    background-color: lightgreen;
+    border: 10px;
+}
+```
+
+![](https://i.imgur.com/E6lwFzo.png)
 
 ## display
 
@@ -32,11 +110,11 @@ display 是設置盒的類型，不同的盒有不同的佈局規則，比如 BF
 
 盒與盒之間也是有區別的，有的盒可以在同一行顯示，有的則是獨佔一行，而且對內容的位置的計算方式也不一樣。於是提供了 display 樣式來設置盒類型，不同的盒類型就會使用不同的計算規則。
 
-* block 
+* block
     * 元素會獨佔一行、可以設置內容的寬高，具體計算規則叫做 BFC。
-* inline 
+* inline
     * 元素寬高由內容撐開不可設置，不會獨佔一行，具體計算規則叫做 IFC。
-* flex 
+* flex
     * 子元素可以自動計算空白部分，由 flex 樣式指定分配比例，具體計算規則叫做 FFC。
 * grid
     * 子元素則是可以拆分成多個行列來計算位置，具體計算規則叫 GFC。
@@ -59,7 +137,6 @@ display 是設置盒的類型，不同的盒有不同的佈局規則，比如 BF
     * 默認的 position
     * 流式的，上個盒子顯示到什麼地方了，下個盒子就在下面繼續計算位置，顯示在什麼位置是由內容多少來決定的。
     * 最開始的時候網頁主要是用來顯示一些文本，所以流式的位置計算規則就很方便。
-    * 
 
 * relative
     * 根據上個盒子的位置自動計算出下個盒子的位置，可以使用 relative 做一些偏移
@@ -108,4 +185,7 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 
 而且 vscode 每一塊的大小是也是可以拖動改變大小的，也要在拖動的時候重新計算 left、top 的值。
 
-參考資料 https://mp.weixin.qq.com/s/ulp8BbbeZAneS4NajDF6-g
+## 參考資料
+
+* [06-CSS盒模型詳解](https://github.com/qianguyihao/Web/blob/master/02-CSS%E5%9F%BA%E7%A1%80/06-CSS%E7%9B%92%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3.md)
+* [CSS 布局的本质是什么](https://mp.weixin.qq.com/s/ulp8BbbeZAneS4NajDF6-g)
