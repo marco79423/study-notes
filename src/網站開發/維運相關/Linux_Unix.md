@@ -1,5 +1,9 @@
 # Linux/Unix 學習筆記
 
+## 中斷
+
+* [認認真真的聊聊中斷](https://mp.weixin.qq.com/s/bTfeI5p4eO5j6I9edeV73g)
+
 ## 計算機的時間來源
 
 推薦參考文章： https://mp.weixin.qq.com/s/A9fgd2xnp1YfHZ1iTMyXvw?utm_source=pocket_mylist
