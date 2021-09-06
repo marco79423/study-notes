@@ -43,6 +43,30 @@
 
     ```
 
+### 單位
+
+html 中的單位只有一種，那就是像素 px，所以單位是可以省略的，但是在 CSS 中不一樣。 CSS 中的單位是必須要寫的，因為它沒有默認單位。
+
+#### 絕對單位
+
+1 in = 2.54cm = 25.4mm = 72pt = 6pc。
+
+各種單位的含義：
+
+* in：英吋 Inches (1 英吋 = 2.54 釐米)
+* cm：釐米 Centimeters
+* mm：毫米 Millimeters
+* pt：點 Points，或者叫英鎊 (1點 = 1/72英吋)
+* pc：皮卡 Picas (1 皮卡 = 12 點)
+
+#### 相對單位
+
+* px：像素 
+* em：印刷單位相當於12個點 
+* %：百分比，相對周圍的文字的大小
+
+為什麼說像素 px 是一個相對單位呢，這也很好理解。比如說，電腦屏幕的的尺寸是不變的，但是我們可以讓其顯示不同的分辨率，在不同的分辨率下，單個像素的長度肯定是不一樣的啦。
+
 ## 佈局相關
 
 css 是瀏覽器提供給開發者的描述界面的方式，而描述界面分為兩部分：
@@ -88,7 +112,7 @@ css 是瀏覽器提供給開發者的描述界面的方式，而描述界面分�
 * 真實佔有長度 = 上 border + 上 padding + height + 下 padding + 下 border
 * 真實佔有寬度 = 左 border + 左 padding + width + 右 padding + 右 border
 
-### padding 也有顏色
+### `padding` 也有顏色
 
 padding 就是內邊距，padding的區域有背景顏色，並且背景顏色一定和內容區域的相同。
 
@@ -103,6 +127,40 @@ padding 就是內邊距，padding的區域有背景顏色，並且背景顏色�
 ```
 
 ![](https://i.imgur.com/E6lwFzo.png)
+
+### 預設就有 `padding` 的元素
+
+有些元素預設就有 padding，所以為了方便控制，通常會清除掉 (不過一般都用套件，而非自己清)
+
+```css
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{
+    margin:0;
+    padding:0;
+}
+```
+
+### 屬性 border
+
+border 就是邊框。邊框有三個要素：
+
+* 像素（粗細）border-width
+  * 若無就不會有邊框
+* 線型 border-style
+  * 若無就不會有邊框
+* 顏色 border-color
+  * 預設為黑
+
+border屬性是能夠被拆開的，有兩大種拆開的方式：
+
+* 按三要素拆開：border-width、border-style、border-color
+* 按方向拆開：border-top、border-right、border-bottom、border-left。
+
+#### 線型 border-style
+
+![](./images/css-5.png)
+
+* 不同瀏覽器顯示會有區別
+* 如果要追求完全的一致性，就不能用 CSS 來做邊框
 
 ## display
 
@@ -161,7 +219,6 @@ display 是設置盒的類型，不同的盒有不同的佈局規則，比如 BF
 ## 例子 - VSCode
 
 vscode 是上中下嵌套左中右的結構，窗口改變或者拖動都可以調整每塊大小，所以使用嵌套的 absolute 的方式來做整體的佈局。每一塊的內部則綜合使用流式、彈性等方式配合 position 分別做更細節的佈局。
-
 
 ## vscode 是如何佈局的
 
