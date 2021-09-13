@@ -3,6 +3,7 @@
 ## 中斷
 
 * [認認真真的聊聊中斷](https://mp.weixin.qq.com/s/bTfeI5p4eO5j6I9edeV73g)
+* [認認真真的聊聊"軟"中斷](https://mp.weixin.qq.com/s/g9rGKRQofAlWjdq8lDTTkQ?utm_source=pocket_mylist)
 
 ## 計算機的時間來源
 
