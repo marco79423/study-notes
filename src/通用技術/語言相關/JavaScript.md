@@ -12,3 +12,11 @@
     * 在 package.json 中，增加 type: "module" 配置；
     * 在 .mjs 檔案可以直接使用 import 和 export
     * 若不新增上述兩項中任一項，直接在 Node 中使用 ES Modules，則會丟擲警告
+
+## 函式庫要包成 CommonJS 還是 ES Module？
+
+如果接入方以SSR的形式在服務端接入組件，可能使用CJS規范。
+
+CSR的情況通常使用ESM。
+
+所以SDK組件在打包編譯時需要輸出ESM、CJS兩種規范的文件。
