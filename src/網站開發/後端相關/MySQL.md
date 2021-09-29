@@ -1376,8 +1376,9 @@ Xtrabackup
       based on anything!)
     * When does LIMIT happen? (at the very end!)
 
-## 待整理資料
+## 參考資料
 
+* [這波MySQL操作，穩穩帶你進階頂端](https://mp.weixin.qq.com/s/EXbMgT0T3cXZ0u-4lvMDbQ)
 * DBA 推薦的學習參考書
     * MySQL技術內幕︰InnoDB存儲引擎
     * MySQL運維內參
