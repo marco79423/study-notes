@@ -70,6 +70,15 @@ NATS Streaming 沒有 NACK 的方法，要等到之後的 JetStream 才有。
     * 包含訊息佇列中的最後一條訊息，即使被處理過的訊息
 * nats.DeliverNew()
     * 只處理訂閱之後的新訊息
+* nats.StartSequence(seq)
+    * 從 seq 開始收，從 1 開始
+
+## 心得
+
+* push base 可能會重覆收
+* subscribe 不用 queue 時，不能用同樣的 durable name
+* pull subscribe 一定要 ack
+* push base 太大量時可能會產生 slow consumer (改 max_pending 可緩解)
 
 ## 參考資料
 
