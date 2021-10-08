@@ -62,6 +62,10 @@ NATS Streaming 沒有 NACK 的方法，要等到之後的 JetStream 才有。
 
 雖然低層的 NATS 可以自動重連，但不代表 NATS Streaming 會重新訂閱，所以對 NATS Streaming 來說，重連這件事並不是透明的，必須要另外處理。
 
+### 坑
+
+* NATS Streaming 有自己的 ClientID，意義和 NATS 本身的 ClientID 不同，會混淆
+
 ## JetStream
 
 * nats.DeliverAll() [預設]
