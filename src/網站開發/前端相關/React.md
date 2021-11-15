@@ -22,9 +22,9 @@
     * 一些小細節
         * 內建 tag 小寫，自定義 component 大寫
             ```jsx
-                <div>
-                    <HelloWorld />
-                </div>
+            <div>
+                <HelloWorld />
+            </div>
             ```
         * Built-in keyword 會改名 (如：class  是 JS 的 keyword，所以改為 className)
             ```jsx
