@@ -1,5 +1,9 @@
 # Linux/Unix 學習筆記
 
+## Linux 源碼
+
+* [你管这破玩意叫操作系统源码 | 第一回 最开始的两行代码](https://mp.weixin.qq.com/s/LIsqRX51W7d_yw-HN-s2DA?utm_source=pocket_mylist)
+
 ## 中斷
 
 * [認認真真的聊聊中斷](https://mp.weixin.qq.com/s/bTfeI5p4eO5j6I9edeV73g)
