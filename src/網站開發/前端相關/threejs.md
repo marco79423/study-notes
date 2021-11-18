@@ -1,41 +1,34 @@
 # three.js 學習筆記
 
-* 官網：https://threejs.org/
-* GitHub：https://github.com/mrdoob/three.js/
+* 官網： https://threejs.org/
+* GitHub： https://github.com/mrdoob/three.js/
+
+Three.js 為 Ricardo Cabello 於 2012 年發布之 3D Javascript 函式庫開源專案，它是基於 WebGL 的物件導向框架，不需要像以前那樣依賴外部 Plug in 即可進行 3D 繪圖，並可使用 GPU 加速。
+
+* 前身是 Ricardo Cabello 以 ActionScript 實作的場景演示
+* Ricardo Cabello 於 2009 年移植到 Javascript
+* 2010 年首次發布於 GitHub
+* Paul Brunt 為 Three.js 添加渲染功能
+* Cabello 開發了 CanvasRenderer 與 SVGRenderer 等 API
+* Branislav Ulicny 貢獻了素材, 著色器, 後處理, 以及渲染能力之強化
+* Three.js 在所有支持 WebGL 1.0 的瀏覽器皆可運行
+* Three.js 以最寬鬆的 MIT 授權開源
 
 ## 基本流程
 
 使用場景放置物件，把物件增加到場景之後，需要為場景提供一個相機（觀察點），然後使用繪製器繪製，基本流程為：
 
-* 建立場景
-* 建立相機
+* 建立場景 (Scene)
+* 建立相機 (Camera)
 * 建立模型、材質並放置到場景
-* 建立繪製器
+* 建立繪製器 (Renderer)
 * 重新繪製
 
-## 使用繪製器
+## 場景 (Scene)
 
-Three.js 提供兩種繪製器：
+場景是一個容器，用來放置曲面 (Mesh)、光源 (Light) 與相機 (Camera) 等 3D 繪製元素。繪製器 (Renderer) 就根據這些元素進行繪製。
 
-* WebGLRenderer 繪製器
-    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
-* CanvasRenderer 繪製器
-    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
-    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
-    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
-
-```js
-//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
-if(window.WebGLRenderingContext){
-    renderer = new THREE.WebGLRenderer();
-} else {
-    renderer = new THREE.CanvasRenderer();
-}
-```
-
-## 使用場景
-
-場景可以放置模型、光源和相機，然後繪製器根據這些進行繪製，相機在建立後自動增加到場景中，但模型和光源必須使用 add() 方法增加：
+相機會在建立後自動增加到場景中，但模型和光源必須使用 add() 方法增加：
 
 ```js
 //將曲面增加到場景中
@@ -56,16 +49,25 @@ for(var i = 0, l = scene.children.length; i < l; i++){
 }
 ```
 
-## 使用相機
+## 相機 (Camera)
 
-相機就是觀察點，有兩種類型，都繼承自 Camera 類別：
+相機就是觀察點，也就是觀察者的視角投影，將 3D 物件呈現在 2D 平面上需要透過相機的投影，投影有兩種模式：
 
-* 透視投影相機（PerspectiveCamera）
-    * THREE.PerspectiveCamera(fov, aspect, ear, far);
-    * PerspectiveCamera 參數都可以省略，因為都有預設值
-* 正交投影相機（OrthographicCamera）
-    * THREE.OrthographicCamera(left, right, top, bottom, near, far);
-    * OrthographicCamera 只有後兩個參數可以省略
+* 透視投影
+    * 使用四稜錐建模將 3D 物件投影到 2D 平面, 有立體感
+    * 透視投影與人類視覺最類似, 有景深空間立體感, 但大小會被扭曲
+    * 用法
+        ```js
+        THREE.PerspectiveCamera(fov, aspect, ear, far); // 參數都可以省略，因為都有預設值
+        ```
+* 正交投影
+    * 模擬長焦鏡頭拍攝相片方式將 3D 投影至 2D, 無立體感
+    * 正交投影則建立 3D 物件的 2D 幾何圖形，提供無扭曲的投影視圖，以便精確縮放與放置
+    * 一般 3D 繪圖流程是先以正交投影來建立場景，得到精確之製圖與建模，然後用透視投影來繪製輸出
+    * 用法  
+        ```js
+        THREE.OrthographicCamera(left, right, top, bottom, near, far); // 只有後兩個參數可以省略
+        ```
 
 ![threejs-1](./images/threejs-1.png)
 
@@ -84,21 +86,14 @@ camera.up.y = -1;
 camera.lookAt(new THREE.Vector3(320, 240, 0));
 ```
 
-## 繪製為曲面線框
+## 曲面圖形物件 (Mesh)
 
-只需改變材質就可以非常方便繪製一個曲面線框：
+曲面圖形物件 (Mesh) 就是 3D 空間中的物體，包含模型以及其上的材質，Three.js 是用 Mesh 類別來表示這個物體。
 
-```js
-// 使用顏色建立一個材質
-material = new THREE.MeshBasicMaterial({
-    color: 0xff0000,  // 曲面線框的顏色
-    wireframe: true, // 指定繪製為曲面線框
-});
-```
+Mesh 類別只有兩個屬性：
 
-## 曲面建構–幾何形體
-
-曲面就是 3D 空間中的物體，包含模型以及其上的材質，Three.js 是用 Mesh 類別來表示這個物體，Mesh 類別只有兩個屬性，表示幾何形體的 geometry 物件和材質 material 物件，Mesh 物件的這兩個屬性相互緊密連結：
+* 表示幾何形體的 geometry 物件
+* 材質 material 物件
 
 ```js
 THREE.Mesh = function(geometry, material){
@@ -108,7 +103,17 @@ THREE.Mesh = function(geometry, material){
 
 geometry 中 vertices 屬性決定頂點的清單，faces 屬性決定面的組成，faceVertexUv 屬性決定紋理座標，faces 屬性是一組 face 物件，每個 face 物件的 materialIndex 屬性用比對 material 物件。
 
-## Object3D 和基本類型
+### 幾何模型 (Geometry)
+
+使用 Geometry 類別表示幾何模型，在幾何模型上包含頂點座標、頂點索引陣列（也就是面的組成）、紋理座標。
+
+* vertices 屬性決定頂點的清單
+* faces 屬性決定面的組成
+* faceVertexUv 屬性決定紋理座標。
+
+如果想使用頂點顏色作為紋理，就可以使用每個 face 的 VertexColors 屬性，該屬性是一個 THREE.Color 類型，指定面上每個頂點的顏色。
+
+#### Object3D 和基本類型
 
 Three.js 中 3D 物件都繼承於 Object3D，包含相機、幾何模型等，他定義了一些基本屬性和方法可被其他物體繼承：
 
@@ -154,57 +159,8 @@ var face = new THREE.Face3(
 );
 ```
 
-## 自訂幾何模型的建構
 
-使用 Geometry 類別表示幾何模型，在幾何模型上包含頂點座標、頂點索引陣列（也就是面的組成）、紋理座標。vertices 屬性決定頂點的清單，faces 屬性決定面的組成，faceVertexUv 屬性決定紋理座標。
-
-如果想使用頂點顏色作為紋理，就可以使用每個 face 的 VertexColors 屬性，該屬性是一個 THREE.Color 類型，指定面上每個頂點的顏色。
-
-## 使用 BufferGeometry
-
-若想使用原生 API 的 GPU 快取方式來撰寫程式，就可以使用 BufferGeometry，這個類別將頂點、索引、顏色或紋理座標、法線資料封裝在一起，可以充分利用 GPU 快取中，實現大幅的加速功能。
-
-但也是它的缺陷，因為快取計算比較複雜，因此如果更改這些快取中的資料就會花費更多計算，因此這類別主要用在靜態物件。
-
-## 資料更新
-
-雖然 JavaScript Object 類型是一種參考類型，但不表示更改了屬性就一定會導致物件更新！
-
-舉例來說，一個 Geometry 物件的頂點屬性 vertices 發生改變，並不會更新 Mesh，因為 Three.js 將 Mesh 的資訊快取為某種最佳化的結構，如果要讓 Mesh 物件更新，必須通知 Three.js 重新計算快取中的結構：
-
-```js
-//設定 Geometry 為動態，這樣才允許改變其中的頂點
-geometry.dynamic = true;
-
-//告訴 Three.js 需要更新頂點
-geometry.verticesNeedUpdate = true;
-
-//告訴 Three.js 需要重新計算法線
-geometry.normalsNeedUpdate = true;
-```
-
-原書作者認為 verticesNeedUpdate 和 normalsNeedUpdate 兩個屬性是最有用的，然後應該僅僅標示那些確實需要計時計算的屬性，避免無謂的運算負擔，其他可以使用的標示更新的屬性：
-
-* dynamic
-    * 設定快取中的資料可以動態更新，該屬性預設設定為 true，如果不設定為該屬性為 true，Geometry 資料被上傳給 GPU 快取後就會被刪除
-* verticesNeedUpdate
-    * 設定 true 表示需要更新頂點
-* elementsNeedUpdate
-    * 設定 true 表示需要更新頂點索引
-* uvsNeedUpdate
-    * 設定 true 表示需要更新頂點紋理座標
-* normalsNeedUpdate
-    * 設定 true 表示需要更新頂點法線
-* tangentsNeedUpdate
-    * 設定 true 表示需要更新頂點切線
-* colorsNeedUpdate
-    * 設定 true 表示需要更新頂點顏色紋理
-* lineDistancesNeedUpdate
-    * 設定 true 表示需要更新線之間的距離陣列
-* buffersNeedUpdate
-    * 設定 true 表示需要更新快取的長度，因為陣列長度改變了
-
-## 內建幾何模型
+### 內建幾何模型
 
 Three.js 提供了基本的幾何模型，這些幾何模型已經計算了法線，甚至紋理座標都已經提供：
 
@@ -254,9 +210,79 @@ Three.js 提供了基本的幾何模型，這些幾何模型已經計算了法�
 * WireframeGeometry
     * 線框體
 
-## 曲面建構–材質和紋理
+### 使用 BufferGeometry
 
-Three.js 提供內建材質，就不需自己寫著色器，若想親自撰寫，可使用 MeshShaderMaterial。
+若想使用原生 API 的 GPU 快取方式來撰寫程式，就可以使用 BufferGeometry，這個類別將頂點、索引、顏色或紋理座標、法線資料封裝在一起，可以充分利用 GPU 快取中，實現大幅的加速功能。
+
+但也是它的缺陷，因為快取計算比較複雜，因此如果更改這些快取中的資料就會花費更多計算，因此這類別主要用在靜態物件。
+
+### 材質物件 (Material)
+
+只需改變材質就可以非常方便繪製一個曲面線框：
+
+```js
+// 使用顏色建立一個材質
+material = new THREE.MeshBasicMaterial({
+    color: 0xff0000,  // 曲面線框的顏色
+    wireframe: true, // 指定繪製為曲面線框
+});
+```
+
+曲面材質決定應用於曲面的紋理和光源特性，以 MeshBasicMaterial 為例，其中包含以下屬性：
+
+* color
+    * 十六進位整數，如果設定了 color 屬性，整個材質將全部使用這個種顏色，預設值為 0xffffff，如果指定使用頂點顏色（VertexColor 屬性設定為 true），那麼設定將不會有作用
+* map
+    * 指定紋理物件，也就是一個 THREE.Texture 物件，預設值為 null
+* wireframe
+    * 如果設定為 true，那麼整個幾何形狀就顯示為線框（即只顯示邊，不顯示面），預設值為 false
+* wireframeLinewidth
+    * 當顯示為線框時線條的粗細，預設值為 1
+* wireframeLinecap
+    * 當顯示為線框時線條端點的形狀，也就是線蓋，合法值為 butt、round、square，預設值為 round
+* wireframeLinejoin
+    * 指定兩個線條如何結合，合法的值是 round、bevel、miter，分別表示尖角、圓角或斜角，預設值為 round
+* shading
+    * 定義著色類型，預設值為 THREE.SmoothShading
+* vertexColors
+    * 定義是否使用頂點顏色，預設值為 false（常數 THREE.NoColors）
+* fog
+    * 定義該材質的顏色是否會被全域的 fog 設定影響，預設值為 true
+* lightMap
+    * 定義光源影射，預設值為 null
+* specularMap
+    * 定義鏡面影射，預設值為 null
+* envMap
+    * 定義環境影射，預設值為 null
+* skinning
+    * 預設值為 false
+* morphTargets
+    * 定義是否使用頂點變形動畫，預設值為 false
+
+#### 線段材質
+
+有兩種類型的線段材質，分別表示實現和虛線：
+
+* LineBasicMaterial
+    * 最基本的用於繪製線段的材質
+* LineDashedMaterial
+    * 是一種虛線類型的線段材質
+
+#### 粒子系統
+
+粒子就是繪製一個一個的點，然後在著色器中使用內建變數 gl_PointSize 改變點的大小，成為一個方塊，然後賦以紋理。當多個粒子組合起來就形成一個粒子系統，粒子系統被視為一個整體的物件，我們仍然可以為每個粒子單獨著色，因為在繪製的過程中，Three.js 透過 attribute 參數 color 向著色器傳遞了每一個頂點的顏色。
+
+在粒子系統第一次被繪製時，Three.js 會將其資料快取下來，之後無法增加或減少系統中的粒子，如果不希望看到某個粒子，可將它的顏色中的 alpha 值設定為 0，但無法刪除它，所以在建立粒子系統時，就將所有可能需要顯示的粒子考慮進來。
+
+#### Sprite 和 SpriteMaterial
+
+Sprite 是一個 2D 的幾何像素，主要用於 CanvasRenderer 繪製器，但 WebGLRenderer 繪製器也可繪製，此時 Sprite 被繪製成一個矩形，SpriteMaterial 專門為 Sprite 提供材質。
+
+不同於 Partical 在頂點著色器中改變大小，Sprite 繼承自 Object3D，透過 scale 來改變矩形大小，預設為 1x1。
+
+#### 內建材質
+
+Three.js 提供內建材質。
 
 創建材質時，除了顏色還有其他參數可以指定，例如光滑度和環境貼圖。每個材質的建構方法只有一個參數，該參數是一個 Object 類型，其屬性指定了材質的特性，這些屬性也對應材質對象的屬性。
 
@@ -299,59 +325,82 @@ Material 是所有其他類型的材質對象的基礎類別，該類別建構�
 * SpriteMaterial
     * 為 Sprite 提供材質
 
-## 曲面材質
 
-曲面材質決定應用於曲面的紋理和光源特性，以 MeshBasicMaterial 為例，其中包含以下屬性：
+## 繪製器 (Renderer)
 
-* color
-    * 十六進位整數，如果設定了 color 屬性，整個材質將全部使用這個種顏色，預設值為 0xffffff，如果指定使用頂點顏色（VertexColor 屬性設定為 true），那麼設定將不會有作用
-* map
-    * 指定紋理物件，也就是一個 THREE.Texture 物件，預設值為 null
-* wireframe
-    * 如果設定為 true，那麼整個幾何形狀就顯示為線框（即只顯示邊，不顯示面），預設值為 false
-* wireframeLinewidth
-    * 當顯示為線框時線條的粗細，預設值為 1
-* wireframeLinecap
-    * 當顯示為線框時線條端點的形狀，也就是線蓋，合法值為 butt、round、square，預設值為 round
-* wireframeLinejoin
-    * 指定兩個線條如何結合，合法的值是 round、bevel、miter，分別表示尖角、圓角或斜角，預設值為 round
-* shading
-    * 定義著色類型，預設值為 THREE.SmoothShading
-* vertexColors
-    * 定義是否使用頂點顏色，預設值為 false（常數 THREE.NoColors）
-* fog
-    * 定義該材質的顏色是否會被全域的 fog 設定影響，預設值為 true
-* lightMap
-    * 定義光源影射，預設值為 null
-* specularMap
-    * 定義鏡面影射，預設值為 null
-* envMap
-    * 定義環境影射，預設值為 null
-* skinning
-    * 預設值為 false
-* morphTargets
-    * 定義是否使用頂點變形動畫，預設值為 false
+(由於所有主流瀏覽器均已支援 WebGLRenderer, 因此 Three.js 已經將 CanvasRenderer 移除了)
 
-## 建構線段
+Three.js 提供兩種繪製器：
 
-有兩種類型的線段材質，分別表示實現和虛線：
+* WebGLRenderer 繪製器
+    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
+* CanvasRenderer 繪製器
+    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
+    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
+    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
 
-* LineBasicMaterial
-    * 最基本的用於繪製線段的材質
-* LineDashedMaterial
-    * 是一種虛線類型的線段材質
+```js
+//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
+if(window.WebGLRenderingContext){
+    renderer = new THREE.WebGLRenderer();
+} else {
+    renderer = new THREE.CanvasRenderer();
+}
+```
 
-## 粒子系統
+### 繪製器設定屬性
 
-粒子就是繪製一個一個的點，然後在著色器中使用內建變數 gl_PointSize 改變點的大小，成為一個方塊，然後賦以紋理。當多個粒子組合起來就形成一個粒子系統，粒子系統被視為一個整體的物件，我們仍然可以為每個粒子單獨著色，因為在繪製的過程中，Three.js 透過 attribute 參數 color 向著色器傳遞了每一個頂點的顏色。
+* shadowMap.enabled
+    * 是否允許使用陰影，預設值為 false
+* shadowMap.autoUpdate
+    * 是否自動更新陰影，預設值為 true
+* shadowMap.type
+    * 定義陰影類型，有三個值可選：
+        * THREE.BasicShadowMap
+            * 表示基本陰影，不進行過濾處理
+        * THREE.PCFShadowMap
+            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
+        * THREE.PCFSoftShadow
+            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
 
-在粒子系統第一次被繪製時，Three.js 會將其資料快取下來，之後無法增加或減少系統中的粒子，如果不希望看到某個粒子，可將它的顏色中的 alpha 值設定為 0，但無法刪除它，所以在建立粒子系統時，就將所有可能需要顯示的粒子考慮進來。
 
-## Sprite 和 SpriteMaterial
+## 資料更新
 
-Sprite 是一個 2D 的幾何像素，主要用於 CanvasRenderer 繪製器，但 WebGLRenderer 繪製器也可繪製，此時 Sprite 被繪製成一個矩形，SpriteMaterial 專門為 Sprite 提供材質。
+雖然 JavaScript Object 類型是一種參考類型，但不表示更改了屬性就一定會導致物件更新！
 
-不同於 Partical 在頂點著色器中改變大小，Sprite 繼承自 Object3D，透過 scale 來改變矩形大小，預設為 1x1。
+舉例來說，一個 Geometry 物件的頂點屬性 vertices 發生改變，並不會更新 Mesh，因為 Three.js 將 Mesh 的資訊快取為某種最佳化的結構，如果要讓 Mesh 物件更新，必須通知 Three.js 重新計算快取中的結構：
+
+```js
+//設定 Geometry 為動態，這樣才允許改變其中的頂點
+geometry.dynamic = true;
+
+//告訴 Three.js 需要更新頂點
+geometry.verticesNeedUpdate = true;
+
+//告訴 Three.js 需要重新計算法線
+geometry.normalsNeedUpdate = true;
+```
+
+原書作者認為 verticesNeedUpdate 和 normalsNeedUpdate 兩個屬性是最有用的，然後應該僅僅標示那些確實需要計時計算的屬性，避免無謂的運算負擔，其他可以使用的標示更新的屬性：
+
+* dynamic
+    * 設定快取中的資料可以動態更新，該屬性預設設定為 true，如果不設定為該屬性為 true，Geometry 資料被上傳給 GPU 快取後就會被刪除
+* verticesNeedUpdate
+    * 設定 true 表示需要更新頂點
+* elementsNeedUpdate
+    * 設定 true 表示需要更新頂點索引
+* uvsNeedUpdate
+    * 設定 true 表示需要更新頂點紋理座標
+* normalsNeedUpdate
+    * 設定 true 表示需要更新頂點法線
+* tangentsNeedUpdate
+    * 設定 true 表示需要更新頂點切線
+* colorsNeedUpdate
+    * 設定 true 表示需要更新頂點顏色紋理
+* lineDistancesNeedUpdate
+    * 設定 true 表示需要更新線之間的距離陣列
+* buffersNeedUpdate
+    * 設定 true 表示需要更新快取的長度，因為陣列長度改變了
 
 ## 光源
 
@@ -374,39 +423,7 @@ Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直�
 * SpotLight
     * 聚光燈，僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質＊如果場景沒有光，Three.js 預設會使用滿環境光，物體會呈現其表面的顏色。
 
-## 陰影
-
-要產生陰影有四個步驟：
-
-1. 繪製器設定
-    * 陰影需要大量運算，預設為不啟用陰影功能，所以首先繪製器必須啟用陰影功能。
-    * renderer.shadowMapEnable = true;
-2. 光源設定
-    * 只有平行光和聚光燈才可以產生陰影，如果想讓某個光源可以產生陰影，必須設定該光源產生陰影。
-    * light.castShadow = true;
-3. 物體產生陰影設定
-    * 只有物體擋著光才會產生陰影，如果想讓某個物體可以擋著光產生陰影。
-    * mesh1.castShadow = true;
-4. 物體接收陰影設定
-    * 如果想讓某個物體表面產生陰影，必須設定物體接收陰影。
-    * mesh2.receiveShadow = true;
-
-## 繪製器設定屬性
-
-* shadowMap.enabled
-    * 是否允許使用陰影，預設值為 false
-* shadowMap.autoUpdate
-    * 是否自動更新陰影，預設值為 true
-* shadowMap.type
-    * 定義陰影類型，有三個值可選：
-        * THREE.BasicShadowMap
-            * 表示基本陰影，不進行過濾處理
-        * THREE.PCFShadowMap
-            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
-        * THREE.PCFSoftShadow
-            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
-
-## 光源設定屬性
+### 光源設定屬性
 
 * castShadow
     * 是否讓該光源發出的光產生陰影，預設為 false
@@ -426,6 +443,23 @@ Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直�
     * 陰影影射紋理的寬度，以像素為單位，預設值為 512
 * shadow.mapSize.height
     * 陰影影射紋理的高度，以像素為單位，預設值為 512
+
+## 陰影
+
+要產生陰影有四個步驟：
+
+1. 繪製器設定
+    * 陰影需要大量運算，預設為不啟用陰影功能，所以首先繪製器必須啟用陰影功能。
+    * renderer.shadowMapEnable = true;
+2. 光源設定
+    * 只有平行光和聚光燈才可以產生陰影，如果想讓某個光源可以產生陰影，必須設定該光源產生陰影。
+    * light.castShadow = true;
+3. 物體產生陰影設定
+    * 只有物體擋著光才會產生陰影，如果想讓某個物體可以擋著光產生陰影。
+    * mesh1.castShadow = true;
+4. 物體接收陰影設定
+    * 如果想讓某個物體表面產生陰影，必須設定物體接收陰影。
+    * mesh2.receiveShadow = true;
 
 ## 協助工具
 
@@ -754,3 +788,4 @@ Three.js 自己定義了以 JSON 格式儲存模型資訊，雖非常有效率�
 ## 參考資料
 
 * [3D 網站開發入門筆記＿Three.js 入門](http://test.domojyun.net/MEMO/3D/threejs.html)
+* [Three.js 學習筆記 (一) : 執行環境配置](http://yhhuang1966.blogspot.com/2019/01/threejs.html)
