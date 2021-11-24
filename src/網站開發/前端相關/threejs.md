@@ -31,19 +31,35 @@ Object3D.scale     //縮放，包含 x、y、z 屬性
 
 * 建立場景 (Scene)
 * 建立相機 (Camera)
-* 建立模型、材質並放置到場景
 * 建立繪製器 (Renderer)
+* 建立模型、材質並放置到場景
 * 重新繪製
 
 ```js
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-//...
-
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
+
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+const cube = new THREE.Mesh( geometry, material );
+scene.add( cube );
+
+camera.position.z = 5;
+
+const animate = function () {
+    requestAnimationFrame( animate );
+
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+
+    renderer.render( scene, camera );
+};
+
+animate();
 ```
 
 ## 場景 (Scene)
@@ -113,6 +129,45 @@ camera.up.y = -1;
 //看向右上方
 camera.lookAt(new THREE.Vector3(320, 240, 0));
 ```
+
+## 繪製器 (Renderer)
+
+(由於所有主流瀏覽器均已支援 WebGLRenderer, 因此 Three.js 已經將 CanvasRenderer 移除了)
+
+Three.js 提供兩種繪製器：
+
+* WebGLRenderer 繪製器
+    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
+* CanvasRenderer 繪製器
+    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
+    * 使用Canvas 2D Context API
+    * 可以在一般場景時作為 WebGLRenderer 後備的渲染器
+    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
+    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
+
+```js
+//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
+if(window.WebGLRenderingContext){
+    renderer = new THREE.WebGLRenderer();
+} else {
+    renderer = new THREE.CanvasRenderer();
+}
+```
+
+### 繪製器設定屬性
+
+* shadowMap.enabled
+    * 是否允許使用陰影，預設值為 false
+* shadowMap.autoUpdate
+    * 是否自動更新陰影，預設值為 true
+* shadowMap.type
+    * 定義陰影類型，有三個值可選：
+        * THREE.BasicShadowMap
+            * 表示基本陰影，不進行過濾處理
+        * THREE.PCFShadowMap
+            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
+        * THREE.PCFSoftShadow
+            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
 
 ## 曲面圖形物件 (Mesh)
 
@@ -347,46 +402,6 @@ Material 是所有其他類型的材質對象的基礎類別，該類別建構�
 * SpriteMaterial
     * 為 Sprite 提供材質
 
-## 繪製器 (Renderer)
-
-(由於所有主流瀏覽器均已支援 WebGLRenderer, 因此 Three.js 已經將 CanvasRenderer 移除了)
-
-Three.js 提供兩種繪製器：
-
-* WebGLRenderer 繪製器
-    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
-* CanvasRenderer 繪製器
-    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
-    * 使用Canvas 2D Context API
-    * 可以在一般場景時作為 WebGLRenderer 後備的渲染器
-    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
-    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
-
-```js
-//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
-if(window.WebGLRenderingContext){
-    renderer = new THREE.WebGLRenderer();
-} else {
-    renderer = new THREE.CanvasRenderer();
-}
-```
-
-### 繪製器設定屬性
-
-* shadowMap.enabled
-    * 是否允許使用陰影，預設值為 false
-* shadowMap.autoUpdate
-    * 是否自動更新陰影，預設值為 true
-* shadowMap.type
-    * 定義陰影類型，有三個值可選：
-        * THREE.BasicShadowMap
-            * 表示基本陰影，不進行過濾處理
-        * THREE.PCFShadowMap
-            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
-        * THREE.PCFSoftShadow
-            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
-
-
 ## 資料更新
 
 雖然 JavaScript Object 類型是一種參考類型，但不表示更改了屬性就一定會導致物件更新！
@@ -431,7 +446,7 @@ geometry.normalsNeedUpdate = true;
 
 Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直接使用這些光源類型為模型打光，內建光源類型：
 
-* Light
+* Light // 繼承自Object3D類別
     * 所有其他類型的光的基礎類別，這是一個抽象類別，不能直接使用
 * AmbientLight
     * 環境光，沒有方向
@@ -807,6 +822,11 @@ Morph 動畫不但可以實現頂點變化，還可以實現紋理顏色以及�
 ### 以 JSON 格式儲存模型資訊
 
 Three.js 自己定義了以 JSON 格式儲存模型資訊，雖非常有效率，但沒有業界普遍的支援，其相容性可能會有些折扣，但其特點是簡潔明了的格式資訊、檔案小利於傳輸，Three.js 目前提供 Maya、3ds Max、Blender 開發外掛程式用於模型儲存為 JSON 格式。
+
+
+## 物理引擎
+
+### cannon.js
 
 ## 參考資料
 
