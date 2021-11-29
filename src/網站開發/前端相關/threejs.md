@@ -33,7 +33,7 @@ Object3D.scale     //縮放，包含 x、y、z 屬性
 * 建立相機 (Camera)
 * 建立繪製器 (Renderer)
 * 建立模型、材質並放置到場景
-* 重新繪製
+* 繪製循環
 
 ```js
 var scene = new THREE.Scene();
@@ -51,12 +51,12 @@ scene.add( cube );
 camera.position.z = 5;
 
 const animate = function () {
-    requestAnimationFrame( animate );
-
     cube.rotation.x += 0.01;
     cube.rotation.y += 0.01;
 
     renderer.render( scene, camera );
+
+    requestAnimationFrame( animate );
 };
 
 animate();
@@ -64,7 +64,7 @@ animate();
 
 ## 場景 (Scene)
 
-場景是一個容器，用來放置曲面 (Mesh)、光源 (Light) 與相機 (Camera) 等 3D 繪製元素。繪製器 (Renderer) 就根據這些元素進行繪製。
+場景是一個載體，容器，所有的一切都運行在這個容器裡面，用來放置曲面 (Mesh)、光源 (Light) 與相機 (Camera) 等 3D 繪製元素。繪製器 (Renderer) 就根據這些元素進行繪製。
 
 相機會在建立後自動增加到場景中，但模型和光源必須使用 add() 方法增加：
 
@@ -91,7 +91,7 @@ for(var i = 0, l = scene.children.length; i < l; i++){
 
 ## 相機 (Camera)
 
-相機就是觀察點，也就是觀察者的視角投影，將 3D 物件呈現在 2D 平面上需要透過相機的投影，投影有兩種模式：
+相機(Camera) 的作用是定義可視域，相當於我們的雙眼，可以產生畫面的快照，將 3D 物件呈現在 2D 平面上需要透過相機的投影，投影有兩種模式：
 
 * 透視投影
     * 使用四稜錐建模將 3D 物件投影到 2D 平面, 有立體感
@@ -113,7 +113,7 @@ for(var i = 0, l = scene.children.length; i < l; i++){
         ```
         * left, right, top, bottom 各為坐標的位置
 
-![threejs-1](./images/threejs-1.png)
+![threejs-1](./images/threejs-1.jpg)
 
 如果想要增加觀察矩陣，可使用 Camera 繼承的 lookAt() 方法：
 Camera.lookAt(vector)
@@ -129,6 +129,12 @@ camera.up.y = -1;
 //看向右上方
 camera.lookAt(new THREE.Vector3(320, 240, 0));
 ```
+
+其他還有：
+
+* ArrayCamera 陣列攝像機（包含多個子攝像機，通過這一組子攝像機渲染出實際效果，適用於 VR 場景）
+* CubeCamera 立方攝像機（創建六個 PerspectiveCamera（透視攝像機），適用於鏡面場景）
+* StereoCamera 立體相機（雙透視攝像機適用於 3D 影片、視差效果）
 
 ## 繪製器 (Renderer)
 
@@ -169,14 +175,85 @@ if(window.WebGLRenderingContext){
         * THREE.PCFSoftShadow
             * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
 
+
+## 光源
+
+光源模型，從光源本身角度來看包含環境光、平行光、點光源，從物體比面材質角度看又包含漫反射和鏡面反射，光源應配合 MeshLambertMaterial 和 MeshPhongMaterial 使用。
+
+Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直接使用這些光源類型為模型打光，內建光源類型：
+
+* Light // 繼承自Object3D類別
+    * 所有其他類型的光的基礎類別，這是一個抽象類別，不能直接使用
+* AmbientLight
+    * 環境光源，屬於基礎光源，為場景中的所有物體提供一個基礎亮度。
+    * 沒有方向
+* DirectionalLight
+    * 類似太陽光，發出的光源都是平行的
+    * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
+    * 預設在點 (0,1,1)，和相機預設方向一致
+* PointLight
+    * 點光源，一個點向四周發出光源，一般用於燈泡。
+    * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
+    * 預設為原點
+* SpotLight
+    * 聚光燈，一個圓錐體的燈光
+    * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
+    * 如果場景沒有光，Three.js 預設會使用滿環境光，物體會呈現其表面的顏色。
+* RectAreaLight
+    * 區域光，是二維矩形光源，俗稱面燈，有些被實現為橢圓形區域、大部分為一個矩形區域，僅能用 WebGLDederredRender 繪製器，即延遲繪製器，所謂延遲繪製器就是將場景先繪製為材質，再將材質指定給模型
+* HemisphereLight
+    * 天頂光，又稱天光，一種模擬日光的模型，太陽會發射平行光線，地面會反射平行光線，進一步組成日光
+
+並不是每一種光源都能產生陰影(Shadow): DirectionalLight, PointLight, SpotLight 三種能產生陰影，另外如要開啟模型的陰影的話，模型是由多個 Mesh 組成的，只開啟父的 Mesh 的陰影是不行的，還需要遍歷父 Mesh 下所有的子 Mesh 為其開啟投射陰影 castShadow 和接收投射陰影 receiveShadow。
+
+### 陰影
+
+要產生陰影有四個步驟：
+
+1. 繪製器設定
+    * 陰影需要大量運算，預設為不啟用陰影功能，所以首先繪製器必須啟用陰影功能。
+    * renderer.shadowMapEnable = true;
+2. 光源設定
+    * 只有平行光和聚光燈才可以產生陰影，如果想讓某個光源可以產生陰影，必須設定該光源產生陰影。
+    * light.castShadow = true;
+3. 物體產生陰影設定
+    * 只有物體擋著光才會產生陰影，如果想讓某個物體可以擋著光產生陰影。
+    * mesh1.castShadow = true;
+4. 物體接收陰影設定
+    * 如果想讓某個物體表面產生陰影，必須設定物體接收陰影。
+    * mesh2.receiveShadow = true;
+
+### 光源設定屬性
+
+* castShadow
+    * 是否讓該光源發出的光產生陰影，預設為 false
+* onlyShadow
+    * 是否光源發出的光僅僅用來產生陰影，而不會為目前環境貢獻光源效果，預設值為 false，如果僅僅用來產生陰影，那麼運算量較小
+* shadow.camera.near
+    * 陰影四棱錐透視投影的 near 參數值，預設值為 50
+* shadow.camera.far
+    * 陰影四棱錐透視投影的 far 參數值，預設值為 5000
+* shadow.camera.fov
+    * 陰影四棱錐透視投影的 fov 參數值，預設值為 50
+* shadow.camera.visible
+    * 是否顯示該四棱錐用於偵錯，預設為 false
+* shadow.bias
+    * 陰影影射的偏斜量，預設為 0
+* shadow.mapSize.width
+    * 陰影影射紋理的寬度，以像素為單位，預設值為 512
+* shadow.mapSize.height
+    * 陰影影射紋理的高度，以像素為單位，預設值為 512
+
 ## 曲面圖形物件 (Mesh)
 
 曲面圖形物件 (Mesh) 就是 3D 空間中的物體，包含模型以及其上的材質，Three.js 是用 Mesh 類別來表示這個物體。
 
-Mesh 類別只有兩個屬性：
+Mesh 類別有兩個部分組成：
 
-* 表示幾何形體的 geometry 物件
-* 材質 material 物件
+* Geometry 幾何形狀
+    * threejs 使用 Geometry 定義物體的幾何形狀，其實 Geometry 的核心就是點集，之所以有這麼多的 Geometry，是為了更方便的創建各種形狀的點集
+* 材料（Materials），紋理（ Textures）
+    * 物體的表面屬性可以是單純的顏色，也可以是很複雜的情況，比如反射/透射/折射的情況，還可以有紋理圖案。比如包裝盒外面的貼圖。
 
 ```js
 THREE.Mesh = function(geometry, material){
@@ -439,65 +516,6 @@ geometry.normalsNeedUpdate = true;
     * 設定 true 表示需要更新線之間的距離陣列
 * buffersNeedUpdate
     * 設定 true 表示需要更新快取的長度，因為陣列長度改變了
-
-## 光源
-
-光源模型，從光源本身角度來看包含環境光、平行光、點光源，從物體比面材質角度看又包含漫反射和鏡面反射，光源應配合 MeshLambertMaterial 和 MeshPhongMaterial 使用。
-
-Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直接使用這些光源類型為模型打光，內建光源類型：
-
-* Light // 繼承自Object3D類別
-    * 所有其他類型的光的基礎類別，這是一個抽象類別，不能直接使用
-* AmbientLight
-    * 環境光，沒有方向
-* RectAreaLight
-    * 區域光，是二維矩形光源，俗稱面燈，有些被實現為橢圓形區域、大部分為一個矩形區域，僅能用 WebGLDederredRender 繪製器，即延遲繪製器，所謂延遲繪製器就是將場景先繪製為材質，再將材質指定給模型
-* DirectionalLight
-    * 平行光，僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質，預設在點 (0,1,1)，和相機預設方向一致
-* HemisphereLight
-    * 天頂光，又稱天光，一種模擬日光的模型，太陽會發射平行光線，地面會反射平行光線，進一步組成日光
-* PointLight
-    * 點光源，僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質，預設為原點
-* SpotLight
-    * 聚光燈，僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質＊如果場景沒有光，Three.js 預設會使用滿環境光，物體會呈現其表面的顏色。
-
-### 光源設定屬性
-
-* castShadow
-    * 是否讓該光源發出的光產生陰影，預設為 false
-* onlyShadow
-    * 是否光源發出的光僅僅用來產生陰影，而不會為目前環境貢獻光源效果，預設值為 false，如果僅僅用來產生陰影，那麼運算量較小
-* shadow.camera.near
-    * 陰影四棱錐透視投影的 near 參數值，預設值為 50
-* shadow.camera.far
-    * 陰影四棱錐透視投影的 far 參數值，預設值為 5000
-* shadow.camera.fov
-    * 陰影四棱錐透視投影的 fov 參數值，預設值為 50
-* shadow.camera.visible
-    * 是否顯示該四棱錐用於偵錯，預設為 false
-* shadow.bias
-    * 陰影影射的偏斜量，預設為 0
-* shadow.mapSize.width
-    * 陰影影射紋理的寬度，以像素為單位，預設值為 512
-* shadow.mapSize.height
-    * 陰影影射紋理的高度，以像素為單位，預設值為 512
-
-## 陰影
-
-要產生陰影有四個步驟：
-
-1. 繪製器設定
-    * 陰影需要大量運算，預設為不啟用陰影功能，所以首先繪製器必須啟用陰影功能。
-    * renderer.shadowMapEnable = true;
-2. 光源設定
-    * 只有平行光和聚光燈才可以產生陰影，如果想讓某個光源可以產生陰影，必須設定該光源產生陰影。
-    * light.castShadow = true;
-3. 物體產生陰影設定
-    * 只有物體擋著光才會產生陰影，如果想讓某個物體可以擋著光產生陰影。
-    * mesh1.castShadow = true;
-4. 物體接收陰影設定
-    * 如果想讓某個物體表面產生陰影，必須設定物體接收陰影。
-    * mesh2.receiveShadow = true;
 
 ## 協助工具
 
