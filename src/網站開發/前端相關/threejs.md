@@ -100,8 +100,10 @@ for(var i = 0, l = scene.children.length; i < l; i++){
         ```js
         THREE.PerspectiveCamera(fov, aspect, near, far); // 參數都可以省略，因為都有預設值
         ```
-        * fov 為相機的可視角度
-        * aspect為相機的可視長寬比
+        * fov（field of view） — 攝像機視錐體垂直視野角度
+        * aspect（width / height） — 攝像機視錐體長寬比
+        * near — 攝像機視錐體近端面
+        * far — 攝像機視錐體遠端面
 * 正交投影
     * 模擬長焦鏡頭拍攝相片方式將 3D 投影至 2D, 無立體感
     * 正交投影則建立 3D 物件的 2D 幾何圖形，提供無扭曲的投影視圖，以便精確縮放與放置
