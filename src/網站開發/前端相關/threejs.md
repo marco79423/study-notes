@@ -14,6 +14,18 @@ Three.js 為 Ricardo Cabello 於 2012 年發布之 3D Javascript 函式庫開源
 * Three.js 在所有支持 WebGL 1.0 的瀏覽器皆可運行
 * Three.js 以最寬鬆的 MIT 授權開源
 
+## 概念
+
+### 座標系
+
+在 Three.js 中採用「右手座標定位」，也就是當你伸出右手來看時，大拇指代表 X 軸、食指為 Y 軸、中指代表 Z 軸，而這三隻手指的指向即為座標軸正向的方向。
+
+![threejs-5](./images/threejs-5.jpg)
+
+(Photo by Primalshell on Wikimedia)
+
+* 可以搭配 THREE.AxesHelper 來輔助。
+
 ## Object3D 和基本類型
 
 Object3D 是 three.js 下的一個核心類別，three.js 中 3D 物件都繼承於 Object3D，包含相機、幾何模型等，他定義了一些基本屬性和方法可被其他物體繼承：
@@ -855,3 +867,4 @@ Morph 動畫不但可以實現頂點變化，還可以實現紋理顏色以及�
 * [3D 網站開發入門筆記＿Three.js 入門](http://test.domojyun.net/MEMO/3D/threejs.html)
 * [Three.js 學習筆記 (一) : 執行環境配置](http://yhhuang1966.blogspot.com/2019/01/threejs.html)
 * [Three.js快速上手以及在React中運用](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/748247/)
+* [用 Three.js 來當個創世神 (00)：關於此系列文](https://ithelp.ithome.com.tw/articles/10199657)
