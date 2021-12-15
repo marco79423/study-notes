@@ -58,6 +58,7 @@
         * [Linux/Unix](網站開發/維運相關/Linux_Unix.md)
         * [Docker](網站開發/維運相關/Docker.md)
         * [Kubernetes](網站開發/維運相關/Kubernetes.md)
+        * [Prometheus](網站開發/維運相關/Prometheus.md)
         * [測試](網站開發/維運相關/測試.md)
 
 * [桌面開發](桌面開發/README.md)
