@@ -46,3 +46,63 @@ pip install pypiserver
 import pypiserver
 application = pypiserver.app('指定資料夾')
 ```
+
+## Django
+
+### 壓縮 JS 和 CSS
+
+assets
+
+Django compressor
+
+[http://django-compressor.readthedocs.org/en/latest/](http://django-compressor.readthedocs.org/en/latest/)
+
+安裝
+
+```shell
+pip install django_compressor
+```
+
+設定
+
+```python
+INSTALLED_APPS = (
+    "compressor",
+
+    # other apps    
+)
+
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder', 
+    'compressor.finders.CompressorFinder',
+
+    # other finders..
+)
+    
+```
+
+如果沒有設定 STATIC_ROOT 時，就要指定 COMPRESS_ROOT
+
+與 settings 的 DEBUG 連動，當 DEBUG=False 就會開啟壓縮，也可以直接指定 COMPRESS_ENABLED = True
+
+使用範例
+
+```html
+{% load compress %}
+
+{% compress css %}
+<link rel="stylesheet" href="/static/css/one.css" type="text/css" charset="utf-8">
+<style type="text/css">
+    p { border:5px solid green;}
+</style>
+<link rel="stylesheet" href="/static/css/two.css" type="text/css" charset="utf-8">
+{% endcompress %}
+
+{% load compress %}
+{% compress js %}
+<script src="/static/js/one.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8">obj.value = "value";</script>
+{% endcompress %}
+```
