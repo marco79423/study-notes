@@ -213,20 +213,37 @@ Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直�
     * 類似太陽光，發出的光源都是平行的
     * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
     * 預設在點 (0,1,1)，和相機預設方向一致
+
+    ![threejs-8](./images/threejs-8.jpg)
+
 * PointLight
     * 點光源，一個點向四周發出光源，一般用於燈泡。
     * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
     * 預設為原點
+
+    ![threejs-10](./images/threejs-10.jpg)
+
 * SpotLight
     * 聚光燈，一個圓錐體的燈光
     * 僅能用於 MeshLambertMaterial 和 MeshPhongMaterial 材質
     * 如果場景沒有光，Three.js 預設會使用滿環境光，物體會呈現其表面的顏色。
+
+    ![threejs-11](./images/threejs-11.jpg)
+
 * RectAreaLight
     * 區域光，是二維矩形光源，俗稱面燈，有些被實現為橢圓形區域、大部分為一個矩形區域，僅能用 WebGLDederredRender 繪製器，即延遲繪製器，所謂延遲繪製器就是將場景先繪製為材質，再將材質指定給模型
 * HemisphereLight
     * 天頂光，又稱天光，一種模擬日光的模型，太陽會發射平行光線，地面會反射平行光線，進一步組成日光
 
-並不是每一種光源都能產生陰影(Shadow): DirectionalLight, PointLight, SpotLight 三種能產生陰影，另外如要開啟模型的陰影的話，模型是由多個 Mesh 組成的，只開啟父的 Mesh 的陰影是不行的，還需要遍歷父 Mesh 下所有的子 Mesh 為其開啟投射陰影 castShadow 和接收投射陰影 receiveShadow。
+    ![threejs-9](./images/threejs-9.jpg)
+
+另外要注意並不是每一種光源都能產生陰影，目前只有三種光源可以：
+
+* DirectionalLight 平行光源
+* PointLight 點光源
+* SpotLight 聚光燈光源
+
+另外如要開啟模型的陰影的話，模型是由多個 Mesh 組成的，只開啟父的 Mesh 的陰影是不行的，還需要遍歷父 Mesh 下所有的子 Mesh 為其開啟投射陰影 castShadow 和接收投射陰影 receiveShadow。
 
 ### 陰影
 
@@ -294,6 +311,8 @@ Geometry 是描述幾何模型的核心類別，包含所有描述 3D 模型必�
 * faceVertexUv 屬性決定紋理座標。
 
 如果想使用頂點顏色作為紋理，就可以使用每個 face 的 VertexColors 屬性，該屬性是一個 THREE.Color 類型，指定面上每個頂點的顏色。
+
+![threejs-6](./images/threejs-6.jpg)
 
 #### face
 
@@ -395,6 +414,8 @@ Three.js 提供了基本的幾何模型，這些幾何模型已經計算了法�
 Material 用來描述物件的外觀，在大部分情況下 Material 的定義上與渲染器無關(renderer-independent)，所以不需要為了不同渲染器重新設計一個 Material。
 
 three.js 提供了不同種類的材質類別： LineBasicMaterial、 MeshBasicMaterial、 MeshLambertMaterial、 ShaderMaterial、 SpriteMaterial 等，不同種類的類別。
+
+![threejs-7](./images/threejs-7.jpg)
 
 ```js
 // 使用顏色建立一個材質
@@ -543,14 +564,13 @@ geometry.normalsNeedUpdate = true;
 
 Three.js 提供一些純粹用於協助工具的曲面，這些曲面如果被增加到場景中，非常直觀，可以用於偵錯和提供協助。這些曲面也是有由幾何體和材質組成，因此可以像處理其他曲面一樣改變材質。
 
-幾何體協助工具
+### Camera Helper 攝像機除錯模式
 
-* THREE.VertexNormalsHelper
-    * 頂點的法線
-* THREE.FaceNormalsHelper
-    * 現面的法線
-* THREE.BoxHelper
-    * 能夠包圍幾何體的最小長方體，透過 THREE.LINE 繪製
+開啟 Camera Helper 除錯模式後，可以直觀的看到 Camera 的 Fov 、 Nera 、 Far 的引數效果。
+
+![threejs-12](./images/threejs-12.jpg)
+
+### Light Helper 光源除錯模式
 
 光源協助工具
 
@@ -565,21 +585,29 @@ Three.js 提供一些純粹用於協助工具的曲面，這些曲面如果被�
 * THREE.SpotLightHelper
     * 聚光燈，光源呈現一個凌錐體
 
-相機（投影矩陣）協助工具
+聚光燈開啟 Light Helper 除錯模式後，可以直觀的看到 distance 、 angle 的引數效果。
 
-* THREE.CameraHelper
-    * 根據投影設定一個 4 棱體，畫布上會呈現一個十字交換的線條
+```js
+let light = new THREE.DirectionalLight(0xffffff)
+let helper = new THREE.DirectionalLightHelper(0xffffff)
+scene.add(helper)
+```
 
-其他協助工具
+![threejs-13](./images/threejs-13.jpg)
 
-* THREE.AxisHelper
-    * 建立一個標示座標的三向座標軸，是一個 mesh，當應用各種矩陣的時候也應該同時應用這個 mesh
-* THREE.ArrowHelper
-    * 建立一個箭頭圖示，也常用於標記法線，是一個 mesh，當應用各種矩陣的時候也應該同時應用這個 mesh
-* THREE.GridHelper
-    * 建立地面網格，網格是一個正方形
 
-效能監視器 Stats
+### AxesHelper 座標軸除錯模式
+
+AxesHelper 是在場景的中心點，新增一個座標軸（紅色：X 軸、綠色：Y 軸、藍色：Z 軸），方便辨別方向。
+
+```js
+let axesHelper = new THREE.AxesHelper(10)
+scene.add(axesHelper)
+```
+
+![threejs-14](./images/threejs-14.jpg)
+
+### 效能監視器 Stats
 
 ![stats](./images/threejs-4.jpg)
 
@@ -593,6 +621,23 @@ var stats = new Stats()
 stats.showPanel(1)
 document.body.appendChild(stats.dom)
 ```
+
+### 幾何體協助工具
+
+* THREE.VertexNormalsHelper
+    * 頂點的法線
+* THREE.FaceNormalsHelper
+    * 現面的法線
+* THREE.BoxHelper
+    * 能夠包圍幾何體的最小長方體，透過 THREE.LINE 繪製
+
+### 其他協助工具
+
+* THREE.ArrowHelper
+    * 建立一個箭頭圖示，也常用於標記法線，是一個 mesh，當應用各種矩陣的時候也應該同時應用這個 mesh
+* THREE.GridHelper
+    * 建立地面網格，網格是一個正方形
+
 
 ## 進階
 
@@ -868,7 +913,24 @@ Morph 動畫不但可以實現頂點變化，還可以實現紋理顏色以及�
 
 ### 物理引擎
 
-#### cannon.js
+#### Cannon.js
+
+目前在 Github 上搜索到的 3D 物理引擎庫有 Cannon.js、Oimo.js、Ammo.js、Energy.js、Physijs 等等，大部分都已許久沒有更新迭代了（長達好幾年），專案的 Star 數量和 Issues 數量也不多，我們該如何選擇？
+
+Cannon.js、Oimo.js 和 Energy.js 作為 Babylon.js 的內建物理引擎，我們試著從這三個下手。
+
+* Energy.js ：使用 C++ 編寫轉 JavaScript 的 3D 物理引擎，原始碼不可讀，目前 Github 比較冷清。
+* Oimo.js ：一款輕量級的 3D 物理引擎，檔案大小 153 KB。
+* Cannon.js ：完全使用 JavaScript 編寫的優秀 3D 物理引擎，包含簡單的碰撞檢測、各種形狀的摩擦力、彈力、約束等功能。
+
+使用 Cannon.js 前需要建立 CANNON.World 物件，CANNON.World 物件是負責管理物件和模擬物理的中心。
+
+建立完 CANNON.World 物件後，接著設定物理世界的重力，這裡設定了負 Y 軸為 10 m/s²。
+
+```js
+let world = new CANNON.World()
+world.gravity.set(0, -10, 0)
+```
 
 ## 參考資料
 
@@ -876,3 +938,4 @@ Morph 動畫不但可以實現頂點變化，還可以實現紋理顏色以及�
 * [Three.js 學習筆記 (一) : 執行環境配置](http://yhhuang1966.blogspot.com/2019/01/threejs.html)
 * [Three.js快速上手以及在React中運用](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/748247/)
 * [用 Three.js 來當個創世神 (00)：關於此系列文](https://ithelp.ithome.com.tw/articles/10199657)
+* [3D 物理世界 - Three.js 與 Cannon.js 介紹與使用](https://www.itread01.com/fxlif.html)
