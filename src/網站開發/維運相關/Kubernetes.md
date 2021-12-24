@@ -169,7 +169,13 @@ Kubernetes 運作的最小單位，一個 Pod 對應到一個應用服務（Appl
 
 ### StatefulSet
 
-* 基本上 StatefulSet 中在 pod 的管理上都是與 Deployment 相同，基於相同的 container spec 來進行；而其中的差別在於 StatefulSet controller 會為每一個 pod 產生一個固定的識別資訊，不會因為 pod reschedule 後有變動。
+基本上 StatefulSet 中在 pod 的管理上都是與 Deployment 相同，基於相同的 container spec 來進行；而其中的差別在於 StatefulSet controller 會為每一個 pod 產生一個固定的識別資訊，不會因為 pod reschedule 後有變動。
+
+* 特性
+    * 管理的每個Pod都有唯一的文檔/網絡標識，並且按照數字規律生成，而不是像 Deployment 中那樣名稱和 IP 都是隨機的（比如名字為redis，那麼pod名就是redis-0, redis-1 ...）
+    * 中ReplicaSet的啟停順序是嚴格受控的，操作第N個pod一定要等前N-1個執行完才可以
+    * StatefulSet中的Pod採用穩定的持久化儲存，並且對應的PV不會隨著Pod的刪除而被銷毀
+
 * 什麼時候需要使用 StatefulSet?
     * 需要穩定 & 唯一的網路識別 (pod reschedule 後的 pod name & hostname 都不會變動)
     * 需要穩定的 persistent storage (pod reschedule 後還是能存取到相同的資料，基本上用 PVC 就可以解決)
@@ -180,6 +186,12 @@ Kubernetes 運作的最小單位，一個 Pod 對應到一個應用服務（Appl
     2. [Headless Service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services)
     3. `.spec.selector` 所定義的內容(**matchLabels**)必須與 `.spec.template.metadata.labels` 相同
 
+另外需要說明的是，StatefulSet必須要配合Headless Service使用，它會在Headless Service提供的DNS映射上再加一層，最終形成精確到每個pod的域名映射，格式如下：
+
+    $(podname).$(headless service name)
+
+有了這個映射，就可以在配置集群時使用域名替代IP，實現有狀態應用集群的管理
+
 ### Service
 
 Service 就是 Kubernetes 中用來定義「一群 Pod 要如何被連線及存取」的元件。
@@ -187,16 +199,16 @@ Service 就是 Kubernetes 中用來定義「一群 Pod 要如何被連線及存�
 #### port vs targetPort vs nodePort
 
 * targetPort
-
-指定我們 Pod 上允許外部資源存取 Port Number
-
+    * 指定我們 Pod 上允許外部資源存取 Port Number
 * port
-
-指定我們 Pod 上的 targetPort 要 mapping 到 Service 中 ClusterIP 中的哪個 port
-
+    * 指定我們 Pod 上的 targetPort 要 mapping 到 Service 中 ClusterIP 中的哪個 port
 * nodePort
+    * 指定我們 Pod 上的 targetPort 要 mapping 到 Node 上的哪個 port
+    * 容器的端口（最終的流量端口）
 
-指定我們 Pod 上的 targetPort 要 mapping 到 Node 上的哪個 port
+targetPort 是pod 上的端口，從 port 和 nodePort 上來的流量，經過 kube-proxy 流入到後端 pod 的 targetPort 上，最後進入容器。
+
+port 和 nodePort 都是 service 的端口，前者暴露給集群內客戶訪問服務，後者暴露給集群外客戶訪問服務。從這兩個端口到來的數據都需要經過反向代理 kube-proxy 流入後端 pod 的targetPod，從而到達pod上的容器內
 
 ```yaml
 apiVersion: v1
@@ -209,43 +221,33 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 8080         # 提供給集群內部客戶訪問 service 的入口
-    nodePort: 30062    # 提供給集群外部客戶訪問 service 的入口（也可以用LoadBalancer）
-    targetPort: 8080   # targetPort是pod上的端口
+    - targetPort: 8080   # targetPort 是 pod 上的端口
+      port: 8080         # 提供給集群內部客戶訪問 service 的入口 (即 clusterIP:port)
+      nodePort: 30062    # 提供給集群外部客戶訪問 service 的入口（也可以用LoadBalancer）
   selector:
     name: app1
 ```
 
-* port
-    * 集群內部服務之間訪問 service 的入口，即 clusterIP:port
-        ```yaml
-        apiVersion: v1
-        kind: Service
-        metadata:
-         name: mysql-service
-        spec:
-         ports:
-         * port: 33306
-           targetPort: 3306
-         selector:
-          name: mysql-pod
-        ```
-        * mysql 容器暴露了3306 端口，集群內其他容器通過33306端口訪問mysql服務，但是外部流量不能訪問mysql服務，因為mysql服務沒有配置NodePort
+#### Headless Service
 
-* nodePort
-    * 容器的端口（最終的流量端口）。targetPort是pod上的端口，從port和nodePort上來的流量，經過kube-proxy流入到後端pod的targetPort上，最後進入容器。
-* targetPort
-    * targetPort是pod上的端口，與製作容器時暴露的端口一致
+簡單的說，Headless Service就是沒有指定Cluster IP的Service，相應的，在k8s的dns映射裡，Headless Service的解析結果不是一個Cluster IP，而是它所關聯的所有 Pod 的 IP 列表
 
-port 和 nodePort 都是 service 的端口，前者暴露給集群內客戶訪問服務，後者暴露給集群外客戶訪問服務。從這兩個端口到來的數據都需要經過反向代理 kube-proxy 流入後端 pod 的targetPod，從而到達pod上的容器內
-
-The Service resource also has a type to provide more versatile usage. The 3 most commonly used types are `ClusterIP`, `NodePort` and `LoadBalancer`. Each provides a different way to expose the service and is useful in different situations.
-
-* ClusterIP: Exposes the Service on a cluster-internal IP. Choosing this value makes the Service only reachable within the cluster. This is the default ServiceType.
-* [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport): Exposes the Service on each Node’s IP at a static port. A ClusterIP Service towards the NodePort Service routes is automatically created. We'll be able to access the NodePort Service from outside the cluster by requesting `<NodeIP>:<NodePort>`.
-* [LoadBalancer](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer): Exposes the Service externally using a cloud provider’s load balancer. NodePort and ClusterIP Services, towards the external load balancer routes are automatically created.
-
-ClusterIP is usually used to expose a service internally, NodePort and LoadBalancer to expose it externally.
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  labels:
+    app: redis
+spec:
+  ports:
+  - name: redis-port
+    port: 6379
+  clusterIP: None
+  selector:
+    app: redis
+    appCluster: redis-cluster
+```
 
 ### Persistent Volume (Claim)
 
