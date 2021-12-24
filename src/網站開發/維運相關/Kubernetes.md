@@ -167,6 +167,77 @@ Kubernetes 運作的最小單位，一個 Pod 對應到一個應用服務（Appl
 * Deployment 指揮 Kubernetes 如何創建和更新應用程序的實例。創建 Deployment 後，Kubernetes master 將應用程序實例調度到集群中的各個節點上。
 * 創建應用程序實例後，Kubernetes Deployment 控制器會持續監視這些實例。 如果託管實例的節點關閉或被刪除，則 Deployment 控制器會將該實例替換為群集中另一個節點上的實例。 這提供了一種自我修復機制來解決機器故障維護問題。
 
+```yaml
+# apiVersion, kind, metadata 3個欄位是必備的
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment-spec # deployment name
+  labels:
+    app: nginx
+
+spec:
+  strategy:
+    # 用來指定當 new pod 要取代 old pod 時要如何進行
+    # RollingUpdate: 會根據 maxUnavailable & maxSurge 的設定，確保有足夠的 pod 可以提供服務
+    # 才會慢慢的將 old pod 換成 new pod (default)
+    # Recreate: 會先移除所有的 old pod 後，才會開始產生 new pod
+    type: RollingUpdate
+    rollingUpdate:
+      # 指定當 update 進行中時，可以失效(無法提供服務)的 pod 佔整體 pod 數量的比例(也可以是整數值)為多少
+      # (default = 25%)
+      maxUnavailable: 25%
+      # 指定當 update 進行中時，pod 可以超過 desired status 定義數量的比例(也可以是整數值)
+      # (default = 25%)
+      maxSurge: 25%
+
+  # 指定要建立多少 pod 副本(default = 1)
+  # 實際情況少於此數字，則會增加 pod，反之則會殺掉 pod
+  replicas: 3
+
+  # 指定最長等待多少時間後，佈署依舊無法順利完成時，回報 "failed progressing" 的時間(秒)
+  # (default = 600)
+  progressDeadlineSeconds: 600
+  
+  # 設定若是沒有任何 pod crashing 的情況發生，被認為是可用狀態的最小秒數 (default = 0)
+  minReadySeconds: 0
+  
+  # 設定 revision history 保留的數量
+  # 建議可以根據 Deployment 更新的頻率來決定這個值要設定多少
+  # 設定 0 將會無法進行 rollback
+  # (default = 10)
+  revisionHistoryLimit: 10
+
+  # 用來指定要用來監控並進行管理的 pod label 設定
+  # 必須要與下面的 pod label(.spec.template.metadata.labels) 相符合
+  # 在 apps/v1 版本中，".spec.selector" 一旦設定後就無法變更了
+  selector:
+    matchLabels:
+      app: nginx
+
+  # .spec.template 其實就是 pod 的定義
+  # 也是 .spec 中唯一必須要設定的欄位
+  template:
+    # pod metadata
+    metadata:
+      # 設定給 pod 的 label 資訊
+      labels:
+        app: nginx
+
+    spec:
+      # restart policy  在 Delpoyment 中只能設定為 Always
+      restartPolicy: Always
+      
+      # 可看出這個 pod 只運行了一個 nginx container
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+```
+
+> **註：**  設定 deployment 時，必須注意不可以佈署帶有相同 label selector 的 Deployment, ReplicaSet 或是 ReplicationController
+
 ### StatefulSet
 
 基本上 StatefulSet 中在 pod 的管理上都是與 Deployment 相同，基於相同的 container spec 來進行；而其中的差別在於 StatefulSet controller 會為每一個 pod 產生一個固定的識別資訊，不會因為 pod reschedule 後有變動。
@@ -750,3 +821,7 @@ quality of service (QoS)
 * 外交官模式
 * 适配器模式
 * 多节点模式
+
+### 參考文章
+
+* [[Kubernetes] Deployment Overview](https://godleon.github.io/blog/Kubernetes/k8s-Deployment-Overview/)
