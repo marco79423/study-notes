@@ -233,7 +233,21 @@ spec:
       - name: nginx
         image: nginx:1.7.9
         ports:
-        - containerPort: 80
+          - containerPort: 80
+
+        # 定義資源
+        # 針對的是 container，所以 Pod 的資源會是 container 的總合
+        resources:
+          # 定義基本資源 (k8s 會給予基本資源的保證)
+          requests:
+              cpu: "800m"     # 1000m = 1 cpu = 1 核心意思
+              memory: "512Mi" # 可以透過 G, M, K, Gi, Mi, Ki 作為後綴表達單位
+         
+          # 定義資源上限 (k8s 會確保 container 運作時不超過資源上限)
+          # 如果沒有定義 Limit 則 Container 可用資源是無上限的，實際依據 node 資源為上限
+          limits:
+              cpu: "1.5"
+              memory: "1024Mi"
 ```
 
 > **註：**  設定 deployment 時，必須注意不可以佈署帶有相同 label selector 的 Deployment, ReplicaSet 或是 ReplicationController
