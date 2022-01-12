@@ -4,4 +4,5 @@
 * [HTML](HTML.md)
 * [CSS](CSS.md)
 * [React](React.md)
+* [RxJS](RxJS.md)
 * [three.js](threejs.md)
