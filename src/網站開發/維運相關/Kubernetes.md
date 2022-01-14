@@ -567,6 +567,52 @@ spec:
 
         ```
 
+### Job / CronJob
+
+Kubernetes 中的 Job 可以創建並且保證一定數量 Pod 的成功停止，當 Job 持有的一個 Pod 對象成功完成任務之後，Job 就會記錄這一次 Pod 的成功運行；當一定數量的Pod 的任務執行結束之後，當前的 Job 就會將它自己的狀態標記成結束。
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  completions: 10  # 代表需要等待 10 個 Pod 的成功執行
+  parallelism: 5   # 代表最多有多少個並發執行的任務
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never
+  backoffLimit: 4
+```
+
+```yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: pi
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      completions: 2
+      parallelism: 1
+      template:
+        spec:
+          containers:
+          - name: pi
+            image: perl
+            command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+          restartPolicy: OnFailure
+```
+
+Job 作為 Kubernetes 中用於處理任務的資源，與其他的資源沒有太多的區別，它也使用 Kubernetes 中常見的控制器模式，監聽 Informer 中的事件並運行 syncHandler 同步任務
+
+而 CronJob 由於其功能的特殊性，每隔 10s 會從 apiserver 中取出資源並進行檢查是否應該觸發調度創建新的資源，需要注意的是 CronJob 並不能保證在准確的目標時間執行，執行會有一定程度的滯後。
+
 ## 內部
 
 ### k8s 的升級策略
