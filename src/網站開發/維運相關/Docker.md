@@ -1,5 +1,9 @@
 # Docker 相關
 
+## 學習資源
+
+* [Docker 系列](https://medium.com/lily-engineer/docker/home)
+
 ## 基礎概念
 
 Docker技術的三大核心概念，分別是：
