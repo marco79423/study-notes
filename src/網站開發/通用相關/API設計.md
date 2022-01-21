@@ -1,6 +1,9 @@
 # API 設計學習筆記
 
+## OpenAPI
+
+* 參考文章： [OpenAPI/Swagger](https://help.coding.net/docs/document/api/import/openapi.html)
+
 ## REST API 的設計
 
 * 已整理為文章： [淺談 REST API 的設計和規劃](https://marco79423.net/articles/%E6%B7%BA%E8%AB%87-rest-api-%E7%9A%84%E8%A8%AD%E8%A8%88%E5%92%8C%E8%A6%8F%E5%8A%83/)
-
