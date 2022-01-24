@@ -1,5 +1,18 @@
 # Git 學習筆記
 
+## 使用 Monorepo 的優勢和問題
+
+* 優勢
+    * 新進員工可以很容易開始，只要下載一個專案就行了。反過來說如果是分多個 Repo 就要下載多個不同的專案。
+    * 管理程式碼比較容易，可以用單一個 Issue Tracker 追蹤問題，bug 本身也比較好追蹤，反之如果分多個 Repo 那麼 bug 就得需要追蹤多個專案
+    * 可能將多個專案的修改合進同一個 PR 中
+    * 共同專案可以讓公司的不同團隊互相參考和學習
+* 問題
+    * 如果功能會影響別的專案，別的專案就要放下手邊的工作合 code，造成互卡
+    * Monorepo 專案可能會太大，下載和互動可能都會變很慢
+    * 沒修改過的子專案可能會有新的版號
+    * 開源專案在於容易參與，但 Monorepo 通常會包含多個專案，貢獻者比較難理解他們的 PR 到底會影響多少個其他專案。
+
 ## Commit message
 
     Header: <type>(<scope>): <subject>
@@ -46,3 +59,7 @@
     git gc  --prune=now
     ```
 5. 然後再進行提交即可。
+
+## 參考資料
+
+* [Monorepo vs Multi-Repo: Pros and Cons of Code Repository Strategies](https://kinsta.com/blog/monorepo-vs-multi-repo/)
