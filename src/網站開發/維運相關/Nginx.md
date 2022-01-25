@@ -141,3 +141,7 @@ server {
   return 301 https://$host$request_uri;
 }
 ```
+
+## 參考資料
+
+* [小白级别 Nginx 常用配置清单](https://mp.weixin.qq.com/s/ipUHaFPcDfIM9MsyqDGSEg)
