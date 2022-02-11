@@ -6,5 +6,4 @@ multilingual = false
 src = "src"
 
 [output.html]
-google-analytics = "UA-38552387-5"
 git-repository-url = "https://github.com/marco79423/study-notes"
