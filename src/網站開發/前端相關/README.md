@@ -7,3 +7,4 @@
 * [React](React.md)
 * [RxJS](RxJS.md)
 * [three.js](threejs.md)
+* [WebAssembly](WebAssembly.md)
