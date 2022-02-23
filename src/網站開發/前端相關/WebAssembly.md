@@ -34,6 +34,10 @@ WebAssembly 現在已經處於穩定階段了，幾年前就被所有主流瀏�
 
 可查看： https://webassembly.org/roadmap/
 
+## 有趣應用
+
+* [Wasm 玩出花？在浏览器中运行虚拟机！](https://mp.weixin.qq.com/s/RQq8K7GmLysAx55Vuk-K5A)
+
 ## 參考文章
 
 * [Wasm 為 Web 開發帶來無限可能](https://mp.weixin.qq.com/s/6dHxBZcZk8905nvSsjz67A)
