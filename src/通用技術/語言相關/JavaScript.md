@@ -24,7 +24,7 @@
 
 ## Promise
 
-已整理為文章： https://marco79423.net/articles/%E6%B7%BA%E8%AB%87-javascript-%E7%9A%84-promise/
+已整理為文章： [淺談 JavaScript 的 Promise](https://marco79423.net/articles/%E6%B7%BA%E8%AB%87-javascript-%E7%9A%84-promise/)
 
 
 ## 函式庫要包成 CommonJS 還是 ES Module？
@@ -34,3 +34,42 @@
 CSR的情況通常使用ESM。
 
 所以SDK組件在打包編譯時需要輸出ESM、CJS兩種規范的文件。
+
+## 模組
+
+### JSON
+
+```js
+JSON.stringify(
+    value,
+    replacer,  // [可選] 過濾器，只會包含列出的對象屬性
+    space, // [可選] 決定縮排的空格數
+)
+```
+
+replacer 代表過濾器 只會包含列出的對象屬性
+
+```js
+JSON.stringify(value, ['a', 'b']) 只會有 a 和 b
+```
+
+space 是決定縮排的空格數
+
+```js
+let jsonText = JSON.stringify(value, null, 4);
+```
+
+開發者可以自行定義物件的 toJSON 序列化的結果 (不能用箭頭函數)
+
+```js
+let value = {
+  a: 'a',
+  b: 'b',
+  toJSON: function () {
+    return this.a
+  }
+};
+console.log(JSON.stringify(value));
+```
+
+> **註：**  stringify 會把 undefined, nan, infinity 轉為 null
