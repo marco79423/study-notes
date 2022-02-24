@@ -159,6 +159,23 @@ K8s 為每個 Pod 都分配一個唯一的 IP 地址，稱之為 Pod IP ，而�
     * 靜態的 Pod
         * 沒有被存在 etcd 裡，而是被儲存某個實際的 Node 上，並且只在此 Node 上啟動、執行
 
+#### Pod 狀態
+
+##### Evicted
+
+因為節點資源不足被驅逐，但是這些實例並沒有被自動清理。
+
+k8s 中產生 Evicted 狀態實例主要是因為節點資源不足實例主動被驅逐導致的，kubelet eviction_manager 模塊會定期檢查節點內存使用率、inode 使用率、磁盤使用率、pid 等資源，根據 kubelet 的配置當使用率達到一定閾值後會先回收可以回收的資源，若回收後資源使用率依然超過閾值則進行驅逐實例操作。
+
+Evicted 狀態的 Pod 在底層關聯的容器其實已經被銷毀了，對用戶的服務也不會產生什麼影響，也就是說只有一個 Pod 空殼在 k8s 中保存著，但需要人為手動清理。
+
+```shell
+kubectl get pod | grep -i Evicted
+cloud-1023955-84421-49604-5-deploy-c-7748f8fd8-hjqsh        0/1     Evicted   0          73d
+cloud-1023955-84421-49604-5-deploy-c-7748f8fd8-mzd8x        0/1     Evicted   0          81d
+cloud-1237162-276467-199844-2-deploy-7bdc7c98b6-26r2r       0/1     Evicted   0          18d
+```
+
 ### DaemonSet Pod
 
 * 每個節點部署一個，通用用於監視節點並確保能夠運行
@@ -634,7 +651,7 @@ k8s 的方法是先方法 1 再方法 2，新特性先放 annotations，然後�
 
 以一个例子再去看一下 Kubernetes 架构中的这些组件，是如何互相进行 interaction 的。
 
-![](./images/k8s-1.webp)
+![k8s-1](./images/k8s-1.webp)
 
 用户可以通过 UI 或者 CLI 提交一个 Pod 给 Kubernetes 进行部署，这个 Pod 请求首先会通过 CLI 或者 UI 提交给 Kubernetes API Server，下一步 API Server 会把这个信息写入到它的存储系统 etcd，之后 Scheduler 会通过 API Server 的 watch 或者叫做 notification 机制得到这个信息：有一个 Pod 需要被调度。
 
@@ -904,3 +921,4 @@ quality of service (QoS)
 
 * [[Kubernetes] Deployment Overview](https://godleon.github.io/blog/Kubernetes/k8s-Deployment-Overview/)
 * [通俗理解 Kubernetes 中的服務，搞懂後真香](https://blog.csdn.net/qq_43280818/article/details/107164860)
+* [K8s中大量Pod是Evicted狀態，這是咋回事？](https://mp.weixin.qq.com/s/hUNZkt4XDgJaubsYQyKG3w)
