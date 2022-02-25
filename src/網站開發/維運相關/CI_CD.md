@@ -18,3 +18,20 @@
             * 驗證完成後，進一步可以整合自動化發佈或部署 (Continuous Delivery / Continuous Deployment) 。透過此流程可以確保軟體品質，不會因為一個錯誤變動而產生錯誤結果或崩潰(Crash)。
 * 實務
     * 每次都要花超過 90 秒處理的事就自動化
+
+## GitOps
+
+![ci-cd-1](./images/ci-cd-1.png)
+
+GitOps 的兩個核心點：
+
+* 以聲明式系統為基座（典型如 Kubernetes）
+* 以 Git（GitHub/GitLab等）為單一可信源
+
+### ArgoCD
+
+![ci-cd-2](./images/ci-cd-2.png)
+
+## 參考文章
+
+* [利用 Tekton + ArgoCD 打造雲原生 GitSecOps | IDCF](https://mp.weixin.qq.com/s/8-6LFNzgmoOCMYhDhaF2fw)
