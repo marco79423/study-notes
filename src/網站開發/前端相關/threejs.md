@@ -41,38 +41,87 @@ Object3D.scale     //縮放，包含 x、y、z 屬性
 
 使用場景放置物件，把物件增加到場景之後，需要為場景提供一個相機（觀察點），然後使用繪製器繪製，基本流程為：
 
+* 建立繪製器 (Renderer)
 * 建立場景 (Scene)
 * 建立相機 (Camera)
-* 建立繪製器 (Renderer)
 * 建立模型、材質並放置到場景
 * 繪製循環
 
 ```js
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const container = document.getElementById('container')
 
-var renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+// 建立繪製器 (Renderer)
+const renderer = new THREE.WebGLRenderer({antialias: true})
+renderer.setPixelRatio(window.devicePixelRatio)
+renderer.setSize(window.innerWidth, window.innerHeight)
+container.appendChild(renderer.domElement)
 
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
+// 建立場景 (Scene)
+const scene = new THREE.Scene()
 
-camera.position.z = 5;
+// 建立相機 (Camera)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.position.set(0, 0, 5)
+camera.lookAt(new THREE.Vector3(0, 0, 0))
 
+// 建立模型、材質並放置到場景
+const cubeGeometry = new THREE.BoxGeometry()
+const cubeMaterial = new THREE.MeshBasicMaterial({color: 'green'})
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
+scene.add(cube)
+
+// 繪製循環
 const animate = function () {
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    cube.rotation.x += 0.01
+    cube.rotation.y += 0.01
 
-    renderer.render( scene, camera );
+    renderer.render(scene, camera)
 
-    requestAnimationFrame( animate );
-};
+    requestAnimationFrame(animate)
+}
 
-animate();
+animate()
 ```
+
+## 繪製器 (Renderer)
+
+Three.js 提供多種繪製器：
+
+* WebGLRenderer 繪製器
+    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
+* WebGL1Renderer 繪製器
+    * r118 版後， Three.js 會自動使用 WebGL 2，但如果有問題可以改用 WebGL1Renderer 繪製器
+* CanvasRenderer 繪製器 (已移除)
+    * **由於所有主流瀏覽器均已支援 WebGLRenderer, 因此 Three.js 已經將 CanvasRenderer 移除了**
+    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
+    * 使用Canvas 2D Context API
+    * 可以在一般場景時作為 WebGLRenderer 後備的渲染器
+    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
+    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
+
+```js
+//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
+if(window.WebGLRenderingContext){
+    renderer = new THREE.WebGLRenderer();
+} else {
+    renderer = new THREE.CanvasRenderer();
+}
+```
+
+### 繪製器設定屬性
+
+* shadowMap.enabled
+    * 是否允許使用陰影，預設值為 false
+* shadowMap.autoUpdate
+    * 是否自動更新陰影，預設值為 true
+* shadowMap.type
+    * 定義陰影類型，有三個值可選：
+        * THREE.BasicShadowMap
+            * 表示基本陰影，不進行過濾處理
+        * THREE.PCFShadowMap
+            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
+        * THREE.PCFSoftShadow
+            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
 
 ## 場景 (Scene)
 
@@ -157,45 +206,6 @@ camera.lookAt(new THREE.Vector3(320, 240, 0));
 * ArrayCamera 陣列攝像機（包含多個子攝像機，通過這一組子攝像機渲染出實際效果，適用於 VR 場景）
 * CubeCamera 立方攝像機（創建六個 PerspectiveCamera（透視攝像機），適用於鏡面場景）
 * StereoCamera 立體相機（雙透視攝像機適用於 3D 影片、視差效果）
-
-## 繪製器 (Renderer)
-
-(由於所有主流瀏覽器均已支援 WebGLRenderer, 因此 Three.js 已經將 CanvasRenderer 移除了)
-
-Three.js 提供兩種繪製器：
-
-* WebGLRenderer 繪製器
-    * 使用 WebGLRenderingContext2D 實現 GPU 加速的 3D 和 2D 繪圖。
-* CanvasRenderer 繪製器
-    * 使用 CanvasRenderingContext2D 實現 2D 繪圖。
-    * 使用Canvas 2D Context API
-    * 可以在一般場景時作為 WebGLRenderer 後備的渲染器
-    * 在某些特定情況下，CanvasRenderer 繪製器也可以使用 2D 環境模擬出來 3D 效果，但並非所有 3D 功能都能模擬，特別是有關材質和光源的情況下是不能模擬的
-    * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
-
-```js
-//如果支援 WebGLRenderingContext 就使用 WebGLRenderer 繪製器
-if(window.WebGLRenderingContext){
-    renderer = new THREE.WebGLRenderer();
-} else {
-    renderer = new THREE.CanvasRenderer();
-}
-```
-
-### 繪製器設定屬性
-
-* shadowMap.enabled
-    * 是否允許使用陰影，預設值為 false
-* shadowMap.autoUpdate
-    * 是否自動更新陰影，預設值為 true
-* shadowMap.type
-    * 定義陰影類型，有三個值可選：
-        * THREE.BasicShadowMap
-            * 表示基本陰影，不進行過濾處理
-        * THREE.PCFShadowMap
-            * 表示使用 PCF（Percentage Closer Filtering）對陰影紋理進行多重採樣，使陰影邊緣平順
-        * THREE.PCFSoftShadow
-            * 表示結合使用 PCF 和雙線行過濾對陰影紋理進行最佳化。預設值為 THREE.PCFShadowMap
 
 
 ## 光源
