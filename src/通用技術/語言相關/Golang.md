@@ -935,6 +935,17 @@
         fmt.Println("好了，大家都幹完了，收工")
         ```
     * 適用於適用於多個 goroutine 協同做一件事情的時候，因為每個 goroutine 做的都是這件事情的一部分，只有全部的goroutine都完成，這件事情才算是完成。
+* runtime.Gosched
+    * 以下是官方的定義：
+        ```golang
+        // Gosched yields the processor, allowing other goroutines to run. It does not
+        // suspend the current goroutine, so execution resumes automatically.
+        func Gosched() {
+            mcall(gosched_m)
+        }
+        ```
+    * 這個函式的作用是讓當前 goroutine 讓出 CPU，好讓其它的goroutine 獲得執行的機會。同時，當前的goroutine也會在未來的某個時間點繼續執行。
+    * 參考文章： [Golang runtime.Gosched()函式淺析](https://www.gushiciku.cn/pl/23yq/zh-tw)
 
 ### Package
 
