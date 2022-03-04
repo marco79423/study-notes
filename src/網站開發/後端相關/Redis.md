@@ -27,6 +27,10 @@
 * 不建議只使用 AOF (性能差)
 * 恢復時：有 AOF 就先選擇 AOF 恢復，沒有的話選擇 RDB 文件恢復
 
+## Stream
+
+* [Redis 究竟适不适合当队列来用？](https://mp.weixin.qq.com/s/3nsvFj3_JcCCezZ2ou6fTQ)
+
 ## 實用工具
 
 * [Redis Memory Analyzer](https://github.com/gamenet/redis-memory-analyzer)
