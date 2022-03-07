@@ -73,3 +73,13 @@ console.log(JSON.stringify(value));
 ```
 
 > **註：**  stringify 會把 undefined, nan, infinity 轉為 null
+
+### Temporal
+
+新的代替 Date 的模組
+
+![temporal-1.png](./images/temporal-1.png)
+
+![temporal-2.png](./images/temporal-2.png)
+
+* 參考文章： [取而代之！以后不用再 new Date() 了](https://mp.weixin.qq.com/s/49CDsOtS_GK3R6ljT3holw)
