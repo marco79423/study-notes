@@ -1,4 +1,4 @@
-FROM rust:1.54 as builder
+FROM rust:1.59 as builder
 
 RUN cargo install mdbook --vers "^0.4.15"
 
