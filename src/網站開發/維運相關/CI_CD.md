@@ -19,6 +19,10 @@
 * 實務
     * 每次都要花超過 90 秒處理的事就自動化
 
+## Github Actions
+
+測試 Github Actions 的工具： [act](https://github.com/nektos/act)
+
 ## GitOps
 
 ![ci-cd-1](./images/ci-cd-1.png)
