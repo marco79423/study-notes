@@ -267,7 +267,144 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 
 而且 vscode 每一塊的大小是也是可以拖動改變大小的，也要在拖動的時候重新計算 left、top 的值。
 
+## CSS 開發中的防禦規則
+
+* 避免用 JavaScript 控制佈局 (我覺得可以討論)
+    * 不要用 JavaScript 實現的佈局組件。它會多出很多層沒用的嵌套，同時把佈局定義的很死，難以再用 CSS 控制。而且永遠沒有原生的流暢，同時增加代碼的復雜，容易用問題。除非解決一些必要的兼容性問題。
+
+* 避免用 float / position: absolute / display: table 等過時的佈局技術
+    * 優先用 Flexbox/Grids 佈局。
+
+* 避免定高/定寬
+    * 固定寬/高最容易出現的問題是內容溢出。沒必要通過定寬高對齊，可以利用 Flexbox 的位伸/收縮特性。一般情況下用最小寬/高、calc()、相對單位替代。
+
+* 避免侵入性的寫法
+    * 避免影響全局樣式，如：* { ... }、:root {...} 、div { ....} 等。
+    * 避免影響通用組件樣式，如：.next-card {...}，如果要定製單加一個 class 名。
+    * 不要直接修改全局 CSS 變量，把自己的 CSS 變量定義在模塊的范圍內。
+    * 不要寫 z-index:999。一般 1～9，防止被遮擋 10～99，絕對夠用了。
+    * 不要在標簽上定義 style 屬性。不要在 JS 代碼中做樣式微調，這樣今後無法統一升級 CSS 樣式。
+    * 只有完全不可修改的樣式才能用 !important，利用選擇器優先級調整樣式。
+
+* 避免CSS代碼的誤改 / 漏改
+    * 將樣式集中在一起，容易改錯。保持 CSS 代碼和文件在相應的層級上，同一模塊的放一起。避免混入通用樣式中，為了避免改錯，允許適當冗餘。
+    * 用 @media 時，會集中覆寫一批元素的樣式，更新樣式時非常容易遺漏。所以必須拆開寫，和對應模塊的樣式放在一起。不要集中放在文件底部，或是集中放在某一個文件裡。
+    * 及時清除「死代碼」。
+
+* 避免 CSS 樣式衝突
+    * 限定作用范圍。如，.my-module .xxx { ... }。
+    * 業務代碼中的樣式要加前綴，或借鑑 BEM 命名方式。如：.overview-card-title { ... }。用CSS Module。
+    * 注意選擇器的精確性。層級過長過於複雜的 CSS 選擇器會影響性能，但要注意：有時需要精確選擇某些元素，如僅選擇一級子元素，.overview-card-content > .item { ... }。
+
+* 防止內容不對齊
+    * flexbox 側重「對齊」，Grids是專為佈局設計的。受字體、行高等因素影響（如圖），用 Flexbox 實現對齊最可靠：
+        1. height / line-height 不可靠。
+        2. display:inline-block / vertical-align:middle 不可靠。
+
+* 防止內容溢出
+    * 文字 / 圖表等內容在寬度變化時或是英文版下容易出現溢出。
+        ![css-7](./images/css-7.png)
+        * 圖表要支持自動 resize。
+        * 圖片要限制大小范圍，如：max-width、max-height、min(100px, 100%)、max(100px, 100%)
+            * （注意：min() / max() 兼容性：chrome 79+ / safari 11 / firefox 75）
+        * 不要固定寬/高
+
+* 防止內容過度擁擠
+    * 為了防止內容過長時緊帖到後面的內容，水平排列元素之間要設置間距，一般是 8px。
+    * 如果用 flexbox 可以用 gap (但要考慮兼容性問題，穩定起見可用 margin)。
+
+* 防止內容被遮擋
+    * 避免定義負值時（負 margin / top / left），小心內容被遮擋。定義 margin 統一朝一個方向，向下和向右定義，再重置一下:last-child。position: relative 平時很常用，發生遮擋時會造成鏈接無法點擊。
+
+* 防止可點擊區域過小
+    * 小於 32x32 像素的可點擊元素，通過下面的方式擴大可點擊區域：
+        ```css
+        .btn-text {
+            position: relative;
+        }
+
+        /* 比 padding 副作用小 */
+        .btn-text::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -8px;
+            right: -8px;
+            bottom: -6px;
+        }
+        ```
+
+* 防止內容顯示不全 / 被截斷
+    * 在定義 overflow:hidden 時，就要考慮內容是否有被截斷的可能。一般不要加在容器元素上。
+    * 防止長文字被生生截斷，加省略號。UI實現過程中要對內容做出判斷，哪些是不應該折行的，哪些是不應該省略的，如：
+        * white-space: nowrap;
+        * overflow: hidden;
+        * text-overflow: ellipsis;
+
+* 防止該折行不折行 / 不該折行的折行
+    * 首先必須理解UI，折行有3種情況：哪些需要折行，哪些不能折行，哪些不能從中間斷行。
+        1. 大部分情況需要折行，不能為了保持 UI 美觀而損失內容的完整性。一般用overflow-wrap，盡量不要用 word-wrap（不符CSS標准）：
+            * overflow-wrap: break-word 配合 overflow-wrap，可再加上 hyphens: auto（目前兼容性不夠）
+        2. 不能折行，如標題 / 列頭 / 按鈕等。
+        3. 避免表頭折行。表格列數過多（>5列）時，會要求鎖列，此時，th定義white-space: nowrap強制不折行。
+        4. 不能從中間斷行
+            ![css-8](./images/css-8.png)
+
+* 防止滾動鏈問題
+    * 浮層的場景下需要避免滾動鏈問題：子元素可滾動，如果父元素也有滾動區域，在子元素上滾動時，觸頂/觸底後，會影響父元素滾動。關掉浮層後，用戶會發現頁面滾到了其它位置。
+        ```css
+        overscroll-behavior: contain;
+        overflow-y: auto;
+        overflow-x: hidden;
+        ```
+    * 注意：避免出現同時出現水平/垂直滾動條
+
+* 防止圖片變形
+    * 圖片被置於特定比例的容器中時，固定寬/高和約束最大寬/高，都可能會導致圖片變形。
+        ```css
+        .head img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        ```
+        * 在 Flexbox 容器內，圖片高度會被自動拉伸。因為不要定義 align-items，默認是stretch。
+
+* 防止圖片加載失敗
+    * 需要考慮圖片加載慢或加載失敗的情景。在圖片的容器上加邊或加底色。
+
+* 防止CSS變量未引入
+    * 在標准化開發中，我們提倡使用全局的CSS變量。業務代碼中，利用CSS變量也可以方便的進行全局的控制。在使用CSS變量時要加上預設值。
+        * font-size: var(--tab-item-text-size-s, 12px);
+
+* 防止CSS兼容性問題
+    * 不要加瀏覽器廠商前綴，讓CSS預編譯自動處理，像-webkit-、-moz-。
+    * 不要用僅特定瀏覽器廠商支持的屬性。
+
+* Flexbox常見防禦性寫法
+    * Flexbox的默認表現比較多，不能簡單的定義display:flex，或是flex:1。
+        * Flexbox容器元素通常要做如下定義：
+            * 要支持多行（默認是單行）
+            * 交叉軸上垂直居中（默認是stretch）
+            * 主軸上採用 space-between，將自由空間分配到相鄰元素之間。
+        * 一般都要寫上：
+            ```css
+            {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+            }
+            ```
+    * Flexbox的盒子元素要定義間距。
+
+* Grid常見防禦性寫法
+    * 不固定網格的寬度，用 minmax (最小值，1fr)。
+    * 定義間距，如grid-gap: 8px。
+    * 不固定列數, 利用auto-fit / auto-fill自動適配。
+
 ## 參考資料
 
 * [06-CSS盒模型詳解](https://github.com/qianguyihao/Web/blob/master/02-CSS%E5%9F%BA%E7%A1%80/06-CSS%E7%9B%92%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3.md)
 * [CSS 布局的本质是什么](https://mp.weixin.qq.com/s/ulp8BbbeZAneS4NajDF6-g)
+* [防禦性設計和開發](https://mp.weixin.qq.com/s/G4pME9xFHdWnFckgytnofQ)
