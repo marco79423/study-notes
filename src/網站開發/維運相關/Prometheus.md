@@ -113,26 +113,51 @@ Prometheus 中會將任意獨立資料來源(Target)稱為 Instance。而包含�
 
 Prometheus 提供一種特殊表達式來查詢監控數據，這個表達式被稱為 PromQL（Prometheus Query Language）。通過 PromQL 不僅可以在 Graph 頁面查詢數據，而且還可以通過 Prometheus 提供的 HTTP API 來查詢。
 
+PromQL 查詢結果主要有 3 種類型：
+
+* 瞬時數據 (Instant vector)
+    * 包含一組時序，每個時序只有一個點，例如：http_requests_total
+* 區間數據 (Range vector)
+    * 包含一組時序，每個時序有多個點，例如：http_requests_total[5m]
+* 純量數據 (Scalar)
+    * 純量只有一個數字，沒有時序，例如：count(http_requests_total)
+
+條件判斷：
+
+* `=` 等於
+* `!=` 不等於
+* `=~` 等於 (支援 regex)
+* `!~` 不等於 (支援 regex)
+
+時間區間：
+
+* ms - 毫秒
+* s - 秒
+* m - 分
+* h - 時
+* d - 天 (24 小時)
+* w - 週 (7 天)
+* y - 年 (365 天)
+
+### 範例
+
 直接輸入指標名稱
 
 ```promql
-# 表示 Prometheus 能否抓取 target 的指標，用於 target 的健康檢查  
-up
+up # 表示 Prometheus 能否抓取 target 的指標，用於 target 的健康檢查  
 ```
 
-指定某個 label 來查詢 (Instant vector selectors)，還可以使用 !=、=~、!~。
+指定某個 label 來查詢 (Instant vector selectors)。
 
 ```promql
 up{job="prometheus"} 
 ```
 
-和 Instant vector selectors 相應的，還有一種選擇器，叫做 Range vector selectors，它可以查出一段時間內的所有數據
+查出一段時間內的所有數據 (注意它返回的數據類型是 Range vector，沒辦法在 Graph 上顯示成曲線圖，通常會和 rate() 或 irate() 函數一起使用)
 
 ```promql
 http_requests_total[5m]
 ```
-
-注意它返回的數據類型是 Range vector，沒辦法在 Graph 上顯示成曲線圖，一般情況下，會用在 Counter 類型的指標上，並和 rate() 或 irate() 函數一起使用（注意 rate 和 irate 的區別）。
 
 ```promql
 # 計算的是每秒的平均值，適用於變化很慢的 counter  
