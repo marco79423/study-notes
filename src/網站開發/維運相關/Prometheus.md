@@ -58,7 +58,9 @@ Prometheus 生態系統包含了幾個關鍵的組件：Prometheus server、Push
 
 ## 運作機制
 
-Prometheus Server 拉取 Exporter 資料，然後透過 PromQL 語法進行查詢，再將資料給 Web UI or Dashboard。
+Exporter 負責把想要傳送給 Prometheus 的資料暴露出來。
+
+Prometheus Server 拉取(Pull) Exporter 資料，然後透過 PromQL 語法進行查詢，再將資料給 Web UI or Dashboard。
 
 ![prometheus-2](./images/prometheus-2.png)
 
@@ -87,17 +89,27 @@ Prometheus 儲存的資料為時間序列，主要以 Metrics name 以及一系�
 
 按類型來分，可以分成四種主要的模型：
 
-* Counter
+* Counter (只增不減計數器)
     * 可被累加的 Metric，用於計數，代表一種樣本數據單調遞增的指標，值會一直增加，不會減少 (但可以重設為 0)
     * 比如一個 HTTP Get 錯誤的出現次數、任務完成數、錯誤發生次數等。
-* Gauge
-    * Gauge 屬於瞬時、與時間無關的任意更動 Metric，代表一種數據可以任意變化的指標，可增可減
+    * 一般在定義 Counter 類型指標名稱時推薦使用 `_total` 為後綴。
+    * 範例
+        * 通過 rate 取得 HTTP 請求量的增長率
+            ```promql
+            rate(http_requests_total[5m])
+            ```
+        * 查询当前系统中，访问量前10的HTTP地址：
+            ```promql
+            topk(10, http_requests_total)
+            ```
+* Gauge (可增可減儀表盤)
+    * Gauge 代表一種數據可以任意變化的指標，可增可減，側重於反應系統的當前狀態
     * 通常用來統計如服務的 CPU 使用值，溫度變化、內存使用變化等
-* Histogram
+* Histogram (直方圖)
     * Histogram 主要使用在表示一段時間範圍內的資料採樣
     * 常用於跟蹤事件發生的規模，例如請求耗時或響應大小等
     * 它特別之處是可以對記錄的內容進行分組，提供 count 和 sum 的功能。
-* Summary
+* Summary (摘要)
     * 類似 Histogram，用來表示一端時間範圍內的資料採樣總結。
     * 與 Histogram 不同之處是，它提供了一個 quantiles 的功能，可以按百分比劃分跟蹤的結果。
     * 例如：quantile 取值 0.95，表示取采樣值裡面的 95% 數據。
@@ -122,6 +134,19 @@ PromQL 查詢結果主要有 3 種類型：
 * 純量數據 (Scalar)
     * 純量只有一個數字，沒有時序，例如：count(http_requests_total)
 
+樣本(Sample) 由以三三個部分組成：
+
+* 指標(metric)
+    * 名稱和描述當前樣本特徵的 labelsets
+* 時間戳(timestamp)：
+    * 一个精确到毫秒的時間戳;
+* 樣本值(value)
+    * 一个float64的浮点型数据表示当前样本的值。
+
+    <--------------- metric ---------------------><-timestamp -><-value->
+    http_request_total{status="200", method="GET"}@1434417560938 => 94355
+    http_request_total{status="200", method="GET"}@1434417561287 => 94334
+
 條件判斷：
 
 * `=` 等於
@@ -139,12 +164,53 @@ PromQL 查詢結果主要有 3 種類型：
 * w - 週 (7 天)
 * y - 年 (365 天)
 
+修飾子：
+
+* offset 指定時間 offsest
+* @ 直接指定時間 (用 unix timestamp，可以用 start, end 函式)
+
+聚合：
+
+* sum (總和)
+* min (最小值))
+* max (最大值)
+* avg (平均值)
+* group (all values in the resulting vector are 1)
+* stddev (標準差)
+* stdvar (標準方差)
+* count (計數)
+* count_values (同值的計數)
+* bottomk (最小的 k 個數)
+* topk (最大的 k 個數)
+* quantile (分位數)
+
+其中只有count_values, quantile, topk, bottomk 支援參數。
+
+* `without` 從計算結果移除列舉的標簽。
+* `by` 只保留列出的標簽。
+
+```promql
+sum(http_requests_total) without (instance)
+```
+
+等價於
+
+```promql
+sum(http_requests_total) by (code,handler,job,method)
+```
+
 ### 範例
 
 直接輸入指標名稱
 
 ```promql
 up # 表示 Prometheus 能否抓取 target 的指標，用於 target 的健康檢查  
+```
+
+等價於
+
+```promql
+{__name__="up"}
 ```
 
 指定某個 label 來查詢 (Instant vector selectors)。
@@ -188,12 +254,25 @@ irate(http_requests_total[5m])
 ## 設定檔
 
 ```yaml
-# my global config  
+#  全局配置，比如 scrape_interval 表示 Prometheus 多久抓取一次數據，evaluation_interval 表示多久檢測一次告警規則
 global:  
-  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.  
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.  
-  # scrape_timeout is set to the global default (10s).  
+  scrape_interval:     15s  # 間隔多久拉取一次資料 (預設 1 分鐘)  
+  scrape_timeout: 10s       # 抓取的 Timeout 時間 (預設 10 秒)
+
+  evaluation_interval: 15s  # 表示多久檢測一次告警規則 (預設 1 分鐘)
    
+# 定義 Prometheus 要抓取的目標
+scrape_configs:  
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.  
+  - job_name: 'prometheus'  
+   
+    scrape_interval: 5s     # 複寫抓取的頻率
+    metrics_path: /metrics  # 抓取 metric 的路由
+    scheme: 'http'          # 請求的 protocol
+   
+    static_configs:  
+    - targets: ['localhost:9090']  
+
 # Alertmanager configuration  
 alerting:  
   alertmanagers:  
@@ -205,18 +284,6 @@ alerting:
 rule_files:  
   # - "first_rules.yml"  
   # - "second_rules.yml"  
-   
-# A scrape configuration containing exactly one endpoint to scrape:  
-# Here it's Prometheus itself.  
-scrape_configs:  
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.  
-  - job_name: 'prometheus'  
-   
-    # metrics_path defaults to '/metrics'  
-    # scheme defaults to 'http'.  
-   
-    static_configs:  
-    - targets: ['localhost:9090']  
 ```
 
 Prometheus 默認的配置文件分為四個部分：
@@ -224,8 +291,7 @@ Prometheus 默認的配置文件分為四個部分：
 * global
     * Prometheus 的全局配置，比如 scrape_interval 表示 Prometheus 多久抓取一次數據，evaluation_interval 表示多久檢測一次告警規則
 * scrape_config
-    * 這裡定義了 Prometheus 要抓取的目標，我們可以看到默認已經配置了一個名稱為 prometheus 的 job，這是因為 Prometheus 在啟動的時候也會通過 HTTP 接口暴露自身的指標數據，這就相當於 Prometheus 自己監控自己，雖然這在真正使用 Prometheus 時沒啥用處，但是我們可以通過這個例子來學習如何使用 Prometheus
-    * 可以訪問 http://localhost:9090/metrics 查看 Prometheus 暴露了哪些指標；
+    * 這裡定義了 Prometheus 要抓取的目標
 * rule_files
     * 告警規則
 * alerting
