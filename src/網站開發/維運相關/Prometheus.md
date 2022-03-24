@@ -114,6 +114,83 @@ Prometheus 儲存的資料為時間序列，主要以 Metrics name 以及一系�
     * 與 Histogram 不同之處是，它提供了一個 quantiles 的功能，可以按百分比劃分跟蹤的結果。
     * 例如：quantile 取值 0.95，表示取采樣值裡面的 95% 數據。
 
+### 常見指標
+
+* Process
+    * process_cpu_seconds_total (Counter)
+        * 用戶和系統 CPU 總耗時，單位是秒
+    * process_open_fds (Gauge)
+        * 打開的的 file descriptors 的數量。
+    * process_max_fds (Gauge)
+        * file descriptors 數量的最大限額
+    * process_virtual_memory_bytes (Gauge)
+        * 虛擬內存大小（單位：字節）
+    * process_virtual_memory_max_bytes (Gauge)
+        * 虛擬內存大小的最大限額（單位：字節）
+    * process_resident_memory_bytes (Gauge)
+        * 預留內存大小，單位：字節
+    * process_start_time_seconds (Gauge)
+        * 進程自 unix 紀元以來的開始時間（秒）
+
+* Golang 相關
+    * go_goroutines (Gauge)
+        * 目前存在的 goroutines 的數量
+    * go_threads (Gauge)
+        * 創建的操作系統線程數
+    * go_info (Gauge)
+        * GO 環境的信息
+    * go_gc_duration_seconds (S)
+        * 垃圾收集週期的暫停時間匯總
+
+    * go_memstats_alloc_bytes (Gauge)
+        * 已分配且仍在使用的字節數
+    * go_memstats_alloc_bytes_total (Counter)
+        * 分配的字節總數，包括已經被釋放的字節
+    * go_memstats_sys_bytes (Gauge)
+        * 從系統獲得的字節數
+    * go_memstats_lookups_total (Counter)
+        * 指針查找的總次數
+    * go_memstats_mallocs_total (Counter)
+        * 已分配內存的總數
+    * go_memstats_frees_total (Counter)
+        * 已釋放內存釋放統計
+    * go_memstats_heap_alloc_bytes (Gauge)
+        * 已分配且仍在使用的 heap 字節數。
+    * go_memstats_heap_sys_bytes (Gauge)
+        * 從系統獲得的 heap 數量
+    * go_memstats_heap_idle_bytes (Gauge)
+        * 未使用的 heap 字節數
+    * go_memstats_heap_inuse_bytes (Gauge)
+        * 正在使用的 heap 字節數
+    * go_memstats_heap_released_bytes (Gauge)
+        * 釋放給 OS 的 heap 字節數
+    * go_memstats_heap_objects (Gauge)
+        * 已分配對象的數量
+    * go_memstats_stack_inuse_bytes (Gauge)
+        * stack allocator 使用的字節數
+    * go_memstats_stack_sys_bytes (Gauge)
+        * stack allocator 從系統獲取的字節數
+    * go_memstats_mspan_inuse_bytes (Gauge)
+        * 內存跨度結構所使用的字節數。
+    * go_memstats_mspan_sys_bytes (Gauge)
+        * 內存跨度結構從系統獲取的字節數
+    * go_memstats_mcache_inuse_bytes (Gauge)
+        * 內存緩存結構使用的字節數。
+    * go_memstats_mcache_sys_bytes (Gauge)
+        * 內存緩存結構從系統獲取的字節數
+    * go_memstats_buck_hash_sys_bytes (Gauge)
+        * profile bucket 哈希表使用的字節數
+    * go_memstats_gc_sys_bytes (Gauge)
+        * 用於垃圾收集系統元數據的字節數
+    * go_memstats_other_sys_bytes (Gauge)
+        * 用於其他系統分配的字節數
+    * go_memstats_next_gc_bytes (Gauge)
+        * 下一次進行垃圾收集時的 heap 字節數
+    * go_memstats_last_gc_time_seconds (Gauge)
+        * 自 1970 年以來最後一次收集垃圾時間，精確到秒數
+    * go_memstats_gc_cpu_fraction (Gauge)
+        * 自程序啟動以來，GC 使用的該程序可用 CPU 時間，精確到分鐘
+
 ## Job 與 Instance
 
 Prometheus 中會將任意獨立資料來源(Target)稱為 Instance。而包含多個相同 Instance 的集合稱為 Job。
@@ -199,7 +276,7 @@ sum(http_requests_total) without (instance)
 sum(http_requests_total) by (code,handler,job,method)
 ```
 
-### 範例
+### 語法
 
 直接輸入指標名稱
 
