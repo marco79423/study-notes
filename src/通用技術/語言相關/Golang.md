@@ -1073,7 +1073,69 @@
     }
     ```
 
-### go module 機八的地方
+### go generic 泛型
+
+golang 1.18 的新功能
+
+```golang
+// 定義一個新的型態，此型態可以為 int64 或 float64
+func show[num int64 | float64](s num) { 
+    fmt.Println(s)
+}
+
+// 如果支援型態很多的話，可以這樣寫
+type Num interface { // 定義一個新的 interface 將所有型態放入
+    int8 | int16 | int32 | int64 | float32 | float64
+}
+
+func show2[num Num](s num) {
+    fmt.Println(s)
+}
+
+// 多個同型態
+
+func show3[num1, num2 comparable](s num1, b num2) {
+    fmt.Println(s, b)
+}
+
+// 新增 any 及 comparable 兩種語法型態
+func show4[T any](s T) { // 可以當成 interface{}
+    fmt.Println(s)
+}
+
+func equal[T comparable](v1, v2 T) bool { // 可以當成能用 == 和 != 的 interface{}
+    return v1 == v2 // goland 支援有問題，要更新到 2021.3.4 也沒有用
+}
+
+type MyString string
+
+// 用 ~string 约束，即可表示 string 或底层是 string 的类型：
+func show5[T ~string](x T) {
+    fmt.Println(x)
+}
+
+func show6[T string](x T) {
+    fmt.Println(x)
+}
+
+// generics 限制
+type vector struct {
+    values []any
+}
+
+// 多了方便使用的 constraints (golang 1.18 才能用)
+func find[T constraints.Integer](s []T, x T) {
+    for i, v := range s {
+        if v == x {
+            fmt.Println(i)
+        }
+    }
+}
+```
+
+### go module
+
+#### go module 機八的地方
 
 * 是否使用 go module，go get 的抓取邏輯不同
     * 在 go module 模式中，使用 go get 會抓最新版號(如 v1.2.0)，但在非 go module 模式，卻會抓 latest 版。
