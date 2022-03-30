@@ -503,14 +503,14 @@
             * TOP (SQL Server), LIMIT (MySQL), ROWNUM (Oracle) 這些語法其實都是同樣的功能，都是用來限制您的 SQL
               查詢語句最多只影響幾筆資料，而不同的語法則只因不同的資料庫實作時採用不同的名稱。
             * 語法
-                ```
+                ```sql
                 SELECT table_column1, table_column2...
                 FROM table_name LIMIT 【起始的条目索引，】条目数;
                 ```
                 * 起始条目索引从0开始
                 * limit子句放在查询语句的最后
             * 常用公式
-                ```
+                ```sql
                 SELECT * FROM table LIMIT （要顯示的頁數-1）* 每頁條目數, 每頁條目數
                 ```
 
@@ -542,7 +542,7 @@
                 * CASE 類似於程式語言裡的 if/then/else 語句，用來作邏輯判斷。
                 * 語法
                     * 類似 switch 的用法
-                        ```
+                        ```sql
                         CASE expression
                             WHEN value THEN result
                             [WHEN···]
@@ -670,16 +670,16 @@
         * 例子：
             * 授與 mike 所有資料庫和所有資料表的所有操作權限：
 
-                ```
+                ```sql
                 GRANT ALL PRIVILEGES ON *.* TO 'mike'@'%';
 
-                -* 要記得下這個指令讓權限開始生效
+                -- 要記得下這個指令讓權限開始生效
                 FLUSH PRIVILEGES;
                 ```
 
             * 同時授與多個權限
 
-                ```
+                ```sql
                 GRANT SELECT,INSERT ON customers.* TO 'mike'@'%';
                 ```
 
@@ -1425,72 +1425,175 @@ MyISAM 儲存引擎在儲存索引的時候，是將索引資料單獨儲存，�
 
 通過這個結構，我們可以看出來，MyISAM的儲存引擎的索引都是同級別的，主鍵和非主鍵索引結構和查詢方式完全一樣。
 
-### 評估效能
+### 效能改善
 
 #### 使用 Explain
 
-* Explain
-    * id: 1
-    * select_type
-        * simple
-            * 表示簡單 select (不使用union或子查詢)
-        * primary
-            * 表示最外層的 select
-        * union
-            * 表示這個許句是 union 中的第二個或後面的select語句
-        * dependent
-            * union union中的第二個或後面的select語句,取決於外面的查詢
-        * union result
-            * union的結果。
-        * subquery
-            * 子查詢中的第一個select
-        * dependent subquery
-            * 子查詢中的第一個select,取決於外面的查詢
-        * derived
-            * 匯出表的select(from子句的子查詢)
-    * table
-        * 顯示這一行的資料是關於哪張表的
-    * type
-        * 這是重要的列，顯示了使用那一種類型
-        * 從最好到最差的連線型別為：
-            * system
-            * const (一次就命中，針對主鍵或唯一索引的等值查詢掃瞄, 最多只返回一行數據. const 查詢速度非常快, 因為它僅僅讀取一次即可.)
-            * eq_ref (MySQL在連接查詢時，會從最前面的資料表，對每一個記錄的聯合，從資料表中讀取一個記錄，在查詢時會使用索引為主鍵或唯一鍵的全部。)
-            * ref (通常最好到 ref，只有在查詢使用了非唯一鍵或主鍵時才會發生。)
-            * fulltext
-            * ref_or_null
-            * index_merge
-            * unique_subquery
-            * index_subquery
-            * range
-                * 一般來說至少要達到 range
-                * 用索引返回一個範圍的結果。例如：使用大於>或小於<查詢時發生
-            * index (此為針對索引中的資料進行查詢)
-            * ALL (掃描了全表才能確定結果)
-    * possible_keys
-        * 顯示可能使用到的索引，或是 Where 中最適合的欄位
-    * key
-        * 實際使用到的索引。如果為NULL,則沒有使用索引。如果為primary的話,表示使用了主鍵。
-    * key_len: 4
-        * 最長的索引寬度。如果鍵是NULL,長度就是NULL。在不損失精確性的情況下,長度越短越好
-    * ref
-        * const -* 顯示哪個欄位或常數與key一起被使用。
-    * rows
-        * 這個數表示mysql要遍歷多少資料才能找到
-        * 在innodb上是不準確的。
-    * Extra
-        * Extra為MySQL用來解析額外的查詢訊息
-        * 可能的欄位
-            * Distinct：當MySQL找到相關連的資料時，就不再搜尋。
-            * Not exists：MySQL優化 LEFT JOIN，一旦找到符合的LEFT JOIN資料後，就不再搜尋。
-            * Range checked for each Record(index map:#)：無法找到理想的索引。此為最慢的使用索引。
-            * Using filesort：當出現這個值時，表示此SELECT語法需要優化。因為MySQL必須進行額外的步驟來進行查詢。
-            * Using index：返回的資料是從索引中資料，而不是從實際的資料中返回，當返回的資料都出現在索引中的資料時就會發生此情況。
-            * Using temporary：同Using filesort，表示此SELECT語法需要進行優化。此為MySQL必須建立一個暫時的資料表(Table)來儲存結果，此情況會發生在針對不同的資料進行ORDER
-              BY，而不是GROUP BY。
-            * Using where：使用WHERE語法中的欄位來返回結果。
-            * System：system資料表，此為const連接類型的特殊情況。
-            * Const：資料表中的一個記錄的最大值能夠符合這個查詢。因為只有一行，這個值就是常數，因為MySQL會先讀這個值然後把它當做常數。
+各欄位解釋：
+
+* id: 1
+* select_type
+    * simple
+        * 表示簡單 select (不使用union或子查詢)
+    * primary
+        * 表示最外層的 select
+    * union
+        * 表示這個許句是 union 中的第二個或後面的select語句
+    * dependent
+        * union union中的第二個或後面的select語句，取決於外面的查詢
+    * union result
+        * union的結果。
+    * subquery
+        * 子查詢中的第一個select
+    * dependent subquery
+        * 子查詢中的第一個select，取決於外面的查詢
+    * derived
+        * 匯出表的select(from子句的子查詢)
+* table
+    * 顯示這一行的資料是關於哪張表的
+* type
+    * 這是重要的列，顯示了使用那一種類型
+    * 建議至少要達到 range 級別
+    * 從最好到最差的連線型別為：
+        * system
+        * const
+            * 一次就命中，針對主鍵或唯一索引的等值查詢掃瞄， 最多只返回一行數據. const 查詢速度非常快， 因為它僅僅讀取一次即可
+        * eq_ref
+            * MySQL 在連接查詢時，會從最前面的資料表，對每一個記錄的聯合，從資料表中讀取一個記錄，在查詢時會使用索引為主鍵或唯一鍵的全部。
+        * ref
+            * 通常最好到 ref，只有在查詢使用了非唯一鍵或主鍵時才會發生。
+        * fulltext
+        * ref_or_null
+        * index_merge
+        * unique_subquery
+        * index_subquery
+        * range
+            * 一般來說至少要達到 range
+            * 用索引返回一個範圍的結果。例如：使用大於或小於查詢時發生
+        * index
+            * 此為針對索引中的資料進行查詢
+        * ALL
+            * 掃描了全表才能確定結果
+* possible_keys
+    * 顯示可能使用到的索引，或是 Where 中最適合的欄位
+* key
+    * 實際使用到的索引。
+    * 如果為 NULL，則沒有使用索引
+    * 如果為 primary 的話，表示使用了主鍵
+* key_len: 4
+    * 最長的索引寬度。
+    * 如果鍵是 NULL，長度就是 NULL
+    * 在不損失精確性的情況下，長度越短越好
+* ref
+    * const -* 顯示哪個欄位或常數與key一起被使用。
+* rows
+    * 這個數表示 mysql 要遍歷多少資料才能找到
+    * 這個值是預估計，在 innodb 上是不準確的。
+* Extra
+    * Extra為MySQL用來解析額外的查詢訊息
+    * 可能的欄位
+        * Distinct
+            * 當MySQL找到相關連的資料時，就不再搜尋。
+        * Not exists
+            * MySQL優化 LEFT JOIN，一旦找到符合的LEFT JOIN資料後，就不再搜尋。
+        * Range checked for each Record(index map:#)
+            * 無法找到理想的索引。此為最慢的使用索引。
+        * Using filesort (需要優化)
+            * 當出現這個值時，表示此SELECT語法需要優化。
+            * 因為MySQL必須進行額外的步驟來進行查詢。
+        * Using index
+            * 返回的資料是從索引中資料，而不是從實際的資料中返回，當返回的資料都出現在索引中的資料時就會發生此情況。
+        * Using temporary (需要優化)
+            * 同Using filesort，表示此SELECT語法需要進行優化。
+            * 此為 MySQL 必須建立一個暫時的資料表(Table)來儲存結果，此情況會發生在針對不同的資料進行 ORDER
+            BY，而不是GROUP BY。
+        * Using where
+            * 使用 WHERE 語法中的欄位來返回結果。
+        * System
+            * system 資料表，此為 const 連接類型的特殊情況。
+        * Const
+            * 資料表中的一個記錄的最大值能夠符合這個查詢。
+            * 因為只有一行，這個值就是常數，因為 MySQL 會先讀這個值然後把它當做常數。
+
+#### Query 技巧
+
+* IN 包含值不應過多
+    * MySQL 對於 IN 做了相應的優化，會將 IN 中的常量全部存儲在一個數組裡面，而且這個數組是排好序的。但是如果數值較多，產生的消耗也是比較大的。
+    * 對於連續的數值，能用 between 就不要用 in 了；再或者使用連接來替換。
+* SELECT 語句務必指明字段名稱
+    * SELECT * 會增加很多不必要的消耗（cpu、io、內存、網絡帶寬）
+    * 增加了使用覆蓋索引的可能性
+    * 當表結構發生改變時，前段也需要更新
+* 當只需要一條數據的時候，使用limit 1
+    * 這是為了使 EXPLAIN 中 type 列達到 const 類型
+* 如果排序字段沒有用到索引，就盡量少排序
+* 如果限制條件中其他字段沒有索引，盡量少用or
+    * or 兩邊的字段中，如果有一個不是索引字段，而其他條件也不是索引字段，會造成該查詢不走索引的情況。很多時候使用 union all 或者是 union (必要的時候)的方式來代替“or”會得到更好的效果
+* 盡量用 union all 代替 union
+    * union和union all的差異主要是前者需要將結果集合並後再進行唯一性過濾操作，這就會涉及到排序，增加大量的CPU運算，加大資源消耗及延遲。
+    * 當然，使用 union all 的前提條件是兩個結果集沒有重復數據。
+* 不使用 ORDER BY RAND()
+    ```sql
+    select id from `table_name` 
+    order by rand() limit 1000;
+    
+    -- 可優化為
+    select id from `table_name` t1 join 
+    (select rand() * (select max(id) from `table_name`) as nid) t2 on t1.id > t2.nid limit 1000;
+    ```
+* 區分in和exists， not in和not exists
+    ```sql
+    -- IN 會先執行子查詢，所以適合於外表大而內表(B)小的情況
+    select * from A where id in (select id from B)
+
+    -- exists 會先查外表(A)，所以適合外表小而內表大的情況
+    select * from A where exists (select * from B where B.id=.Aid)
+    ```
+* 使用合理的分頁方式以提高分頁的效率
+    ```sql
+    -- 數據量越大越慢
+    select id, name from table_name limit 866613, 20
+
+    -- 可以改為取前一頁的最大行數的id，然後根據這個最大的id來限制下一頁的起點
+    select id, name from table_name where id > 866612 limit 20
+    ```
+* 避免在 where 子句中對字段進行 null 值判斷
+    * 對於 null 的判斷會導致引擎放棄使用索引而進行全表掃描。
+* 不建議使用%前綴模糊查詢
+    * 例如LIKE "%name" 或者LIKE "%name%"，這種查詢會導致索引失效而進行全表掃描。但是可以使用LIKE "name%"。
+    * 可以用全文索引
+        ```sql
+        -- 原來
+        select id, fnum, fdst from table_name where user_name like '%zhangsan%'
+
+        ALTER TABLE `table_name` ADD FULLTEXT INDEX `idx_user_name` (`user_name`);
+
+        -- 使用有索引 (語法有差異)
+        select id, fnum, fdst from table_name 
+        where match(user_name) against('zhangsan' in boolean mode);
+        ```
+* 避免在where子句中對字段進行表達式操作
+    ```sql
+    -- 這樣無所用索引
+    select user_id,user_project from table_name where age*2=36;
+    
+    -- 可改為
+    select user_id,user_project from table_name where age=36/2;
+    ```
+* 避免隱式類型轉換
+    * where 子句中出現 column 字段的類型和傳入的參數類型不一致的時候發生的類型轉換，建議先確定where中的參數類型
+* 對於聯合索引來說，要遵守最左前綴法則
+    * 舉列來說索引含有字段id,name,school，可以直接用id字段，也可以id,name這樣的順序，但是name，school都無法使用這個索引。所以在創建聯合索引的時候一定要注意索引字段順序，常用的查詢字段放在最前面
+* 必要時可以使用force index來強制查詢走某個索引
+    * 有的時候MySQL優化器採取它認為合適的索引來檢索sql語句，但是可能它改採用的索引並不是我們想要的。這時就可以採用force index來強制優化器使用我們制定的索引。
+* 注意范圍查詢語句
+    * 對於聯合索引來說，如果存在范圍查詢，比如between,>,<等條件時，會造成後面的索引字段失效。
+* 關於JOIN優化
+    * LEFT JOIN A表為驅動表
+    * INNER JOIN MySQL會自動找出那個數據少的表作用驅動表
+    * RIGHT JOIN B表為驅動表
+* 盡量使用inner join，避免left join
+    * 參與聯合查詢的表至少為2張表，一般都存在大小之分。如果連接方式是inner join，在沒有其他過濾條件的情況下MySQL會自動選擇小表作為驅動表，但是left join在驅動表的選擇上遵循的是左邊驅動右邊的原則，即left join左邊的表名為驅動表。
 
 ### 備份和還原
 
@@ -1566,3 +1669,4 @@ Xtrabackup
 * [這波MySQL操作，穩穩帶你進階頂端](https://mp.weixin.qq.com/s/EXbMgT0T3cXZ0u-4lvMDbQ)
 * [MySQL](https://github.com/yorkmass/interview/blob/master/MySQL.md)
 * [MySQL的索引為什麼用B+Tree？InnoDB的資料儲存檔案和MyISAM的有何不同？](https://iter01.com/584005.html)
+* [項目中常用的 19 條 SQL 優化寶典](https://mp.weixin.qq.com/s/xKjhtgBlDydOm2623AImOA)
