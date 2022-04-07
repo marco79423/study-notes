@@ -369,6 +369,7 @@
                     * 只會留下總 price 小於 1000 的結果
         * 多表連接查詢
             * SQL JOIN (連接) 是利用不同資料表之間欄位的關連性來結合多資料表之檢索。
+                ![mysql-13](./images/mysql-13.png)
             * 類型
                 * INNER JOIN 內部連接
                     * INNER JOIN (內部連接) 為等值連接，必需指定等值連接的條件，而查詢結果只會返回符合連接條件的資料。
@@ -1224,7 +1225,7 @@ MySQL 為什麼選擇了B+Tree作為它索引的資料結構呢。
 
 * 循环
     * 语法：
-        ```
+        ```sql
         【标签：】WHILE 循环条件  DO
             循环体
         END WHILE 【标签】;
@@ -1640,23 +1641,86 @@ Xtrabackup
     * 適合的場景 (如 log)
         * 資料庫大部分是非唯一索引；
         * 業務是寫多讀少，或者不是寫後立刻讀取；
-* SQL Query 處理的順序
-    * FROM / JOIN 和 ON
-    * WHERE
-    * GROUP BY
-    * HAVING
-    * SELECT
-    * ORDER BY
-    * LIMIT
 
-* 但資料庫不真的用這個順序處理，因為他做了很多優化
-* 這個順序可以用來理解 query 是否合理和其理由，但不能用來考慮效能相關或是 index 的問題
-    * Can I do WHERE on something that came from a GROUP BY? (no! WHERE happens before GROUP BY!)
-    * Can I filter based on the results of a window function? (no! window functions happen in SELECT, which happens
-      after both WHERE and GROUP BY)
-    * Can I ORDER BY based on something I did in GROUP BY? (yes! ORDER BY is basically the last thing, you can ORDER BY
-      based on anything!)
-    * When does LIMIT happen? (at the very end!)
+#### SQL 的解析順序
+
+MySQL架構總覽：
+
+![mysql-11](./images/mysql-11.png)
+
+Query 查詢的流程：
+
+![mysql-12](./images/mysql-12.png)
+
+1. 連接
+    1. 客戶端發起一條 Query 請求，監聽客戶端的「連接管理模塊」接收請求
+    2. 將請求轉發到「連接進/線程模塊」
+    3. 調用「用戶模塊」來進行授權檢查
+    4. 通過檢查後，「連接進/線程模塊」從「線程連接池’」取出空閒的被緩存的連接線程和客戶端請求對接，如果失敗則創建一個新的連接請求
+2. 處理
+    1. 先查詢緩存，檢查 Query 語句是否完全匹配，接著再檢查是否具有權限，都成功則直接取數據返回
+    2. 上一步有失敗則轉交給「命令解析器」，經過詞法分析，語法分析後生成解析樹
+    3. 接下來是預處理階段，處理解析器無法解決的語義，檢查權限等，生成新的解析樹
+    4. 再轉交給對應的模塊處理
+    5. 如果是SELECT查詢還會經由「查詢優化器」做大量的優化，生成執行計劃
+    6. 模塊收到請求後，通過「訪問控制模塊」檢查所連接的用戶是否有訪問目標表和目標字段的權限
+    7. 有則調用「表管理模塊」，先是查看 table cache 中是否存在，有則直接對應的表和獲取鎖，否則重新打開表文件
+    8. 根據表的meta數據，獲取表的存儲引擎類型等信息，通過接口調用對應的存儲引擎處理
+    9. 上述過程中產生數據變化的時候，若打開日誌功能，則會記錄到相應二進制日誌文件中
+3. 結果
+　　1. Query 請求完成後，將結果集返回給「連接進/線程模塊」
+　　2. 返回的也可以是相應的狀態標識，如成功或失敗等
+　　3. 「連接進/線程模塊」進行後續的清理工作，並繼續等待請求或斷開與客戶端的連接
+
+SQL 解析的順序：
+
+例子：
+
+    SELECT DISTINCT
+        < select_list >
+    FROM
+        < left_table > < join_type >
+    JOIN < right_table > ON < join_condition >
+    WHERE
+        < where_condition >
+    GROUP BY
+        < group_by_list >
+    HAVING
+        < having_condition >
+    ORDER BY
+        < order_by_condition >
+    LIMIT < limit_number >
+
+SQL 處理的順序：
+
+    FROM <left_table>  # 當涉及多個表的時候，左邊表的輸出會作為右邊表的輸入
+    ON <join_condition> # 基於虛擬表進行過濾，過濾出所有滿足條件的列，生成新的虛擬表 V1 表
+    <join_type> JOIN <right_table>
+    
+    WHERE <where_condition>  # 對生成的臨時表進行過濾，滿足 WHERE 子句的列被插入到表中，生成 V2 表
+    
+    GROUP BY <group_by_list>  # 將生成的表按照GROUP BY中的列進行分組，生成 V3 表
+    HAVING <having_condition>  # 對表中不同的組進行過濾，只作用於分組後的數據，生成 V4 表
+
+    SELECT   # 對 SELECT 子句中的元素進行處理，生成 V5 表
+    DISTINCT <select_list> # 如果指定了 DISTINCT，則會創建一張內存臨時表（如果內存放不下，就存放硬盤）。這張臨時表的表結構和上一步產生的虛擬表是一樣的，不同的是對進行 DISTINCT 操作的列增加了一個唯一索引，以此來除重復數據。
+    
+    ORDER BY <order_by_condition>  # 根據 ORDER BY 對結果進行排序，生成 V6 表
+    LIMIT <limit_number>  # 從上一步得到的VT6虛擬表中選出從指定位置開始的指定行數據
+
+![mysql-13](./images/mysql-13.png)
+
+簡化 Query 處理的順序：
+
+* FROM / JOIN 和 ON
+* WHERE
+* GROUP BY
+* HAVING
+* SELECT
+* ORDER BY
+* LIMIT
+
+但資料庫不真的用這個順序處理，因為它做了很多優化。
 
 ## 推薦的學習參考書
 
@@ -1670,3 +1734,4 @@ Xtrabackup
 * [MySQL](https://github.com/yorkmass/interview/blob/master/MySQL.md)
 * [MySQL的索引為什麼用B+Tree？InnoDB的資料儲存檔案和MyISAM的有何不同？](https://iter01.com/584005.html)
 * [項目中常用的 19 條 SQL 優化寶典](https://mp.weixin.qq.com/s/xKjhtgBlDydOm2623AImOA)
+* [步步深入：MySQL架構總覽->查詢執行流程->SQL解析順序](https://www.cnblogs.com/annsshadow/p/5037667.html)
