@@ -1050,7 +1050,14 @@
     SELECT ID FROM T WHERE NUM = 100*2  -- good
     ```
 * 時常刪除無用的索引，避免對執行計劃造成負面影響
-
+* 一般情況下，左連接給左表加索引。右連接給右表加索引。
+* 索引不能使用不等於（!= <>）或is null (is not null)，否則自身以及右側所有全部失效(針對大多數情況)。復合索引中如果有>，則自身和右側索引全部失效。
+* 盡量不要使用類型轉換（顯示、隱式），否則索引失效
+    ```sql
+    select * from teacher where tname = 123 ; -- 隱含的型態轉換
+    ```
+* 盡量不要使用or，否則索引失效
+    * or很猛，會讓自身索引和左右兩側的索引都失效
 
 #### B+Tree
 
@@ -1510,7 +1517,7 @@ id 值不同，id 值越大越優先查詢，id 值相同，從上往下順序�
 * unique_subquery
 * index_subquery
 * range
-    * 用索引返回一個範圍的結果，where後面是一個範圍查詢(between, >, <, >=, in)
+    * 用索引返回一個範圍的結果，where 後面是一個範圍查詢(between, >, <, >=, in)
     * in 有時候會失效，從而轉為無索引時候的 ALL
     * 一般來說至少要達到 range
 * index
@@ -1573,7 +1580,8 @@ id 值不同，id 值越大越優先查詢，id 值相同，從上往下順序�
             select * from test02 where a1='' order by a2 ;
             ```
     * Using index
-        * 返回的資料是從索引中資料，而不是從實際的資料中返回，當返回的資料都出現在索引中的資料時就會發生此情況。
+        * using index稱之為「索引覆蓋」
+        * 當出現了using index，就表示不用讀取源表，而只利用索引獲取數據，不需要回源表查詢。
     * Using temporary (需要優化)
         * 這是由於當前 SQL 用到了臨時表。一般出現在 group by 中。
             ```sql
@@ -1582,12 +1590,23 @@ id 值不同，id 值越大越優先查詢，id 值相同，從上往下順序�
             ```
         * 當你查詢哪個字段，就按照那個字段分組，否則就會出現using temporary
     * Using where
-        * 使用 WHERE 語法中的欄位來返回結果。
+        * 表示需要【回表查詢】，表示既在索引中進行了查詢，又回到了源表進行了查詢。
+            ```sql
+            create index a1_index on test02(a1);
+            select a1,a3 from test02 where a1="" and a3="" ; -- a1 有 index 而 a3 沒有
+            ```
+    * Impossible where
+        * 當where子句永遠為False的時候，會出現impossible where
+            ```sql
+            select a1 from test02 where a1="a" and a1="b";
+            ```
     * System
         * system 資料表，此為 const 連接類型的特殊情況。
     * Const
         * 資料表中的一個記錄的最大值能夠符合這個查詢。
         * 因為只有一行，這個值就是常數，因為 MySQL 會先讀這個值然後把它當做常數。
+    * Using join buffer
+        * 表示Mysql引擎使用了“連接緩存”，即 MySQL 底層動了你的SQL
 
 #### Query 技巧
 
@@ -1817,3 +1836,4 @@ SQL 處理的順序：
 * [MySQL的索引為什麼用B+Tree？InnoDB的資料儲存檔案和MyISAM的有何不同？](https://iter01.com/584005.html)
 * [項目中常用的 19 條 SQL 優化寶典](https://mp.weixin.qq.com/s/xKjhtgBlDydOm2623AImOA)
 * [步步深入：MySQL架構總覽->查詢執行流程->SQL解析順序](https://www.cnblogs.com/annsshadow/p/5037667.html)
+* [18000 字的 SQL 优化大全，收藏直接起飞！](https://mp.weixin.qq.com/s?__biz=MzA5ODM5MDU3MA==&mid=2650881675&idx=2&sn=967dae1a639fddd2b5f855e185f4ecdb)
