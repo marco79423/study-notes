@@ -100,14 +100,28 @@ Three.js 提供多種繪製器：
     * 如果瀏覽器不支援 WebGLRenderingContext，而要實現的 3D 影像剛好又不需要材質和光源，此時就可以使用 CanvasRenderer 繪製器
 
 ```js
-const renderer = new THREE.WebGLRenderer();
+// define the renderer
+renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
 //設置渲染區域尺寸
-renderer.setSize(width, height)
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// append the rendered to the dom
+document.body.appendChild(renderer.domElement);
 
 //設置背景顏色
 renderer.setClearColor(0xFFFFFF, 1)
 
-renderer.render(scene, camera)
+// render the scene
+renderer.render(scene, camera);
+
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
 ```
 
 ### 繪製器設定屬性
@@ -154,7 +168,19 @@ for(var i = 0, l = scene.children.length; i < l; i++){
 
 ## 相機 (Camera)
 
-相機(Camera) 的作用是定義可視域，相當於我們的雙眼，可以產生畫面的快照，將 3D 物件呈現在 2D 平面上需要透過相機的投影，投影有兩種模式：
+相機(Camera) 的作用是定義可視域，相當於我們的雙眼，可以產生畫面的快照，將 3D 物件呈現在 2D 平面上需要透過相機的投影，投影常用的有兩種模式：
+
+* 透視相機 (PerspectiveCamera)
+* 正交相機 (OrthographicCamera)
+
+比較：
+
+<iframe src="https://codesandbox.io/embed/orthographic-and-perspective-fd99jm?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+     title="orthographic-and-perspective"
+     allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+     sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+   ></iframe>
 
 ### 透視相機 (PerspectiveCamera)
 
@@ -218,6 +244,10 @@ const s = 200;
 const camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 1000);
 ```
 
+實例：
+
+![threejs-19](./images/threejs-19.jfif)
+
 ### 其他相機
 
 * ArrayCamera 陣列攝像機（包含多個子攝像機，通過這一組子攝像機渲染出實際效果，適用於 VR 場景）
@@ -247,7 +277,7 @@ camera.lookAt(new THREE.Vector3(320, 240, 0));
 
 Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直接使用這些光源類型為模型打光，內建光源類型：
 
-* Light // 繼承自Object3D類別
+* Light // 繼承自 Object3D 類別
     * 所有其他類型的光的基礎類別，這是一個抽象類別，不能直接使用
 * AmbientLight
     * 環境光源，屬於基礎光源，為場景中的所有物體提供一個基礎亮度。
@@ -292,18 +322,30 @@ Three.js 提供了常見的幾種光源，因此無需撰寫著色器就可直�
 
 要產生陰影有四個步驟：
 
-1. 繪製器設定
+1. 繪製器啟用陰影
     * 陰影需要大量運算，預設為不啟用陰影功能，所以首先繪製器必須啟用陰影功能。
-    * renderer.shadowMapEnable = true;
+        ```js
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        ```
 2. 光源設定
     * 只有平行光和聚光燈才可以產生陰影，如果想讓某個光源可以產生陰影，必須設定該光源產生陰影。
-    * light.castShadow = true;
-3. 物體產生陰影設定
+        ```js
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024;
+        spotLight.shadow.mapSize.height = 1024;
+        spotLight.shadow.bias = -0.0001;
+        ```
+3. 物體產生陰影
     * 只有物體擋著光才會產生陰影，如果想讓某個物體可以擋著光產生陰影。
-    * mesh1.castShadow = true;
-4. 物體接收陰影設定
+        ```js
+        mesh.castShadow = true;
+        ```
+4. 物體接收陰影
     * 如果想讓某個物體表面產生陰影，必須設定物體接收陰影。
-    * mesh2.receiveShadow = true;
+        ```js
+        mesh.receiveShadow = true;
+        ```
 
 ### 光源設定屬性
 
@@ -354,6 +396,8 @@ Geometry 是描述幾何模型的核心類別，包含所有描述 3D 模型必�
 * faceVertexUv 屬性決定紋理座標。
 
 如果想使用頂點顏色作為紋理，就可以使用每個 face 的 VertexColors 屬性，該屬性是一個 THREE.Color 類型，指定面上每個頂點的顏色。
+
+> **註：** Geometry 一個單位(Unit) 代表 1 公尺
 
 ![threejs-6](./images/threejs-6.jpg)
 
@@ -603,13 +647,20 @@ scene.add( group );
 一般不會只渲染一幀，有動畫效果的話，會使用 requestAnimationFrame 的 api 一幀幀的不停渲染。
 
 ```js
-function render() {
-    renderer.render(scene, camera)
-
-    requestAnimationFrame(render)
+function animate() {
+   // Schedual the next update
+   requestAnimationFrame(animate);
+   
+   // Some other changes that should occur on animate
+   // for instance, here we can rotate the cube a litle on every frame
+   cube.rotation.x += 0.01;
+   cube.rotation.y += 0.01;
+   
+   // re-render
+   renderer.render(scene, camera);
 }
 
-render();
+animate();
 ```
 
 ### 物件更新
@@ -650,6 +701,40 @@ geometry.normalsNeedUpdate = true;
 * buffersNeedUpdate
     * 設定 true 表示需要更新快取的長度，因為陣列長度改變了
 
+## 互動
+
+```js
+// Raycaster
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function intersect(pointerPos) {
+    raycaster.setFromCamera(pointerPos, camera);
+    return raycaster.intersectObjects(scene.children);
+}
+
+window.addEventListener("click", (event) => {
+
+// calculate pointer position in normalized device coordinates
+pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+// calculate objects intersecting the picking ray
+const intersectedObjects = intersect(pointer);
+
+if (intersectedObjects.length > 0) {
+    // do something with the objects our mouse intercted with
+}
+});
+```
+
+<iframe src="https://codesandbox.io/embed/raycaster-three-js-t72zu3?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+     title="raycaster-three-js"
+     allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+     sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+   ></iframe>
+
 ## 協助工具
 
 Three.js 提供一些純粹用於協助工具的曲面，這些曲面如果被增加到場景中，非常直觀，可以用於偵錯和提供協助。這些曲面也是有由幾何體和材質組成，因此可以像處理其他曲面一樣改變材質。
@@ -684,7 +769,6 @@ scene.add(helper)
 ```
 
 ![threejs-13](./images/threejs-13.jpg)
-
 
 ### AxesHelper 座標軸除錯模式
 
@@ -727,7 +811,6 @@ document.body.appendChild(stats.dom)
     * 建立一個箭頭圖示，也常用於標記法線，是一個 mesh，當應用各種矩陣的時候也應該同時應用這個 mesh
 * THREE.GridHelper
     * 建立地面網格，網格是一個正方形
-
 
 ## 進階
 
@@ -955,6 +1038,33 @@ Three.js 已經提供了 .obj 和 .dae 檔案格式的解析器，只需拿來�
 
 Three.js 自己定義了以 JSON 格式儲存模型資訊，雖非常有效率，但沒有業界普遍的支援，其相容性可能會有些折扣，但其特點是簡潔明了的格式資訊、檔案小利於傳輸，Three.js 目前提供 Maya、3ds Max、Blender 開發外掛程式用於模型儲存為 JSON 格式。
 
+#### Loaders
+
+```js
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+const loader = new GLTFLoader();
+loader.load(
+    // resource URL
+    'https://somesite.com/3dmodels/fox.gltf',
+    
+    // called when the resource is loaded
+    function ( gltf ) {
+        scene.add( gltf.scene );
+    },
+
+    // called while loading is progressing
+    function ( xhr ) {
+        console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    },
+
+    // called when loading has errors
+    function ( error ) {
+        console.log( 'An error happened' );
+    }
+);
+```
+
 ### 3D 動畫
 
 3D 模型的位置、大小、旋轉、材質發生變化，場景光源、投影發生變化都會在視覺上產生動畫，但這些都沒有改變 3D 模型的頂點，透過改變 3D 模型的頂點資料也可以產生動畫。
@@ -1029,3 +1139,4 @@ world.gravity.set(0, -10, 0)
 * [Three.js快速上手以及在React中運用](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/748247/)
 * [用 Three.js 來當個創世神 (00)：關於此系列文](https://ithelp.ithome.com.tw/articles/10199657)
 * [3D 物理世界 - Three.js 與 Cannon.js 介紹與使用](https://www.itread01.com/fxlif.html)
+* [Getting Started With Three.js](https://medium.com/geekculture/getting-started-with-three-js-1c2d02e18330)
