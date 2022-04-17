@@ -419,6 +419,13 @@ React 的提交階段也需要做兩件事。
 * Image
     * [像前端专家一样设计 Image 组件](https://mp.weixin.qq.com/s/zuU3NLmrl2GwqxiSZApEMQ?utm_source=pocket_mylist)
 
+## 工具庫
+
+* [react-shepherd](https://github.com/shipshapecode/react-shepherd)
+    * 引導您的用戶瀏覽您的應用
+* [Mantine](https://github.com/mantinedev/mantine)
+    * React 組件庫，包含 120+ 可定製組件和 Hook，支持暗黑主題。
+
 ## 參考文章
 
 * [React 性能优化 ：包括原理、技巧、Demo、工具使用](https://mp.weixin.qq.com/s/jaWzs2GpPjN6Et6rapMUzA)

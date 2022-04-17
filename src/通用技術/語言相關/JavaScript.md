@@ -83,3 +83,30 @@ console.log(JSON.stringify(value));
 ![temporal-2.png](./images/temporal-2.png)
 
 * 參考文章： [取而代之！以后不用再 new Date() 了](https://mp.weixin.qq.com/s/49CDsOtS_GK3R6ljT3holw)
+
+## 工具庫
+
+* qs
+    * 一個輕量的 url 參數轉換的 JavaScript 庫
+        ```js
+        import qs from 'qs'
+
+        qs.parse('user=tom&age=22') // => { user: "tom", age: "22" }
+        qs.stringify({ user: "tom", age: "22" }) // => user=tom&age=22
+        ```
+* js-cookie
+    * 一個簡單的、輕量的處理 cookies 的 js API
+        ```js
+        import Cookies from 'js-cookie'
+
+        Cookies.set('name', 'value', { expires: 7 }) // 有效期7天
+        Cookies.get('name') // => 'value'
+        ```
+* vConsole
+    * 一個輕量、可拓展、針對手機網頁的前端開發者調試面板。 (可給手機用)
+        ```js
+        import VConsole from 'vconsole'
+
+        const vConsole = new VConsole()
+        console.log('Hello world')
+        ```

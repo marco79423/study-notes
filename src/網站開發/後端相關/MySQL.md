@@ -369,6 +369,7 @@
                     * 只會留下總 price 小於 1000 的結果
         * 多表連接查詢
             * SQL JOIN (連接) 是利用不同資料表之間欄位的關連性來結合多資料表之檢索。
+                ![mysql-13](./images/mysql-13.png)
             * 類型
                 * INNER JOIN 內部連接
                     * INNER JOIN (內部連接) 為等值連接，必需指定等值連接的條件，而查詢結果只會返回符合連接條件的資料。
@@ -503,14 +504,14 @@
             * TOP (SQL Server), LIMIT (MySQL), ROWNUM (Oracle) 這些語法其實都是同樣的功能，都是用來限制您的 SQL
               查詢語句最多只影響幾筆資料，而不同的語法則只因不同的資料庫實作時採用不同的名稱。
             * 語法
-                ```
+                ```sql
                 SELECT table_column1, table_column2...
                 FROM table_name LIMIT 【起始的条目索引，】条目数;
                 ```
                 * 起始条目索引从0开始
                 * limit子句放在查询语句的最后
             * 常用公式
-                ```
+                ```sql
                 SELECT * FROM table LIMIT （要顯示的頁數-1）* 每頁條目數, 每頁條目數
                 ```
 
@@ -542,7 +543,7 @@
                 * CASE 類似於程式語言裡的 if/then/else 語句，用來作邏輯判斷。
                 * 語法
                     * 類似 switch 的用法
-                        ```
+                        ```sql
                         CASE expression
                             WHEN value THEN result
                             [WHEN···]
@@ -670,16 +671,16 @@
         * 例子：
             * 授與 mike 所有資料庫和所有資料表的所有操作權限：
 
-                ```
+                ```sql
                 GRANT ALL PRIVILEGES ON *.* TO 'mike'@'%';
 
-                -* 要記得下這個指令讓權限開始生效
+                -- 要記得下這個指令讓權限開始生效
                 FLUSH PRIVILEGES;
                 ```
 
             * 同時授與多個權限
 
-                ```
+                ```sql
                 GRANT SELECT,INSERT ON customers.* TO 'mike'@'%';
                 ```
 
@@ -1030,23 +1031,33 @@
 * 索引的欄位必須是經常作為查詢條件的欄位 (`WHERE` 內，而非 `SELECT` 內)
 * 索引應該建在小欄位上，對於大的文字欄位甚至超長欄位，不要建索引
 * 有頻繁的，大批量更新或插入操作的表，不要建立太多的索引
-* 刪除無用的索引，避免對執行計劃造成負面影響
+* 少量數據不用加索引
+* 很少使用的字段，不需要加索引
 * 不要過度索引。不是索引越多越好，每個額外的索引都要佔用額外的磁碟空間，並降低寫操作的效能。
 * 利用最左前綴，在創建一個 n 列的索引時，實際上是創建了 MySQL 可利用的 n 個索引。多列索引可以起到幾個索引的作用，利用索引最左邊的列來匹配行，這樣的列稱為最左前綴。
 * 考慮在列上進行的比較型別。索引可用於 `<`、`<=`、`=`、`>=`、`>` 和 `BETWEEN` 運算。在模式具有一個直接量字首時，索引也用於 `LIKE` 運算。
 * 於值唯一不重複的列要新增唯一索引，可以更快速的通過該索引來確定某條記錄。唯一索引是最有效的。
 * 複合索引的建立需要進行仔細分析；儘量考慮用 單欄位索引代替：過多的複合索引，在有單欄位索引的情況下，一般都是沒有存在價值的；相反，還會降低資料增加刪除時的效能，特別是對頻繁更新的表來說，負面影響更大。
-    * 正確選擇複合索引中的主列欄位，一般是選擇性較好的欄位
-    * 複合索引的幾個欄位是否經常同時以 `AND` 方式出現在 `WHERE` 子句中？單欄位查詢是否極少甚至沒有？如果是，則可以建立複合索引；否則考慮單欄位索引；
-    * 如果複合索引中包含的欄位經常單獨出現在 `WHERE` 子句中，則分解為多個單欄位索引
-    * 如果複合索引所包含的欄位超過 3 個，那麼仔細考慮其必要性，考慮減少複合的欄位
-    * 如果既有單欄位索引，又有這幾個欄位上的複合索引，一般可以刪除複合索引
-    * 如果索引多個欄位，第一個欄位要是經常作為查詢條件的。如果只有第二個欄位作為查詢條件，這個索引不會起到作用
+* 正確選擇複合索引中的主列欄位，一般是選擇性較好的欄位
+* 複合索引的幾個欄位是否經常同時以 `AND` 方式出現在 `WHERE` 子句中？單欄位查詢是否極少甚至沒有？如果是，則可以建立複合索引；否則考慮單欄位索引；
+* 如果複合索引中包含的欄位經常單獨出現在 `WHERE` 子句中，則分解為多個單欄位索引
+* 如果複合索引所包含的欄位超過 3 個，那麼仔細考慮其必要性，考慮減少複合的欄位
+* 如果既有單欄位索引，又有這幾個欄位上的複合索引，一般可以刪除複合索引
+* 如果索引多個欄位，第一個欄位要是經常作為查詢條件的。如果只有第二個欄位作為查詢條件，這個索引不會起到作用
 * 不要對索引欄位進行運算，要想法辦做變換
     ```sql
     SELECT ID FROM T WHERE NUM/2=100  -- bad
     SELECT ID FROM T WHERE NUM = 100*2  -- good
     ```
+* 時常刪除無用的索引，避免對執行計劃造成負面影響
+* 一般情況下，左連接給左表加索引。右連接給右表加索引。
+* 索引不能使用不等於（!= <>）或is null (is not null)，否則自身以及右側所有全部失效(針對大多數情況)。復合索引中如果有>，則自身和右側索引全部失效。
+* 盡量不要使用類型轉換（顯示、隱式），否則索引失效
+    ```sql
+    select * from teacher where tname = 123 ; -- 隱含的型態轉換
+    ```
+* 盡量不要使用or，否則索引失效
+    * or很猛，會讓自身索引和左右兩側的索引都失效
 
 #### B+Tree
 
@@ -1224,7 +1235,7 @@ MySQL 為什麼選擇了B+Tree作為它索引的資料結構呢。
 
 * 循环
     * 语法：
-        ```
+        ```sql
         【标签：】WHILE 循环条件  DO
             循环体
         END WHILE 【标签】;
@@ -1425,72 +1436,257 @@ MyISAM 儲存引擎在儲存索引的時候，是將索引資料單獨儲存，�
 
 通過這個結構，我們可以看出來，MyISAM的儲存引擎的索引都是同級別的，主鍵和非主鍵索引結構和查詢方式完全一樣。
 
-### 評估效能
+### 效能改善
 
 #### 使用 Explain
 
-* Explain
-    * id: 1
-    * select_type
-        * simple
-            * 表示簡單 select (不使用union或子查詢)
-        * primary
-            * 表示最外層的 select
-        * union
-            * 表示這個許句是 union 中的第二個或後面的select語句
-        * dependent
-            * union union中的第二個或後面的select語句,取決於外面的查詢
-        * union result
-            * union的結果。
-        * subquery
-            * 子查詢中的第一個select
-        * dependent subquery
-            * 子查詢中的第一個select,取決於外面的查詢
-        * derived
-            * 匯出表的select(from子句的子查詢)
-    * table
-        * 顯示這一行的資料是關於哪張表的
-    * type
-        * 這是重要的列，顯示了使用那一種類型
-        * 從最好到最差的連線型別為：
-            * system
-            * const (一次就命中，針對主鍵或唯一索引的等值查詢掃瞄, 最多只返回一行數據. const 查詢速度非常快, 因為它僅僅讀取一次即可.)
-            * eq_ref (MySQL在連接查詢時，會從最前面的資料表，對每一個記錄的聯合，從資料表中讀取一個記錄，在查詢時會使用索引為主鍵或唯一鍵的全部。)
-            * ref (通常最好到 ref，只有在查詢使用了非唯一鍵或主鍵時才會發生。)
-            * fulltext
-            * ref_or_null
-            * index_merge
-            * unique_subquery
-            * index_subquery
-            * range
-                * 一般來說至少要達到 range
-                * 用索引返回一個範圍的結果。例如：使用大於>或小於<查詢時發生
-            * index (此為針對索引中的資料進行查詢)
-            * ALL (掃描了全表才能確定結果)
-    * possible_keys
-        * 顯示可能使用到的索引，或是 Where 中最適合的欄位
-    * key
-        * 實際使用到的索引。如果為NULL,則沒有使用索引。如果為primary的話,表示使用了主鍵。
-    * key_len: 4
-        * 最長的索引寬度。如果鍵是NULL,長度就是NULL。在不損失精確性的情況下,長度越短越好
-    * ref
-        * const -* 顯示哪個欄位或常數與key一起被使用。
-    * rows
-        * 這個數表示mysql要遍歷多少資料才能找到
-        * 在innodb上是不準確的。
-    * Extra
-        * Extra為MySQL用來解析額外的查詢訊息
-        * 可能的欄位
-            * Distinct：當MySQL找到相關連的資料時，就不再搜尋。
-            * Not exists：MySQL優化 LEFT JOIN，一旦找到符合的LEFT JOIN資料後，就不再搜尋。
-            * Range checked for each Record(index map:#)：無法找到理想的索引。此為最慢的使用索引。
-            * Using filesort：當出現這個值時，表示此SELECT語法需要優化。因為MySQL必須進行額外的步驟來進行查詢。
-            * Using index：返回的資料是從索引中資料，而不是從實際的資料中返回，當返回的資料都出現在索引中的資料時就會發生此情況。
-            * Using temporary：同Using filesort，表示此SELECT語法需要進行優化。此為MySQL必須建立一個暫時的資料表(Table)來儲存結果，此情況會發生在針對不同的資料進行ORDER
-              BY，而不是GROUP BY。
-            * Using where：使用WHERE語法中的欄位來返回結果。
-            * System：system資料表，此為const連接類型的特殊情況。
-            * Const：資料表中的一個記錄的最大值能夠符合這個查詢。因為只有一行，這個值就是常數，因為MySQL會先讀這個值然後把它當做常數。
+各欄位解釋：
+
+* id ：編號
+* select_type ：查詢類型
+* table ：表
+* type ：類型
+* possible_keys ：預測用到的索引
+* key ：實際使用的索引
+* key_len ：實際使用索引的長度
+* ref ：表之間的引用
+* rows ：通過索引查詢到的數據量
+* Extra ：額外的信息
+
+##### id 編號
+
+id 值不同，id 值越大越優先查詢，id 值相同，從上往下順序執行
+
+##### select_type
+
+* simple
+    * 表示簡單 select (不使用union或子查詢)
+        ```sql
+        SELECT * FROM `teacher`;
+        ```
+* primary
+    * 包含子查詢的主查詢 (最外層)
+* subquery
+    * 子查詢中的第一個 select
+* derived
+    * 衍生查詢(用到了臨時表)
+    * 在 from 子查詢中，只有一張表；
+    * 在 from 子查詢中，如果 table1 union table2，則 table1 就是derived表；
+* union
+    * 在 from 子查詢中，union 之後的表稱之為 union表
+* dependent
+    * union union中的第二個或後面的select語句，取決於外面的查詢
+* union result
+    * 哪些表之間使用了 union 查詢
+* dependent subquery
+    * 子查詢中的第一個select，取決於外面的查詢
+
+##### table 表
+
+顯示這一行的資料是關於哪張表的
+
+##### type 索引類型
+
+這是重要的列，顯示了使用那一種類型
+
+要對type進行優化的前提是，你得創建索引
+
+建議至少要達到 range 級別
+
+從最好到最差的連線型別為：
+
+* system
+    * 源表只有一條數據
+    * 衍生表只有一條數據的主查詢(偶爾可以達到)
+* const
+    * 僅僅能查到一條數據的 SQL，僅針對主鍵(Primary key)或唯一索引(Unique index) 類型有效
+    * const 查詢速度非常快， 因為它僅僅讀取一次即可
+        ```sql
+        SELECT tid FROM test01 WHERE tid =1 ;
+        ```
+* eq_ref
+    * 唯一性索引，對於每個索引鍵的查詢，返回匹配唯一行數據（有且只有1個，不能多 、不能0），並且查詢結果和數據條數必須一致。
+    * 常見於唯一索引和主鍵索引
+* ref
+    * 查詢使用了非唯一鍵或主鍵。
+    * 非唯一性索引，對於每個索引鍵的查詢，返回匹配的所有行（可以0，可以1，可以多）
+    * 通常最好到 ref
+* fulltext
+* ref_or_null
+* index_merge
+* unique_subquery
+* index_subquery
+* range
+    * 用索引返回一個範圍的結果，where 後面是一個範圍查詢(between, >, <, >=, in)
+    * in 有時候會失效，從而轉為無索引時候的 ALL
+    * 一般來說至少要達到 range
+* index
+    * 查詢全部索引中的數據(掃描整個索引)
+* ALL
+    * 掃描了全表才能確定結果，查詢全部源表中的數據(暴力掃描全表)
+
+##### possible_keys
+
+顯示可能使用到的索引，或是 Where 中最適合的欄位，是一種預測，不准。
+
+##### key
+
+* 實際使用到的索引。
+* 如果為 primary 的話，表示使用了主鍵
+* 如果 possible_key/key 是 NULL，則說明沒用索引
+
+##### key_len
+
+索引的長度，用於判斷復合索引是否被完全使用(a,b,c)。
+
+* 如果鍵是 NULL，長度就是 NULL
+* 在不損失精確性的情況下，長度越短越好
+* 如果索引字段可以為 NULL，則 MySql 底層會使用1個字節用於標識
+
+##### ref
+
+指明當前表所參照的字段
+
+##### rows
+
+* 這個數表示 mysql 要遍歷多少資料才能找到
+* 這個值是預估計，在 innodb 上是不準確的。
+
+##### Extra
+
+* Extra為MySQL用來解析額外的查詢訊息
+* 可能的欄位
+    * Distinct
+        * 當MySQL找到相關連的資料時，就不再搜尋。
+    * Not exists
+        * MySQL優化 LEFT JOIN，一旦找到符合的LEFT JOIN資料後，就不再搜尋。
+    * Range checked for each Record(index map:#)
+        * 無法找到理想的索引。此為最慢的使用索引。
+    * Using filesort (需要優化)
+        * 進行了一次“額外”的排序。
+            * 對於單索引，如果排序和查找是同一個字段，則不會出現using filesort
+            * 如果排序和查找不是同一個字段，則會出現using filesort
+            * 因此where哪些字段，就order by哪些些字段。
+        * 常見於 order by 語句中。
+            ```sql
+            select * from test02 where a1 ='' order by a1 ;
+            
+            -- 查詢了a1字段，卻利用 a2 字段進行排序，此時 myql 底層會進行一次查詢，進行“額外”的排序。
+            select * from test02 where a1 ='' order by a2 ; 
+
+            -- 復合索引的情況 index idx (a1, a2, a3) 最佳左前綴
+            select * from test02 where a1='' order by a3 ; --using filesort
+            select * from test02 where a2='' order by a3 ; --using filesort
+            select * from test02 where a1='' order by a2 ;
+            ```
+    * Using index
+        * using index稱之為「索引覆蓋」
+        * 當出現了using index，就表示不用讀取源表，而只利用索引獲取數據，不需要回源表查詢。
+    * Using temporary (需要優化)
+        * 這是由於當前 SQL 用到了臨時表。一般出現在 group by 中。
+            ```sql
+            select a1 from test02 where a1 in ('1','2','3') group by a1 ;
+            select a1 from test02 where a1 in ('1','2','3') group by a2 ; --using temporary
+            ```
+        * 當你查詢哪個字段，就按照那個字段分組，否則就會出現using temporary
+    * Using where
+        * 表示需要【回表查詢】，表示既在索引中進行了查詢，又回到了源表進行了查詢。
+            ```sql
+            create index a1_index on test02(a1);
+            select a1,a3 from test02 where a1="" and a3="" ; -- a1 有 index 而 a3 沒有
+            ```
+    * Impossible where
+        * 當where子句永遠為False的時候，會出現impossible where
+            ```sql
+            select a1 from test02 where a1="a" and a1="b";
+            ```
+    * System
+        * system 資料表，此為 const 連接類型的特殊情況。
+    * Const
+        * 資料表中的一個記錄的最大值能夠符合這個查詢。
+        * 因為只有一行，這個值就是常數，因為 MySQL 會先讀這個值然後把它當做常數。
+    * Using join buffer
+        * 表示Mysql引擎使用了“連接緩存”，即 MySQL 底層動了你的SQL
+
+#### Query 技巧
+
+* IN 包含值不應過多
+    * MySQL 對於 IN 做了相應的優化，會將 IN 中的常量全部存儲在一個數組裡面，而且這個數組是排好序的。但是如果數值較多，產生的消耗也是比較大的。
+    * 對於連續的數值，能用 between 就不要用 in 了；再或者使用連接來替換。
+* SELECT 語句務必指明字段名稱
+    * SELECT * 會增加很多不必要的消耗（cpu、io、內存、網絡帶寬）
+    * 增加了使用覆蓋索引的可能性
+    * 當表結構發生改變時，前段也需要更新
+* 當只需要一條數據的時候，使用limit 1
+    * 這是為了使 EXPLAIN 中 type 列達到 const 類型
+* 如果排序字段沒有用到索引，就盡量少排序
+* 如果限制條件中其他字段沒有索引，盡量少用or
+    * or 兩邊的字段中，如果有一個不是索引字段，而其他條件也不是索引字段，會造成該查詢不走索引的情況。很多時候使用 union all 或者是 union (必要的時候)的方式來代替“or”會得到更好的效果
+* 盡量用 union all 代替 union
+    * union和union all的差異主要是前者需要將結果集合並後再進行唯一性過濾操作，這就會涉及到排序，增加大量的CPU運算，加大資源消耗及延遲。
+    * 當然，使用 union all 的前提條件是兩個結果集沒有重復數據。
+* 不使用 ORDER BY RAND()
+    ```sql
+    select id from `table_name` 
+    order by rand() limit 1000;
+    
+    -- 可優化為
+    select id from `table_name` t1 join 
+    (select rand() * (select max(id) from `table_name`) as nid) t2 on t1.id > t2.nid limit 1000;
+    ```
+* 區分in和exists， not in和not exists
+    ```sql
+    -- IN 會先執行子查詢，所以適合於外表大而內表(B)小的情況
+    select * from A where id in (select id from B)
+
+    -- exists 會先查外表(A)，所以適合外表小而內表大的情況
+    select * from A where exists (select * from B where B.id=.Aid)
+    ```
+* 使用合理的分頁方式以提高分頁的效率
+    ```sql
+    -- 數據量越大越慢
+    select id, name from table_name limit 866613, 20
+
+    -- 可以改為取前一頁的最大行數的id，然後根據這個最大的id來限制下一頁的起點
+    select id, name from table_name where id > 866612 limit 20
+    ```
+* 避免在 where 子句中對字段進行 null 值判斷
+    * 對於 null 的判斷會導致引擎放棄使用索引而進行全表掃描。
+* 不建議使用%前綴模糊查詢
+    * 例如LIKE "%name" 或者LIKE "%name%"，這種查詢會導致索引失效而進行全表掃描。但是可以使用LIKE "name%"。
+    * 可以用全文索引
+        ```sql
+        -- 原來
+        select id, fnum, fdst from table_name where user_name like '%zhangsan%'
+
+        ALTER TABLE `table_name` ADD FULLTEXT INDEX `idx_user_name` (`user_name`);
+
+        -- 使用有索引 (語法有差異)
+        select id, fnum, fdst from table_name 
+        where match(user_name) against('zhangsan' in boolean mode);
+        ```
+* 避免在where子句中對字段進行表達式操作
+    ```sql
+    -- 這樣無所用索引
+    select user_id,user_project from table_name where age*2=36;
+    
+    -- 可改為
+    select user_id,user_project from table_name where age=36/2;
+    ```
+* 避免隱式類型轉換
+    * where 子句中出現 column 字段的類型和傳入的參數類型不一致的時候發生的類型轉換，建議先確定where中的參數類型
+* 對於聯合索引來說，要遵守最左前綴法則
+    * 舉列來說索引含有字段id,name,school，可以直接用id字段，也可以id,name這樣的順序，但是name，school都無法使用這個索引。所以在創建聯合索引的時候一定要注意索引字段順序，常用的查詢字段放在最前面
+* 必要時可以使用force index來強制查詢走某個索引
+    * 有的時候MySQL優化器採取它認為合適的索引來檢索sql語句，但是可能它改採用的索引並不是我們想要的。這時就可以採用force index來強制優化器使用我們制定的索引。
+* 注意范圍查詢語句
+    * 對於聯合索引來說，如果存在范圍查詢，比如between,>,<等條件時，會造成後面的索引字段失效。
+* 關於JOIN優化
+    * LEFT JOIN A表為驅動表
+    * INNER JOIN MySQL會自動找出那個數據少的表作用驅動表
+    * RIGHT JOIN B表為驅動表
+* 盡量使用inner join，避免left join
+    * 參與聯合查詢的表至少為2張表，一般都存在大小之分。如果連接方式是inner join，在沒有其他過濾條件的情況下MySQL會自動選擇小表作為驅動表，但是left join在驅動表的選擇上遵循的是左邊驅動右邊的原則，即left join左邊的表名為驅動表。
 
 ### 備份和還原
 
@@ -1499,6 +1695,15 @@ MyISAM 儲存引擎在儲存索引的時候，是將索引資料單獨儲存，�
 Xtrabackup
 
 ### 內部實作
+
+#### 架構
+
+![mysql-15](./images/mysql-15.jfif)
+
+可以將 Mysql 分為：
+
+* sql層
+* 存儲引擎層
 
 #### InnoDB 緩衝池(buffer pool)
 
@@ -1537,23 +1742,86 @@ Xtrabackup
     * 適合的場景 (如 log)
         * 資料庫大部分是非唯一索引；
         * 業務是寫多讀少，或者不是寫後立刻讀取；
-* SQL Query 處理的順序
-    * FROM / JOIN 和 ON
-    * WHERE
-    * GROUP BY
-    * HAVING
-    * SELECT
-    * ORDER BY
-    * LIMIT
 
-* 但資料庫不真的用這個順序處理，因為他做了很多優化
-* 這個順序可以用來理解 query 是否合理和其理由，但不能用來考慮效能相關或是 index 的問題
-    * Can I do WHERE on something that came from a GROUP BY? (no! WHERE happens before GROUP BY!)
-    * Can I filter based on the results of a window function? (no! window functions happen in SELECT, which happens
-      after both WHERE and GROUP BY)
-    * Can I ORDER BY based on something I did in GROUP BY? (yes! ORDER BY is basically the last thing, you can ORDER BY
-      based on anything!)
-    * When does LIMIT happen? (at the very end!)
+#### SQL 的解析順序
+
+MySQL架構總覽：
+
+![mysql-11](./images/mysql-11.png)
+
+Query 查詢的流程：
+
+![mysql-12](./images/mysql-12.png)
+
+1. 連接
+    1. 客戶端發起一條 Query 請求，監聽客戶端的「連接管理模塊」接收請求
+    2. 將請求轉發到「連接進/線程模塊」
+    3. 調用「用戶模塊」來進行授權檢查
+    4. 通過檢查後，「連接進/線程模塊」從「線程連接池’」取出空閒的被緩存的連接線程和客戶端請求對接，如果失敗則創建一個新的連接請求
+2. 處理
+    1. 先查詢緩存，檢查 Query 語句是否完全匹配，接著再檢查是否具有權限，都成功則直接取數據返回
+    2. 上一步有失敗則轉交給「命令解析器」，經過詞法分析，語法分析後生成解析樹
+    3. 接下來是預處理階段，處理解析器無法解決的語義，檢查權限等，生成新的解析樹
+    4. 再轉交給對應的模塊處理
+    5. 如果是SELECT查詢還會經由「查詢優化器」做大量的優化，生成執行計劃
+    6. 模塊收到請求後，通過「訪問控制模塊」檢查所連接的用戶是否有訪問目標表和目標字段的權限
+    7. 有則調用「表管理模塊」，先是查看 table cache 中是否存在，有則直接對應的表和獲取鎖，否則重新打開表文件
+    8. 根據表的meta數據，獲取表的存儲引擎類型等信息，通過接口調用對應的存儲引擎處理
+    9. 上述過程中產生數據變化的時候，若打開日誌功能，則會記錄到相應二進制日誌文件中
+3. 結果
+　　1. Query 請求完成後，將結果集返回給「連接進/線程模塊」
+　　2. 返回的也可以是相應的狀態標識，如成功或失敗等
+　　3. 「連接進/線程模塊」進行後續的清理工作，並繼續等待請求或斷開與客戶端的連接
+
+SQL 解析的順序：
+
+例子：
+
+    SELECT DISTINCT
+        < select_list >
+    FROM
+        < left_table > < join_type >
+    JOIN < right_table > ON < join_condition >
+    WHERE
+        < where_condition >
+    GROUP BY
+        < group_by_list >
+    HAVING
+        < having_condition >
+    ORDER BY
+        < order_by_condition >
+    LIMIT < limit_number >
+
+SQL 處理的順序：
+
+    FROM <left_table>  # 當涉及多個表的時候，左邊表的輸出會作為右邊表的輸入
+    ON <join_condition> # 基於虛擬表進行過濾，過濾出所有滿足條件的列，生成新的虛擬表 V1 表
+    <join_type> JOIN <right_table>
+    
+    WHERE <where_condition>  # 對生成的臨時表進行過濾，滿足 WHERE 子句的列被插入到表中，生成 V2 表
+    
+    GROUP BY <group_by_list>  # 將生成的表按照GROUP BY中的列進行分組，生成 V3 表
+    HAVING <having_condition>  # 對表中不同的組進行過濾，只作用於分組後的數據，生成 V4 表
+
+    SELECT   # 對 SELECT 子句中的元素進行處理，生成 V5 表
+    DISTINCT <select_list> # 如果指定了 DISTINCT，則會創建一張內存臨時表（如果內存放不下，就存放硬盤）。這張臨時表的表結構和上一步產生的虛擬表是一樣的，不同的是對進行 DISTINCT 操作的列增加了一個唯一索引，以此來除重復數據。
+    
+    ORDER BY <order_by_condition>  # 根據 ORDER BY 對結果進行排序，生成 V6 表
+    LIMIT <limit_number>  # 從上一步得到的VT6虛擬表中選出從指定位置開始的指定行數據
+
+![mysql-13](./images/mysql-13.png)
+
+簡化 Query 處理的順序：
+
+* FROM / JOIN 和 ON
+* WHERE
+* GROUP BY
+* HAVING
+* SELECT
+* ORDER BY
+* LIMIT
+
+但資料庫不真的用這個順序處理，因為它做了很多優化。
 
 ## 推薦的學習參考書
 
@@ -1566,3 +1834,6 @@ Xtrabackup
 * [這波MySQL操作，穩穩帶你進階頂端](https://mp.weixin.qq.com/s/EXbMgT0T3cXZ0u-4lvMDbQ)
 * [MySQL](https://github.com/yorkmass/interview/blob/master/MySQL.md)
 * [MySQL的索引為什麼用B+Tree？InnoDB的資料儲存檔案和MyISAM的有何不同？](https://iter01.com/584005.html)
+* [項目中常用的 19 條 SQL 優化寶典](https://mp.weixin.qq.com/s/xKjhtgBlDydOm2623AImOA)
+* [步步深入：MySQL架構總覽->查詢執行流程->SQL解析順序](https://www.cnblogs.com/annsshadow/p/5037667.html)
+* [18000 字的 SQL 优化大全，收藏直接起飞！](https://mp.weixin.qq.com/s?__biz=MzA5ODM5MDU3MA==&mid=2650881675&idx=2&sn=967dae1a639fddd2b5f855e185f4ecdb)
