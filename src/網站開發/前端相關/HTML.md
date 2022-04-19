@@ -1,5 +1,21 @@
 # HTML 學習筆記
 
+## iframe
+
+```html
+<body>
+  <iframe>
+  </iframe>
+  <script>
+    const win = frames[0].window;
+    console.assert(win.globalThis !== globalThis); // true
+    console.assert(win.Array !== Array); // true
+  </script>
+</body>
+```
+
+每個 iframe 都有一個獨立的運行環境，document 的全局對象不同於 iframe 的全局對象，類似的，全局對象上的 Array 肯定也不同。
+
 ## Open Graph
 
 Open Graph Protocol（開放圖譜協議），簡稱 OG 協議。它是 Facebook 在 2010 年 F8 開發者大會公佈的一種網頁元信息（Meta Information）標記協議，屬於 Meta Tag （Meta 標簽）的範疇，是一種為社交分享而生的 Meta 標簽，用於標准化網頁中元數據的使用，使得社交媒體得以以豐富的“圖形”對象來表示共享的頁面內容。
