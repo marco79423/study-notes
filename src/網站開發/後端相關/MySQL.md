@@ -8,6 +8,23 @@
 * DBMS：資料庫管理系統，用於管理資料庫的資料
 * SQL：結構化查詢語言，用於和 DBMS 通訊的語言
 
+### 關聯式資料庫管理系統 (Relational Database Management System, RDBMS)
+
+目前常見的 RDBMS 有：
+
+* MySQL
+* SQLite
+* PostgreSQL
+* Oracle Database
+* Microsoft SQL
+
+關聯式資料庫的特色：
+
+* 資料存放在一個或多個資料表當中。資料都是透過資料表中行列的二元關係呈現。
+* 資料表需預先設定架構 (schema)
+* 資料表之間的關係也需要預先定義好，使資料之間有明確的關聯
+* 可以透過 SQL 語言進行資料操作
+
 ### 資料庫的三範式
 
 資料庫正常化是有效地組織資料庫中的數據的過程。
@@ -33,12 +50,12 @@
 * 交易是單一工作單元。如果交易成功，便會確定交易期間所修改的所有資料，且會成為資料庫中永久的內容。如果交易發現錯誤，必須取消或回復，便會清除所有的資料修改。通俗易懂的說就是一組原子性的 SQL 查詢
 * Mysql 中事務的支持在存儲引擎層，MyISAM 存儲引擎不支持事務，而 InnoDB 支持，這是 Mysql 5.5.5 以後默認引擎由 MyISAM 換成 InnoDB 的最根本原因。
 
-#### 事務的 ACID 屬性
+#### 事務(Transaction) 的 ACID 屬性
 
 * 原子性（Atomicity）
     * 作為邏輯工作單元，一個事務裡的所有操作的執行，要麼全部成功，要麼全部失敗（會撤會事務之前的狀態）。
 * 一致性（Consistency）
-    * 資料庫從一個一致性狀態變換到另外一個一致性狀態，資料庫的完整性不會受到破壞。
+    * 事務完成前後，資料都必須永遠符合 schema 的規範，保持資料與資料庫的一致性
 * 隔離性（Isolation）
     * 多个事務同时操作相同資料庫的同一个数據时，一个事務的執行不受另外一个事務的干擾
         * 這通常使用鎖來實現。一個事務處理後的結果，影響了其他事務，那麼其他事務會撤回。事務的 100% 隔離，需要犧牲速度。
@@ -1837,3 +1854,4 @@ SQL 處理的順序：
 * [項目中常用的 19 條 SQL 優化寶典](https://mp.weixin.qq.com/s/xKjhtgBlDydOm2623AImOA)
 * [步步深入：MySQL架構總覽->查詢執行流程->SQL解析順序](https://www.cnblogs.com/annsshadow/p/5037667.html)
 * [18000 字的 SQL 优化大全，收藏直接起飞！](https://mp.weixin.qq.com/s?__biz=MzA5ODM5MDU3MA==&mid=2650881675&idx=2&sn=967dae1a639fddd2b5f855e185f4ecdb)
+* [是否該用 MongoDB？選擇資料庫前你該了解的事](https://tw.alphacamp.co/blog/mysql-and-mongodb-comparison)
