@@ -1,5 +1,50 @@
 # HTML 學習筆記
 
+## Event
+
+### target 和 currentTarget 的差別
+
+當你觸發一個元素的事件的時候，該事件從該元素的祖先元素傳遞下去，此過程為捕獲，而到達此元素之後，又會向其祖先元素傳播上去，此過程為冒泡
+
+```html
+<div id="a">
+  <div id="b">
+    <div id="c">
+      <div id="d">哈哈哈哈哈</div>
+    </div>
+  </div>
+</div>
+```
+
+![html-1](./images/html-1.png)
+
+addEventListener 是為元素綁定事件的方法，他接收三個參數：
+
+* 第一個參數：綁定的事件名
+* 第二個參數：執行的函數
+* 第三個參數：
+    * false：默認，代表冒泡時綁定
+    * true：代表捕獲時綁定
+
+如果為 a、b、c、d 都綁定事件，而且都用默認的 false，看看輸出的東西可以發現觸發的是 d，而執行的順序是冒泡的順序
+
+    target是 d currentTarget是 d
+    target是 d currentTarget是 c
+    target是 d currentTarget是 b
+    target是 d currentTarget是 a
+
+如果改為第三個參數都設置為 true，我們看看輸出結果，可以看出觸發的是 d，而執行的元素是捕獲的順序
+
+    target是 d currentTarget是 a
+    target是 d currentTarget是 b
+    target是 d currentTarget是 c
+    target是 d currentTarget是 d
+
+可以總結出：
+
+* e.target：觸發事件的元素
+* e.currentTarget：綁定事件的元素
+
 ## iframe
 
 ```html
@@ -159,3 +204,4 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 ## 參考文章
 
 * [連 OG 都不知道還好意思說自己開發過 H5？](https://mp.weixin.qq.com/s/DiLZZaJ8ru2VqOEzB1EIbA)
+* [e.target 和 e.currentTarget 的区别？你到底知不知道？](https://mp.weixin.qq.com/s/B3AHkbdr7wlQB8-Fk5CgTg)
