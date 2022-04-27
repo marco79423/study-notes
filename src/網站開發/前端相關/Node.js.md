@@ -680,6 +680,10 @@ browserslist字段用來告知支持哪些瀏覽器及版本。Babel、Autoprefi
 
 這個屬性是不同的前端工具之間共用目標瀏覽器和 node 版本的配置工具，被很多前端工具使用，比如Babel、Autoprefixer等。
 
+## npm
+
+* [前端现代包管理器的进化史](https://mp.weixin.qq.com/s/8C9L_z64NUI9kWan64-qAg)
+
 ## 參考資料
 
 * [关于前端大管家 package.json，你知道多少？](https://mp.weixin.qq.com/s/csGiBBvsZLI76yrXjD6NGg)
