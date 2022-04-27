@@ -318,6 +318,69 @@ class ScrollingList extends React.Component {
 * 服務端渲染 (Server side rendering)
 * 錯誤邊界本身(而不是子組件)拋出的錯誤
 
+## 進階
+
+### Concurrent Mode
+
+Concurrent Mode（以下簡稱 CM）翻譯叫並發模式，本身並不是一個功能，而是一個底層設計，它使 React 能夠同時准備多個版本的 UI。
+
+![react-1](./images/react-1.jfif)
+
+在以前，React 在狀態變更後，會開始准備虛擬 DOM，然後渲染真實 DOM，整個流程是串行的。一旦開始觸發更新，只能等流程完全結束，期間是無法中斷的。
+
+![react-2](./images/react-2.jfif)
+
+在 CM 模式下，React 在執行過程中，每執行一個 Fiber，都會看看有沒有更高優先級的更新，如果有，則當前低優先級的的更新會被暫停，待高優先級任務執行完之後，再繼續執行或重新執行。
+
+CM 模式有點類似計算機的多任務處理，處理器在同時進行的應用程序之間快速切換，也許 React 應該改名叫 ReactOS 了。
+
+這裡舉個例子：我們正在看電影，這時候門鈴響了，我們要去開門拿快遞。在 React 18 以前，一旦我們開始看電影，就不能被終止，必須等電影看完之後，才會去開門。而在 React 18 CM 模式之後，我們就可以暫停電影，等開門拿完快遞之後，再重新繼續看電影。
+
+不過對於普通開發者來說，我們一般是不會感知到 CM 的存在的，在升級到 React 18 之後，我們的項目不會有任何變化。
+
+我們需要關注的是基於 CM 實現的上層功能，比如 Suspense、Transitions、streaming server rendering（流式服務端渲染）， 等等。
+
+React 18 的大部分功能都是基於 CM 架構實現出來的，並且這這是一個開始，未來會有更多基於 CM 實現的高級能力。
+
+#### startTransition
+
+React 的狀態更新可以分為兩類：
+
+* 緊急更新（Urgent updates）
+    * 比如打字、點擊、拖動等，需要立即響應的行為，如果不立即響應會給人很卡，或者出問題了的感覺
+* 過渡更新（Transition updates）
+    * 將 UI 從一個視圖過渡到另一個視圖。不需要即時響應，有些延遲是可以接受的。
+
+React 並不能自動識別哪些更新是優先級更高的，所以默認情況下， React 所有的更新都是緊急更新。
+
+```js
+const [inputValue, setInputValue] = useState();
+
+const onChange = (e)=>{
+  setInputValue(e.target.value); // 緊急的
+  // 更新搜索列表
+  setSearchQuery(e.target.value); // 非緊急的
+}
+
+return (
+  <input value={inputValue} onChange={onChange} />
+)
+```
+
+此例用戶的鍵盤輸入操作後，`setInputValue` 會立即更新用戶的輸入到界面上，是緊急更新。而 `setSearchQuery` 是根據用戶輸入，查詢相應的內容，是非緊急的。
+
+但是 React 確實沒有能力自動識別。所以它提供了 startTransition讓我們手動指定哪些更新是緊急的，哪些是非緊急的。
+
+```js
+// 緊急的
+setInputValue(e.target.value);
+
+startTransition(() => {
+  setSearchQuery(input); // 非緊急的
+});
+
+```
+
 ## 開發技巧
 
 ### 最好一個副作用一個 effect
@@ -413,6 +476,93 @@ React 的提交階段也需要做兩件事。
 
 因此在子組件的 componentDidMount 方法中，可以執行  `document.querySelector('.parentClass')` ，拿到父組件渲染的 `.parentClass` DOM 節點，盡管這時候父組件的 componentDidMount 方法還沒有被執行。useLayoutEffect 的執行時機與 componentDidMount 相同。
 
+### 自動批處理 Automatic Batching
+
+批處理是指 React 將多個狀態更新，聚合到一次 render 中執行，以提升性能。比如
+
+```js
+function handleClick() {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+  // React 只會 re-render 一次，這就是批處理
+}
+```
+
+在 React 18 之前，React 只會在事件回調中使用批處理，而在 Promise、setTimeout、原生事件等場景下，是不能使用批處理的。
+
+```js
+setTimeout(() => {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+  // React 會 render 兩次，每次 state 變化更新一次
+}, 1000);
+```
+
+而在 React 18 中，所有的狀態更新，都會自動使用批處理，不關心場景。
+
+```js
+function handleClick() {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+  // React 只會 re-render 一次，這就是批處理
+}
+
+setTimeout(() => {
+  setCount(c => c + 1);
+  setFlag(f => !f);
+  // React 只會 re-render 一次，這就是批處理
+}, 1000);
+```
+
+如果你在某種場景下不想使用批處理，你可以通過 flushSync來強制同步執行（比如：你需要在狀態更新後，立刻讀取新 DOM 上的數據等。）
+
+```js
+import { flushSync } from 'react-dom';
+
+function handleClick() {
+  flushSync(() => {
+    setCounter(c => c + 1);
+  });
+  // React 更新一次 DOM
+  flushSync(() => {
+    setFlag(f => !f);
+  });
+  // React 更新一次 DOM
+}
+```
+
+React 18 的批處理在絕大部分場景下是沒有影響，但在 Class 組件中，如果你在兩次 setState 中間讀取了 state 值，會出現不兼容的情況，如下示例。
+
+```js
+handleClick = () => {
+  setTimeout(() => {
+    this.setState(({ count }) => ({ count: count + 1 }));
+
+    // 在 React17 及之前，打印出來是 { count: 1, flag: false }
+    // 在 React18，打印出來是 { count: 0, flag: false }
+    console.log(this.state);
+
+    this.setState(({ flag }) => ({ flag: !flag }));
+  });
+};
+```
+
+當然你可以通過 flushSync來修正它。
+
+```js
+handleClick = () => {
+  setTimeout(() => {
+    ReactDOM.flushSync(() => {
+      this.setState(({ count }) => ({ count: count + 1 }));
+    });
+
+    // 在 React18，打印出來是 { count: 1, flag: false }
+    console.log(this.state);
+
+    this.setState(({ flag }) => ({ flag: !flag }));
+  });
+};
+```
 
 ## Next.js
 
@@ -431,3 +581,4 @@ React 的提交階段也需要做兩件事。
 * [React 性能优化 ：包括原理、技巧、Demo、工具使用](https://mp.weixin.qq.com/s/jaWzs2GpPjN6Et6rapMUzA)
 * [你可能不知道的五个关键的 React 知识点](https://mp.weixin.qq.com/s/Brp0TECsGpdBdv1686TPiQ)
 * [重新认识 React 生命周期](https://blog.hhking.cn/2018/09/18/react-lifecycle-change/)
+* [React 18 全覽](https://mp.weixin.qq.com/s/N6MBhe4fkHO49ZqVNBPflQ)
