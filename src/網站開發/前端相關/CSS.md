@@ -448,6 +448,352 @@ HTML 表格對於顯示表格數據是很好的，過去也常常使用表格來
 
 ![css-9](./images/css-9.jpg)
 
+## 函數
+
+在 CSS 中，其實存在各種各樣的函數。具體分為：
+
+* Transform functions
+* Math functions
+* Filter functions
+* Color functions
+* Image functions
+* Counter functions
+* Font functions
+* Shape functions
+* Reference functions
+* CSS grid functions
+
+### Calc()
+
+calc 函數允許在聲明 CSS 屬性值時執行一些計算。
+
+```css
+{
+    width: calc(100% - 80px);
+}
+```
+
+一些需要注意的點：
+
+* `+` 和 `-` 運算符的兩邊必須要有空白字符。比如，`calc(50% -8px)` 會被解析成為一個無效的表達式，必須寫成 `calc(8px + -50%)`
+* 和 `/` 這兩個運算符前後不需要空白字符，但如果考慮到統一性，仍然推薦加上空白符
+* 用 0 作除數會使 HTML 解析器拋出異常
+* 涉及自動佈局和固定佈局的表格中的表列、表列組、表行、表行組和表單元格的寬度和高度百分比的數學表達式，auto 可視為已指定。
+* calc() 函數支持嵌套，但支持的方式是：把被嵌套的 calc() 函數全當成普通的括號。（所以，函數內直接用括號就好了。）
+* calc() 支持與 CSS 變量混合使用
+
+看一個最常見的例子，頁面結構如下：
+
+```css
+<div class="g-container">
+    <div class="g-content">Content</div>
+    <div class="g-footer">Footer</div>
+</div>
+```
+
+頁面的 `g-footer` 高為 80px，我們希望不管頁面多長，`g-content` 部分都可以佔滿剩餘空間，像是這樣：
+
+![css-20](./images/css-20.png)
+
+除了可以用 flex 的彈性佈局實現，也可以使用 calc()：
+
+```css
+.g-container {
+    height: 100vh;
+}
+
+.g-content {
+    height: calc(100vh - 80px);
+}
+
+.g-footer {
+    height: 80px;
+}
+```
+
+#### Calc 中的加減法與乘除法的差異
+
+加減法與乘除法要單位，但乘除不用
+
+```css
+{
+    font-size: calc(1rem + 10px);
+    width: calc(100px + 10%);
+}
+```
+
+可以看到，加減法兩邊的操作數都是需要單位的，而乘除法，需要一個無單位數，僅僅表示一個倍率：
+
+```css
+{
+    width: calc(100% / 7);
+    animation-delay: calc(1s * 3);
+}
+```
+
+#### Calc 的嵌套
+
+calc() 函數是可以嵌套使用的，像是這樣：
+
+```css
+{
+  width: calc(100vw - calc(100% - 64px));
+}
+```
+
+此時，內部的 calc() 函數可以退化寫成一個括號即可 ()，所以上述代碼等價於：
+
+```css
+{
+  width: calc(100vw - (100% - 64px));
+}
+```
+
+也就是嵌套內的 calc()，calc 幾個函數字符可以省略。
+
+#### Calc 內不同單位的混合運算
+
+calc() 支持不同單位的混合運算，對於長度，只要是屬於長度相關的單位都可以進行混合運算，包含這些：
+
+* px
+* %
+* em
+* rem
+* in
+* mm
+* cm
+* pt
+* pc
+* ex
+* ch
+* vh
+* vw
+* vmin
+* vmax
+
+這裡有一個有意思的點，運算肯定是消耗性能的，早年間，有這樣一段 CSS 代碼，可以直接讓 Chrome 瀏覽器崩潰 Crash：
+
+```html
+<div></div>
+```
+
+CSS 樣式如下：
+
+```css
+div {
+  --initial-level-0: calc(1vh + 1% + 1px + 1em + 1vw + 1cm);
+
+  --level-1: calc(var(--initial-level-0) + var(--initial-level-0));
+  --level-2: calc(var(--level-1) + var(--level-1));
+  --level-3: calc(var(--level-2) + var(--level-2));
+  --level-4: calc(var(--level-3) + var(--level-3));
+  --level-5: calc(var(--level-4) + var(--level-4));
+  --level-6: calc(var(--level-5) + var(--level-5));
+  --level-7: calc(var(--level-6) + var(--level-6));
+  --level-8: calc(var(--level-7) + var(--level-7));
+  --level-9: calc(var(--level-8) + var(--level-8));
+  --level-10: calc(var(--level-9) + var(--level-9));
+  --level-11: calc(var(--level-10) + var(--level-10));
+  --level-12: calc(var(--level-11) + var(--level-11));
+  --level-13: calc(var(--level-12) + var(--level-12));
+  --level-14: calc(var(--level-13) + var(--level-13));
+  --level-15: calc(var(--level-14) + var(--level-14));
+  --level-16: calc(var(--level-15) + var(--level-15));
+  --level-17: calc(var(--level-16) + var(--level-16));
+  --level-18: calc(var(--level-17) + var(--level-17));
+  --level-19: calc(var(--level-18) + var(--level-18));
+  --level-20: calc(var(--level-19) + var(--level-19));
+  --level-21: calc(var(--level-20) + var(--level-20));
+  --level-22: calc(var(--level-21) + var(--level-21));
+  --level-23: calc(var(--level-22) + var(--level-22));
+  --level-24: calc(var(--level-23) + var(--level-23));
+  --level-25: calc(var(--level-24) + var(--level-24));
+  --level-26: calc(var(--level-25) + var(--level-25));
+  --level-27: calc(var(--level-26) + var(--level-26));
+  --level-28: calc(var(--level-27) + var(--level-27));
+  --level-29: calc(var(--level-28) + var(--level-28));
+  --level-30: calc(var(--level-29) + var(--level-29));
+
+  --level-final: calc(var(--level-30) + 1px);
+
+    border-width: var(--level-final);                                 
+    border-style: solid;
+}
+```
+
+可以看到，從 --level-1 到 --level-30，每次的運算量都是成倍的增長，最終到 --level-final 變量，展開將有 2^30 = 1073741824 個 --initial-level-0 表達式的內容。
+
+並且，每個 --initial-level-0 表達式的內容 -- calc(1vh + 1% + 1px + 1em + 1vw + 1cm)，在瀏覽器解析的時候，也已經足夠復雜。
+
+混合在一起，就導致了瀏覽器的 BOOM（Chrome 70之前的版本），為了能看到效果，我們將上述樣式賦給某個元素被 hover 的時候，得到如下效果：
+
+![css-21](./images/css-21.gif)
+
+當然，這個 BUG 目前已經被修復了，我們也可以通過這個小 DEMO 瞭解到，一是 calc 是可以進行不同單位的混合運算的，另外一個就是注意具體使用的時候如果計算量巨大，可能會導致性能上較大的消耗。
+
+當然，不要將長度單位和非長度單位混合使用，像是這樣：
+
+```css
+{
+    animation-delay: calc(1s + 1px);
+}
+```
+
+#### Calc 搭配 CSS 自定義變量使用
+
+calc() 函數非常重要的一個特性就是能夠搭配 CSS 自定義以及 CSS @property 變量一起使用。
+
+最簡單的一個 DEMO：
+
+```css
+:root {
+    --width: 10px;
+}
+div {
+    width: calc(var(--width));
+}
+```
+
+當然，這樣看上去，根本看不出這樣的寫法的作用，好像沒有什麼意義。實際應用場景中，會比上述的 DEMO 要稍微復雜一些。
+
+假設我們要實現這樣一個 loading 動畫效果，一開始只有 3 個球：
+
+![css-22](./images/css-22.gif)
+
+可能的寫法是這樣，我們給 3 個球都添加同一個旋轉動畫，然後分別控制他們的 animation-delay：
+
+```html
+<div class="g-container">
+    <div class="g-item"></div>
+    <div class="g-item"></div>
+    <div class="g-item"></div>
+</div>
+```
+
+```css
+.item:nth-child(1) {
+    animation: rotate 3s infinite linear;
+}
+.item:nth-child(2) {
+    animation: rotate 3s infinite -1s linear;
+}
+.item:nth-child(3) {
+    animation: rotate 3s infinite -2s linear;
+}
+```
+
+如果有一天，這個動畫需要擴展成 5 個球的話，像是這樣：
+
+![css-23](./images/css-23.gif)
+
+我們就不得已，得去既添加 HTML，又修改 CSS。而如果借助 Calc 和 CSS 變量，這個場景就可以稍微簡化一下。
+
+假設只有 3 個球：
+
+```html
+<div class="g-container">
+    <div class="g-item" style="--delay: 0"></div>
+    <div class="g-item" style="--delay: 1"></div>
+    <div class="g-item" style="--delay: 2"></div>
+</div>
+```
+
+我們通過 HTML 的 Style 標簽，傳入 --delay 變量，在 CSS 中直接使用它們：
+
+```css
+.g-item {
+    animation: rotate 3s infinite linear;
+    animation-delay: calc(var(--delay) * -1s);
+}
+@keyframes rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+```
+
+而當動畫修改成 5 個球時，我們就不需要修改 CSS，直接修改 HTML 即可，像是這樣：
+
+```html
+<div class="g-container">
+    <div class="g-item" style="--delay: 0"></div>
+    <div class="g-item" style="--delay: 0.6"></div>
+    <div class="g-item" style="--delay: 1.2"></div>
+    <div class="g-item" style="--delay: 1.8"></div>
+    <div class="g-item" style="--delay: 2.4"></div>
+</div>
+```
+
+核心的 CSS 還是這一句，不需要做任何修改：
+
+```css
+{
+    animation-delay: calc(var(--delay) * -1s);
+}
+```
+
+#### calc 搭配自定義變量時候的默認值
+
+還是上述的 Loading 動畫效果，如果我的 HTML 標簽中，有一個標簽忘記填充 --delay 的值了，那會發生什麼？
+
+像是這樣：
+
+```html
+<div class="g-container">
+    <div class="g-item" style="--delay: 0"></div>
+    <div class="g-item" style="--delay: 0.6"></div>
+    <div class="g-item"></div>
+    <div class="g-item" style="--delay: 1.8"></div>
+    <div class="g-item" style="--delay: 2.4"></div>
+</div>
+```
+
+```css
+{
+    animation-delay: calc(var(--delay) * -1s);
+}
+```
+
+由於 HTML 標簽沒有傳入 --delay 的值，並且在 CSS 中向上查找也沒找到對應的值，此時，animation-delay: calc(var(--delay) * -1s) 這一句其實是無效的，相當於 animation-delay: 0，效果也就是少了個球的效果：
+
+图片
+所以，基於這種情況，可以利用 CSS 自定義變量 var() 的 fallback 機制：
+
+```css
+{
+    // (--delay, 1) 中的 1 是個容錯機制
+    animation-delay: calc(var(--delay, 1) * -1s);
+}
+```
+
+此時，如果沒有讀取到任何 --delay 值，就會使用默認的 1 與 -1s 進行運算。
+
+#### Calc 沒有字符串拼接的能力
+
+calc 的沒有字符串拼接的能力，唯一可能完成字符串拼接的是在元素的偽元素的  content 屬性中。但是也不是利用 calc。
+
+```css
+:root {
+    --stringA: '123';
+    --stringB: '456';
+    --stringC: '789';
+}
+
+div::before {
+    /* 錯誤的寫法 */
+    content: calc(var(--stringA) + var(--stringB) + var(--stringC));
+
+    /* 正確的寫法，直接相加即可 */
+    content: var(--stringA) + var(--stringB) + var(--stringC);
+
+    /* 不支持字符串拼接 */
+    content: calc("My " + "counter");
+
+    /* 更不支持字符串乘法 */
+    content: calc("String Repeat 3 times" * 3);
+}
+```
+
 ## 方法論
 
 ### OOCSS
@@ -662,3 +1008,4 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 * [CSS 布局的本质是什么](https://mp.weixin.qq.com/s/ulp8BbbeZAneS4NajDF6-g)
 * [防禦性設計和開發](https://mp.weixin.qq.com/s/G4pME9xFHdWnFckgytnofQ)
 * [層疊與繼承](https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance)
+* [現代 CSS 解決方案：CSS 數學函數之 calc](https://mp.weixin.qq.com/s?__biz=Mzg2MDU4MzU3Nw==&mid=2247491089&idx=1&sn=84aecbf783859c930bf57660b46d06ef&chksm=ce257de7f952f4f17b49c890910d995362a1a7247fdf20bd427d868a15cef08e1c3d9e68eba1)
