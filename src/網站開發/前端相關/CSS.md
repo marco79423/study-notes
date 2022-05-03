@@ -463,7 +463,7 @@ HTML 表格對於顯示表格數據是很好的，過去也常常使用表格來
 * Reference functions
 * CSS grid functions
 
-### Calc()
+### calc()
 
 calc 函數允許在聲明 CSS 屬性值時執行一些計算。
 
@@ -794,6 +794,87 @@ div::before {
 }
 ```
 
+### max(), min(), clamp()
+
+* max()：從一個逗號分隔的表達式列表中選擇最大（正方向）的值作為屬性的值
+* min()：從一個逗號分隔的表達式列表中選擇最小的值作為屬性的值
+* clamp()：把一個值限制在一個上限和下限之間，當這個值超過最小值和最大值的范圍時，在最小值和最大值之間選擇一個值使用
+
+#### min()、max() 支持多個值的列表
+
+min()、max() 支持多個值的列表，譬如 `width: max(1px, 2px, 3px, 50px)`。
+
+當然，對於上例其實就是 `width: 50px`。因此上述這種代碼，雖然語法支持，但其實沒有意義。
+
+#### min()、max()、clamp() 都可以配合 calc 一起使用
+
+```css
+div {
+    width: max(50vw, calc(300px + 10%));
+}
+
+/* 括號可以省略，因此，上述代碼又可以寫成 */
+div {
+    width: max(50vw, 300px + 10%);
+}
+```
+
+#### 使用 min 的例子
+
+```html
+<div class="container"></div>
+```
+
+```css
+.container {
+    height: 100px;
+    background: #000;
+}
+```
+
+`.container` 會隨著屏幕的增大而增大，始終佔據整個屏幕，對於一個響應式的項目，我們肯定不希望它的寬度會一直變大，而是當達到一定的閾值時，寬度從相對單位變成了絕對單位，這種情況就適用於 `min()`：
+
+```css
+.container {
+    width: min(100%, 500px);
+    height: 100px;
+    background: #000;
+}
+```
+
+在類似的場景，也可以用 `max()`。
+
+### clamp
+
+clamp() 函數的作用是把一個值限制在一個上限和下限之間，當這個值超過最小值和最大值的范圍時，在最小值和最大值之間選擇一個值使用。它接收三個參數：最小值、首選值、最大值。
+
+有意思的是，clamp(MIN, VAL, MAX) 其實就是表示 max(MIN, min(VAL, MAX))。
+
+```css
+p {
+    font-size: max(12px, min(3.75vw, 20px));
+
+    /* 等價 */
+    font-size: clamp(12px, 3.75vw, 20px);
+}
+```
+
+在移動端適配，更為推崇的是 vw 純 CSS 方案，它的本質也是頁面的等比例縮放。它的一個問題在於，如果僅僅使用 vw，隨著屏幕的不斷變大或者縮小，內容元素將會一直變大變小下去，這也導致了在大屏幕下，許多元素看著實在太大了！
+
+因此需要一種能夠控制最大、最小閾值的方式，這時就可以採用 clamp()。
+
+#### clamp 反向響應例子
+
+可以反向操作，得到一種屏幕越大，字體越小的反向響應式效果：
+
+```css
+p {
+    font-size: clamp(20px, -5vw + 96px, 60px);
+}
+```
+
+![css-24](./images/css-24.gif)
+
 ## 方法論
 
 ### OOCSS
@@ -1009,3 +1090,4 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 * [防禦性設計和開發](https://mp.weixin.qq.com/s/G4pME9xFHdWnFckgytnofQ)
 * [層疊與繼承](https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance)
 * [現代 CSS 解決方案：CSS 數學函數之 calc](https://mp.weixin.qq.com/s?__biz=Mzg2MDU4MzU3Nw==&mid=2247491089&idx=1&sn=84aecbf783859c930bf57660b46d06ef&chksm=ce257de7f952f4f17b49c890910d995362a1a7247fdf20bd427d868a15cef08e1c3d9e68eba1)
+* [现代 CSS 解决方案：数学函数之 min、max、clamp](https://mp.weixin.qq.com/s/a6CxCvmhQz4Os4j_60gnOg)
