@@ -564,10 +564,183 @@ handleClick = () => {
 };
 ```
 
+### React 專案結構
+
+為了便於理解, 可將 react 應用整體結構分為接口層(api)和內核層(core)2 個部分(並非官方說法)：
+
+* 接口層(api)
+    * `react`
+        * react 基礎包, 只提供定義 react 組件(ReactElement)的必要函數，通常和渲染器(react-dom,react-native) 一同使用
+        * 在編寫 react 應用時，大部分都是調用此包的 API。
+        * 在 react 啟動之後, 正常可以改變渲染的基本操作有 3 個.
+            * class 組件中使用 setState()
+            * function 組件裡面使用 hook，並發起dispatchAction 去改變 hook 對象
+            * 改變 context(其實也需要setState或dispatchAction的輔助才能改變)
+        * 以上 setState 和 dispatchAction 都由 react 包直接暴露. 所以要想 react 工作, 基本上是調用 react 包的 api 去與其他包進行交互.
+* 內核層(core) 整個內核部分, 由 3 部分構成:
+    * 渲染器 `react-dom`
+        * react 渲染器之一，是 react 與 web 平台連接的橋梁(可以在瀏覽器和 nodejs 環境中使用)，將react-reconciler 運行的結果輸出到 web 界面上。
+        * 有 2 個核心職責:
+            * 引導react應用的啟動(通過ReactDOM.render).
+                * 在多數編寫 react 應用時，唯一能用到此包的就是 `ReactDOM.render(<App/>, document.getElementByID('root'))`，其餘使用的 API，基本都是 react 包提供的。
+            * 實現HostConfig協議(源碼在 ReactDOMHostConfig.js 中), 能夠將react-reconciler包構造出來的fiber樹表現出來, 生成 dom 節點(瀏覽器中), 生成字符串(ssr).
+    * 構造器 `react-reconciler`
+        * 管理 react 應用狀態的輸入和結果的輸出，將輸入信號最終轉換成輸出信號傳遞給渲染器。是 react 得以運行的核心包(綜合協調 react-dom, react, scheduler 各包之間的調用與配合)
+        * 接受輸入(scheduleUpdateOnFiber)，將 fiber 樹生成邏輯封裝到一個回調函數中(涉及fiber樹形結構, fiber.updateQueue隊列, 調和算法等)，把此回調函數(performSyncWorkOnRoot或performConcurrentWorkOnRoot) 送入 scheduler 進行調度。scheduler會控制回調函數執行的時機，回調函數執行完成後得到全新的 fiber 樹，再調用渲染器(如react-dom, react-native等)將 fiber 樹形結構最終反映到界面上
+        * 有 3 個核心職責:
+            * 裝載渲染器, 渲染器必須實現HostConfig協議(如: react-dom), 保證在需要的時候, 能夠正確調用渲染器的 api, 生成實際節點(如: dom 節點).
+            * 接收 react-dom 包(初次render) 和 react 包(後續更新setState)發起的更新請求.
+            * 將 fiber 樹的構造過程包裝在一個回調函數中，並將此回調函數傳入到 scheduler 包等待調度.
+
+    * 調度器 `scheduler`
+        * 調度機制的核心實現，控制由 react-reconciler 送入的回調函數的執行時機，在 concurrent 模式下可以實現任務分片。
+        * 核心任務就是執行回調(回調函數由react-reconciler提供)，通過控制回調函數的執行時機, 來達到任務分片的目的, 實現可中斷渲染(concurrent模式下才有此特性)
+        * 核心職責只有 1 個, 就是執行回調.
+            * 把 react-reconciler 提供的回調函數, 包裝到一個任務對象中.
+            * 在內部維護一個任務隊列, 優先級高的排在最前面.
+            * 循環消費任務隊列, 直到隊列清空.
+
+![react-arch](./images/react-arch.png)
+
+注意:
+
+* 紅色方塊代表入口函數, 綠色方塊代表出口函數.
+* package 之間的調用脈絡就是通過板塊間的入口和出口函數連接起來的.
+
+### React 工作循環 (workLoop)
+
+![react-workloop](./images/react-workloop.png)
+
+React 有兩大工作循環，用於控制 react 應用的執行過程，可分為：
+
+* 任務調度循環
+    * 源碼位於 `scheduler` 的 Scheduler.js, 它是react應用得以運行的保證, 它需要循環調用, 控制所有任務(task)的調度
+    * 任務調度循環是以二叉堆(Binary heap)為數據結構(詳見react 算法之堆排序), 循環執行堆的頂點, 直到堆被清空.
+    * 任務調度循環的邏輯偏向宏觀, 它調度的是每一個任務(task), 而不關心這個任務具體是干什麼的
+        * 理論上甚至可以將 Scheduler 包脫離 react 使用
+    * 具體任務其實就是執行回調函數 performSyncWorkOnRoot 或 performConcurrentWorkOnRoot.
+* fiber 構造循環
+    * 源碼位於 `react-reconciler` 的 ReactFiberWorkLoop.js, 控制 fiber 樹的構造, 整個過程是一個深度優先遍歷.
+    * fiber 構造循環是以樹為數據結構, 從上至下執行深度優先遍歷
+    * fiber 構造循環的邏輯偏向具體實現, 它只是任務(task)的一部分(如performSyncWorkOnRoot包括: fiber樹的構造, DOM渲染, 調度檢測), 只負責fiber樹的構造。
+
+總結就是，任務調度循環負責調度task, fiber 構造循環負責實現task。
+
+### React 運行邏輯
+
+可以將 react 運行的主幹邏輯進行概括:
+
+* 輸入
+    * 將每一次更新(如: 新增, 刪除, 修改節點之後)視為一次更新需求(目的是要更新DOM節點).
+* 注冊調度任務
+    * react-reconciler 收到更新需求之後, 並不會立即構造fiber樹, 而是去調度中心scheduler注冊一個新任務task, 即把更新需求轉換成一個task.
+* 執行調度任務(輸出)
+    * 調度中心 scheduler 通過任務調度循環來執行 task(task的執行過程又回到了react-reconciler包中)
+        * fiber 構造循環是 task 的實現環節之一, 循環完成之後會構造出最新的 fiber 樹.
+        * commitRoot是task的實現環節之二, 把最新的 fiber 樹最終渲染到頁面上, task完成.
+
+主幹邏輯就是輸入到輸出這一條鏈路, 為了更好的性能(如批量更新, 可中斷渲染等功能), react在輸入到輸出的鏈路上做了很多優化策略, 比如本文講述的任務調度循環和fiber構造循環相互配合就可以實現可中斷渲染.
+
+### reconciler 運作流程
+
+此處先歸納一下react-reconciler包的主要作用, 將主要功能分為 4 個方面:
+
+* 輸入: 暴露api函數(如: scheduleUpdateOnFiber), 供給其他包(如react包)調用.
+* 注冊調度任務: 與調度中心(scheduler包)交互, 注冊調度任務task, 等待任務回調.
+* 執行任務回調: 在內存中構造出fiber樹, 同時與與渲染器(react-dom)交互, 在內存中創建出與fiber對應的DOM節點.
+* 輸出: 與渲染器(react-dom)交互, 渲染DOM節點.
+
+以上功能源碼都集中在 ReactFiberWorkLoop.js 中. 現在將這些功能(從輸入到輸出)串聯起來, 用下圖表示:
+
+![react-fiber-workloop](./images/react-fiber-workloop.png)
+
+#### 輸入
+
+```js
+// 唯一接收輸入信號的函數
+function scheduleUpdateOnFiber(fiber: Fiber, lane: Lane, eventTime: number) {
+  // ...
+
+  // 兩種可能:
+  //    1. 不經過調度，直接進行 fiber 構造.
+  //    2. 注冊調度任務，經過 Scheduler 包的調度，間接進行 fiber 構造.
+
+  const root = markUpdateLaneFromFiberToRoot(fiber, lane);
+  if (lane === SyncLane) {
+    
+    if (
+      (executionContext & LegacyUnbatchedContext) !== NoContext &&
+      (executionContext & (RenderContext | CommitContext)) === NoContext
+    ) {
+      // 直接進行 fiber 構造
+      performSyncWorkOnRoot(root);
+    } else {
+      // 注冊調度任務, 經過 Scheduler 包的調度，間接進行 fiber構造
+      ensureRootIsScheduled(root, eventTime);
+    }
+
+  } else {
+    // 注冊調度任務, 經過 Scheduler 包的調度，間接進行 fiber構造
+    ensureRootIsScheduled(root, eventTime);
+  }
+}
+```
+
+### 注冊調度任務
+
+```js
+// ... 省略部分無關代碼
+function ensureRootIsScheduled(root: FiberRoot, currentTime: number) {
+  // 前半部分: 判斷是否需要注冊新的調度(如果無需新的調度, 會退出函數)
+  const existingCallbackNode = root.callbackNode;
+  const nextLanes = getNextLanes(
+    root,
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
+  );
+  const newCallbackPriority = returnNextLanesPriority();
+  if (nextLanes === NoLanes) {
+    return;
+  }
+  if (existingCallbackNode !== null) {
+    const existingCallbackPriority = root.callbackPriority;
+    if (existingCallbackPriority === newCallbackPriority) {
+      return;
+    }
+    cancelCallback(existingCallbackNode);
+  }
+
+  // 後半部分: 注冊調度任務
+  //    performSyncWorkOnRoot 或 performConcurrentWorkOnRoot 被封裝到了任務回調(scheduleCallback)中
+  //    等待調度中心執行任務，任務運行其實就是執行 performSyncWorkOnRoot 或performConcurrentWorkOnRoot
+  let newCallbackNode;
+  if (newCallbackPriority === SyncLanePriority) {
+    newCallbackNode = scheduleSyncCallback(
+      performSyncWorkOnRoot.bind(null, root),
+    );
+  } else if (newCallbackPriority === SyncBatchedLanePriority) {
+    newCallbackNode = scheduleCallback(
+      ImmediateSchedulerPriority,
+      performSyncWorkOnRoot.bind(null, root),
+    );
+  } else {
+    const schedulerPriorityLevel = lanePriorityToSchedulerPriority(
+      newCallbackPriority,
+    );
+    newCallbackNode = scheduleCallback(
+      schedulerPriorityLevel,
+      performConcurrentWorkOnRoot.bind(null, root),
+    );
+  }
+  root.callbackPriority = newCallbackPriority;
+  root.callbackNode = newCallbackNode;
+}
+ensureRootIsScheduled的邏
+```
+
 ## Next.js
 
 * Image
-    * [像前端专家一样设计 Image 组件](https://mp.weixin.qq.com/s/zuU3NLmrl2GwqxiSZApEMQ?utm_source=pocket_mylist)
+    * [像前端专家一样设计 Image 组件](https://mp.weixin.qq.com/s/zuU3NLmrl2GwqxiSZApEMQ)
 
 ## 工具庫
 
@@ -582,3 +755,4 @@ handleClick = () => {
 * [你可能不知道的五个关键的 React 知识点](https://mp.weixin.qq.com/s/Brp0TECsGpdBdv1686TPiQ)
 * [重新认识 React 生命周期](https://blog.hhking.cn/2018/09/18/react-lifecycle-change/)
 * [React 18 全覽](https://mp.weixin.qq.com/s/N6MBhe4fkHO49ZqVNBPflQ)
+* [7kms/react-illustration-series](https://github.com/7kms/react-illustration-series)
