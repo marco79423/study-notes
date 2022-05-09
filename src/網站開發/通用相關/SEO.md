@@ -116,6 +116,66 @@ Bing 前身是 MSN Live Search，服務的對象比互聯網世界小得多。�
 7. 使用結構化標記與複合資料在搜尋結果頁面(SERPs)上脫穎而出。
     * 使用Snippet/schema markup 告訴搜尋引擎你的網站架構分布，讓你的網站內容更容易讓搜尋引擎使用
 
+## robots.txt
+
+參考： [Google 如何解讀 robots.txt 規格](https://developers.google.com/search/docs/advanced/robots/robots_txt?hl=zh-tw)
+
+基本會用的幾個參數分別如下：
+
+* User-agent
+    * 定義下述規則對哪些搜尋引擎生效，即是對象。
+* Disallow
+    * 指定哪些目錄或檔案類型不想被檢索，需指名路徑，否則將會被忽略。
+* Allow
+    * 指定哪些目錄或檔案類型可能被檢索，需指名路徑，否則將會被忽略。
+* Sitemap
+    * 指定網站內的 sitemap 檔案放置位置，需使用絕對路徑。
+
+基本用法：
+
+允許所有搜尋引擎檢索所有內容(通常建議使用)
+
+```plain
+User-agent: *
+Disallow:
+```
+
+拒絕所有搜尋引擎檢索所有內容：
+
+```plain
+User-agent: *
+Disallow: /
+```
+
+拒絕所有搜尋引擎檢索/members/底下所有內容：
+
+```plain
+User-agent: *
+Disallow: /members/
+```
+
+拒絕Google搜圖的爬蟲檢索/images/底下所有內容：
+
+```plain
+User-agent: Googlebot-image
+Disallow:/images/
+```
+
+拒絕所有搜尋引擎檢索網站內png為副檔名的圖檔。
+
+```plain
+User-agent: *
+Disallow: *.png$
+```
+
+拒絕Bing搜尋引擎檢索網站內/wp-admin目錄底下所有內容及網站內開頭為test的所有檔名。
+
+```plain
+User-agent: bingbot
+Disallow: /wp-admin/
+Disallow: ^test*
+```
+
 ## 技巧
 
 * 限制網頁只有 125 KB
