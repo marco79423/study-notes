@@ -318,350 +318,362 @@
 
 #### 數據查詢語言 (DQL, Data Query Language)
 
-* SELECT
-    * SELECT 很可能是最常用到的 SQL 語句，它是用來從資料庫取得資料，這個動作我們通常稱之為查詢 (query)，資料庫依 SELECT 查詢的要求會返回一個結果資料表 (result table)，我們通常稱之為資料集 (
-      result-set)。
+##### SELECT
+
+SELECT 很可能是最常用到的 SQL 語句，它是用來從資料庫取得資料，這個動作我們通常稱之為查詢 (query)，資料庫依 SELECT 查詢的要求會返回一個結果資料表 (result table)，我們通常稱之為資料集 (result-set)。
+
+用法：
+
+* 基礎查詢
+    * 語法
+        ``````sql
+        SELECT table_column1, table_column2, table_column3...
+        FROM table_name;
+        ```
+
+    * 注意事項
+        * 盡量避免使用 `SELECT *`，因為一次取得整張資料表會比較耗費系統資源，記住一個原則，取得需要的資料就好，不多拿也不少拿
+        * 查詢完的結果是一個虛擬的表格，不是真實存在
+        * 查詢的內容可以是欄位、表達式、常數、函數等
+* 條件查詢
+    * 根據條件過濾結果，取出符合條件的數據
+    * 語法
+        ```sql
+        SELECT table_column1, table_column2...
+        FROM table_name
+        WHERE column_name operator value;
+        ```
+
+* 排序查詢
+    * 將取得的資料集依某欄位排序
+    * 語法
+        ``````sql
+        SELECT table_column1, table_column2...
+        FROM table_name
+        ORDER BY column_name1 ASC|DESC, column_name2 ASC|DESC..
+        ```
+    * 排序分別可以由小至大 (ascending; 預設)，或由大至小 (descending)。
+* 分組查詢
+    * GROUP BY 敘述句搭配聚合函數 (aggregation function) 使用，是用來將查詢結果中特定欄位值相同的資料分為若干個群組，而每一個群組都會傳回一個資料列。若沒有使用 GROUP
+        BY，聚合函數針對一個 SELECT 查詢，只會返回一個彙總值。
+        ```sql
+        SELECT column_name(s), aggregate_function(column_name)
+        FROM table_name
+        WHERE column_name operator value
+        GROUP BY column_name1, column_name2...;
+        ```
+
+    * 範例
+        ```sql
+        SELECT customer, SUM(price) FROM orders
+        GROUP BY customer;
+        ```
+    * HAVING
+        * HAVING 子句是用來取代 WHERE 搭配聚合函數 (aggregate function) 進行條件查詢，因為 WHERE 不能與聚合函數一起使用。
+        * 聚合函數指的也就是 AVG()、COUNT()、MAX()、MIN()、SUM() 等這些內建函數。
+        * 語法
+            ```sql
+            SELECT column_name(s), aggregate_function(column_name)
+            FROM table_name
+            WHERE column_name operator value
+            GROUP BY column_name1, column_name2...
+            HAVING aggregate_function(column_name) operator value;
+            ```
+        * 範例
+            ```sql
+            SELECT customer, SUM(price) FROM orders
+            GROUP BY customer
+            HAVING SUM(price)<1000;
+            ```
+            * 只會留下總 price 小於 1000 的結果
+* 多表連接查詢
+    * SQL JOIN (連接) 是利用不同資料表之間欄位的關連性來結合多資料表之檢索。
+        ![mysql-13](./images/mysql-13.png)
+    * 類型
+        * INNER JOIN 內部連接
+            * INNER JOIN (內部連接) 為等值連接，必需指定等值連接的條件，而查詢結果只會返回符合連接條件的資料。
+            * 語法
+                * 寫法 1
+                    ```sql
+                    SELECT table_column1, table_column2...
+                    FROM table_name1
+                    INNER JOIN table_name2
+                    ON table_name1.column_name=table_name2.column_name;
+                    ```
+
+                * 寫法 2
+                    ```sql
+                    SELECT table_column1, table_column2...
+                    FROM table_name1
+                    INNER JOIN table_name2
+                    USING (column_name);
+                    ```
+
+        * LEFT (OUTER) JOIN 左外部連接
+            * LEFT JOIN 可以用來建立左外部連接，查詢的 SQL 敘述句 LEFT JOIN 左側資料表 (table_name1) 的所有記錄都會加入到查詢結果中，即使右側資料表 (
+                table_name2) 中的連接欄位沒有符合的值也一樣。
+            * 語法
+                ```sql
+                SELECT table_column1, table_column2...
+                FROM table_name1
+                LEFT OUTER JOIN table_name2
+                ON table_name1.column_name=table_name2.column_name;
+                ```
+
+                * OUTER 可省略，變成 `LEFT JOIN`
+        * RIGHT (OUTER) JOIN 左外部連接
+            * 相對於 LEFT JOIN，RIGHT JOIN 可以用來建立右外部連接，查詢的 SQL 敘述句 RIGHT JOIN 右側資料表 (table_name2)
+                的所有記錄都會加入到查詢結果中，即使左側資料表 (table_name2) 中的連接欄位沒有符合的值也一樣。
+            * 語法
+            * 語法
+                ```sql
+                SELECT table_column1, table_column2...
+                FROM table_name1
+                RIGHT OUTER JOIN table_name2
+                ON table_name1.column_name=table_name2.column_name;
+                ```
+                * OUTER 可省略，變成 `RIGHT JOIN`
+                * 看起來 sqlite 不支援 `RIGHT JOIN`
+
+        * FULL (OUTER) JOIN 全部外部連接
+            * `FULL JOIN` 即為 `LEFT JOIN` 與 `RIGHT JOIN` 的聯集，它會返回左右資料表中所有的紀錄，不論是否符合連接條件。
+            * 語法
+                ```sql
+                SELECT table_column1, table_column2...
+                FROM table_name1
+                FULL JOIN table_name2
+                ON table_name1.column_name=table_name2.column_name;
+                ```
+        * CROSS JOIN 交叉連接
+            * 交叉連接為兩個資料表間的笛卡兒乘積 (Cartesian product)，兩個資料表在結合時，不指定任何條件，即將兩個資料表中所有的可能排列組合出來，以下例而言 CROSS JOIN
+                出來的結果資料列數為 3×5=15 筆，因此，當有 WHERE、ON、USING 條件時不建議使用。
+            * 語法
+                * 寫法 1
+                    ```sql
+                    SELECT table_column1, table_column2...
+                    FROM table_name1
+                    CROSS JOIN table_name2;
+                    ```
+                * 寫法 2
+                    ```sql
+                    SELECT table_column1, table_column2...
+                    FROM table_name1, table_name2;
+                    ```
+
+                * 寫法 3
+                    ```sql
+                    SELECT table_column1, table_column2...
+                    FROM table_name1
+                    JOIN table_name2;
+                    ```
+
+        * NATURAL JOIN 自然連接
+            * 自然連接有 NATURAL JOIN、NATURAL LEFT JOIN、NATURAL RIGHT JOIN，兩個表格在進行 JOIN 時，加上 NATURAL
+                這個關鍵字之後，兩資料表之間同名的欄位會被自動結合在一起。
+            * 語法
+                ```sql
+                SELECT table_column1, table_column2...
+                FROM table_name1
+                NATURAL JOIN table_name2;
+                ```
+
     * 用法
-        * 基礎查詢
-            * 語法
-                ``````sql
-                SELECT table_column1, table_column2, table_column3...
-                FROM table_name;
-                ```
+        * 自連接
+            ```sql
+            SELECT e.id,
+                    e.name,
+                    f.name AS manager
+            FROM employees e
+                        JOIN employees f ON e.manager_id = f.id;
+            ```
 
-            * 注意事項
-                * 盡量避免使用 `SELECT *`，因為一次取得整張資料表會比較耗費系統資源，記住一個原則，取得需要的資料就好，不多拿也不少拿
-                * 查詢完的結果是一個虛擬的表格，不是真實存在
-                * 查詢的內容可以是欄位、表達式、常數、函數等
-        * 條件查詢
-            * 根據條件過濾結果，取出符合條件的數據
-            * 語法
-                ```sql
-                SELECT table_column1, table_column2...
-                FROM table_name
-                WHERE column_name operator value;
-                ```
+* 子查詢
+    * 一條查詢語句中又嵌套了另一條完整的 SELECT 語句，其中被嵌套的 SELECT 語句，称为子查询或内查询；在外面的查询语句，称为主查询或外查询
+    * 語法
+        ```sql
+        SELECT ...
+        FROM ...
+        WHERE 查詢條件  <- 這兩個地方都可以用子查詢
+        HAVING 分組條件 <-
+        ```
 
-        * 排序查詢
-            * 將取得的資料集依某欄位排序
-            * 語法
-                ``````sql
-                SELECT table_column1, table_column2...
-                FROM table_name
-                ORDER BY column_name1 ASC|DESC, column_name2 ASC|DESC..
-                ```
-            * 排序分別可以由小至大 (ascending; 預設)，或由大至小 (descending)。
-        * 分組查詢
-            * GROUP BY 敘述句搭配聚合函數 (aggregation function) 使用，是用來將查詢結果中特定欄位值相同的資料分為若干個群組，而每一個群組都會傳回一個資料列。若沒有使用 GROUP
-              BY，聚合函數針對一個 SELECT 查詢，只會返回一個彙總值。
-                ```sql
-                SELECT column_name(s), aggregate_function(column_name)
-                FROM table_name
-                WHERE column_name operator value
-                GROUP BY column_name1, column_name2...;
-                ```
-
-            * 範例
-                ```sql
-                SELECT customer, SUM(price) FROM orders
-                GROUP BY customer;
-                ```
-            * HAVING
-                * HAVING 子句是用來取代 WHERE 搭配聚合函數 (aggregate function) 進行條件查詢，因為 WHERE 不能與聚合函數一起使用。
-                * 聚合函數指的也就是 AVG()、COUNT()、MAX()、MIN()、SUM() 等這些內建函數。
-                * 語法
+        * 子查詢根據查詢結果的筆數不同可以分為兩類：
+            * 單行子查詢
+                * 子查詢不可以指定超過一個欄位的回傳值，也不可回傳超過一筆紀錄 (或為空)
+                * 一般搭配单行操作符使用：> < = <> >= <=
+                * 例子：
                     ```sql
-                    SELECT column_name(s), aggregate_function(column_name)
-                    FROM table_name
-                    WHERE column_name operator value
-                    GROUP BY column_name1, column_name2...
-                    HAVING aggregate_function(column_name) operator value;
-                    ```
-                * 範例
-                    ```sql
-                    SELECT customer, SUM(price) FROM orders
-                    GROUP BY customer
-                    HAVING SUM(price)<1000;
-                    ```
-                    * 只會留下總 price 小於 1000 的結果
-        * 多表連接查詢
-            * SQL JOIN (連接) 是利用不同資料表之間欄位的關連性來結合多資料表之檢索。
-                ![mysql-13](./images/mysql-13.png)
-            * 類型
-                * INNER JOIN 內部連接
-                    * INNER JOIN (內部連接) 為等值連接，必需指定等值連接的條件，而查詢結果只會返回符合連接條件的資料。
-                    * 語法
-                        * 寫法 1
-                            ```sql
-                            SELECT table_column1, table_column2...
-                            FROM table_name1
-                            INNER JOIN table_name2
-                            ON table_name1.column_name=table_name2.column_name;
-                            ```
-
-                        * 寫法 2
-                            ```sql
-                            SELECT table_column1, table_column2...
-                            FROM table_name1
-                            INNER JOIN table_name2
-                            USING (column_name);
-                            ```
-
-                * LEFT (OUTER) JOIN 左外部連接
-                    * LEFT JOIN 可以用來建立左外部連接，查詢的 SQL 敘述句 LEFT JOIN 左側資料表 (table_name1) 的所有記錄都會加入到查詢結果中，即使右側資料表 (
-                      table_name2) 中的連接欄位沒有符合的值也一樣。
-                    * 語法
-                        ```sql
-                        SELECT table_column1, table_column2...
-                        FROM table_name1
-                        LEFT OUTER JOIN table_name2
-                        ON table_name1.column_name=table_name2.column_name;
-                        ```
-
-                        * OUTER 可省略，變成 `LEFT JOIN`
-                * RIGHT (OUTER) JOIN 左外部連接
-                    * 相對於 LEFT JOIN，RIGHT JOIN 可以用來建立右外部連接，查詢的 SQL 敘述句 RIGHT JOIN 右側資料表 (table_name2)
-                      的所有記錄都會加入到查詢結果中，即使左側資料表 (table_name2) 中的連接欄位沒有符合的值也一樣。
-                    * 語法
-                    * 語法
-                        ```sql
-                        SELECT table_column1, table_column2...
-                        FROM table_name1
-                        RIGHT OUTER JOIN table_name2
-                        ON table_name1.column_name=table_name2.column_name;
-                        ```
-                        * OUTER 可省略，變成 `RIGHT JOIN`
-                        * 看起來 sqlite 不支援 `RIGHT JOIN`
-
-                * FULL (OUTER) JOIN 全部外部連接
-                    * `FULL JOIN` 即為 `LEFT JOIN` 與 `RIGHT JOIN` 的聯集，它會返回左右資料表中所有的紀錄，不論是否符合連接條件。
-                    * 語法
-                        ```sql
-                        SELECT table_column1, table_column2...
-                        FROM table_name1
-                        FULL JOIN table_name2
-                        ON table_name1.column_name=table_name2.column_name;
-                        ```
-                * CROSS JOIN 交叉連接
-                    * 交叉連接為兩個資料表間的笛卡兒乘積 (Cartesian product)，兩個資料表在結合時，不指定任何條件，即將兩個資料表中所有的可能排列組合出來，以下例而言 CROSS JOIN
-                      出來的結果資料列數為 3×5=15 筆，因此，當有 WHERE、ON、USING 條件時不建議使用。
-                    * 語法
-                        * 寫法 1
-                            ```sql
-                            SELECT table_column1, table_column2...
-                            FROM table_name1
-                            CROSS JOIN table_name2;
-                            ```
-                        * 寫法 2
-                            ```sql
-                            SELECT table_column1, table_column2...
-                            FROM table_name1, table_name2;
-                            ```
-
-                        * 寫法 3
-                            ```sql
-                            SELECT table_column1, table_column2...
-                            FROM table_name1
-                            JOIN table_name2;
-                            ```
-
-                * NATURAL JOIN 自然連接
-                    * 自然連接有 NATURAL JOIN、NATURAL LEFT JOIN、NATURAL RIGHT JOIN，兩個表格在進行 JOIN 時，加上 NATURAL
-                      這個關鍵字之後，兩資料表之間同名的欄位會被自動結合在一起。
-                    * 語法
-                        ```sql
-                        SELECT table_column1, table_column2...
-                        FROM table_name1
-                        NATURAL JOIN table_name2;
-                        ```
-
-            * 用法
-                * 自連接
-                    ```sql
-                    SELECT e.id,
-                           e.name,
-                           f.name AS manager
-                    FROM employees e
-                             JOIN employees f ON e.manager_id = f.id;
+                    SELECT Name, GNP
+                    FROM country
+                    WHERE GNP = (SELECT MAX(GNP) FROM country)
                     ```
 
-        * 子查詢
-            * 一條查詢語句中又嵌套了另一條完整的 SELECT 語句，其中被嵌套的 SELECT 語句，称为子查询或内查询；在外面的查询语句，称为主查询或外查询
-            * 語法
-                ```sql
-                SELECT ...
-                FROM ...
-                WHERE 查詢條件  <- 這兩個地方都可以用子查詢
-                HAVING 分組條件 <-
-                ```
-
-                * 子查詢根據查詢結果的筆數不同可以分為兩類：
-                    * 單行子查詢
-                        * 子查詢不可以指定超過一個欄位的回傳值，也不可回傳超過一筆紀錄 (或為空)
-                        * 一般搭配单行操作符使用：> < = <> >= <=
-                        * 例子：
-                            ```sql
-                            SELECT Name, GNP
-                            FROM country
-                            WHERE GNP = (SELECT MAX(GNP) FROM country)
-                            ```
-
-                            * 子查詢都放在小括號內
-                            * 此例中子查詢不可以指定超過一個欄位的回傳值，也不可回傳超過一筆紀錄
-                    * 多行子查詢
-                        * 結果有多筆，一般搭配 ANY, ALL, IN, NOT IN使用 (ANY, ALL 往往可以用其他查詢代替)
-                        * 例子
-                            ```sql
-                            SELECT Name
-                            FROM country
-                            WHERE Code IN (SELECT CountryCode FROM city WHERE Population > 9999)
-                            ```
-                            * 只用 `IN` 可以回傳多筆資料，用 `NOT IN` 也成
-        * 分頁查詢 (使用 LIMIT)
-            * TOP (SQL Server), LIMIT (MySQL), ROWNUM (Oracle) 這些語法其實都是同樣的功能，都是用來限制您的 SQL
-              查詢語句最多只影響幾筆資料，而不同的語法則只因不同的資料庫實作時採用不同的名稱。
-            * 語法
-                ```sql
-                SELECT table_column1, table_column2...
-                FROM table_name LIMIT 【起始的条目索引，】条目数;
-                ```
-                * 起始条目索引从0开始
-                * limit子句放在查询语句的最后
-            * 常用公式
-                ```sql
-                SELECT * FROM table LIMIT （要顯示的頁數-1）* 每頁條目數, 每頁條目數
-                ```
-
-        * 聯合查詢 UNION
-            * UNION 運算子用來將兩個(以上) SQL 查詢的結果合併起來，而由 UNION 查詢中各別 SQL 語句所產生的欄位需要是相同的資料型別及順序。
-            * UNION 查詢只會返回不同值的資料列，有如 `SELECT DISTINCT`。
-            * UNION 就是像是 OR (聯集)，如果紀錄存在於第一個查詢結果集或第二個查詢結果集中，就會被取出。
-            * UNION 與 JOIN 不同的地方在於，JOIN 是作橫向結合 (合併多個資料表的各欄位)；而 UNION 則是作垂直結合 (合併多個資料表中的紀錄)。
-            * 要求
-                1. 多条查询语句的查询的列数必须是一致的
-                2. 多条查询语句的查询的列的类型几乎相同
-            * 語法
-                * UNION
+                    * 子查詢都放在小括號內
+                    * 此例中子查詢不可以指定超過一個欄位的回傳值，也不可回傳超過一筆紀錄
+            * 多行子查詢
+                * 結果有多筆，一般搭配 ANY, ALL, IN, NOT IN使用 (ANY, ALL 往往可以用其他查詢代替)
+                * 例子
                     ```sql
-                    SELECT column_name(s) FROM table_name1
-                    UNION
-                    SELECT column_name(s) FROM table_name2;
+                    SELECT Name
+                    FROM country
+                    WHERE Code IN (SELECT CountryCode FROM city WHERE Population > 9999)
+                    ```
+                    * 只用 `IN` 可以回傳多筆資料，用 `NOT IN` 也成
+* 分頁查詢 (使用 LIMIT)
+    * TOP (SQL Server), LIMIT (MySQL), ROWNUM (Oracle) 這些語法其實都是同樣的功能，都是用來限制您的 SQL
+        查詢語句最多只影響幾筆資料，而不同的語法則只因不同的資料庫實作時採用不同的名稱。
+    * 語法
+        ```sql
+        SELECT table_column1, table_column2...
+        FROM table_name LIMIT 【起始的条目索引，】条目数;
+        ```
+        * 起始条目索引从0开始
+        * limit子句放在查询语句的最后
+    * 常用公式
+        ```sql
+        SELECT * FROM table LIMIT （要顯示的頁數-1）* 每頁條目數, 每頁條目數
+        ```
+
+* 聯合查詢 UNION
+    * UNION 運算子用來將兩個(以上) SQL 查詢的結果合併起來，而由 UNION 查詢中各別 SQL 語句所產生的欄位需要是相同的資料型別及順序。
+    * UNION 查詢只會返回不同值的資料列，有如 `SELECT DISTINCT`。
+    * UNION 就是像是 OR (聯集)，如果紀錄存在於第一個查詢結果集或第二個查詢結果集中，就會被取出。
+    * UNION 與 JOIN 不同的地方在於，JOIN 是作橫向結合 (合併多個資料表的各欄位)；而 UNION 則是作垂直結合 (合併多個資料表中的紀錄)。
+    * 要求
+        1. 多条查询语句的查询的列数必须是一致的
+        2. 多条查询语句的查询的列的类型几乎相同
+    * 語法
+        * UNION
+            ```sql
+            SELECT column_name(s) FROM table_name1
+            UNION
+            SELECT column_name(s) FROM table_name2;
+            ```
+
+        * UNION ALL
+            ```sql
+            SELECT column_name(s) FROM table_name1
+            UNION ALL
+            SELECT column_name(s) FROM table_name2;
+            ```
+            * UNION 會去掉重覆的，UNION ALL 則不會
+* 分支查詢
+    * CASE
+        * CASE 類似於程式語言裡的 if/then/else 語句，用來作邏輯判斷。
+        * 語法
+            * 類似 switch 的用法
+                ```sql
+                CASE expression
+                    WHEN value THEN result
+                    [WHEN···]
+                    [ELSE result]
+                END;
+                ```
+
+                * 如果是放在 begin end 中需要加上 case，如果放在 select 后面不需要
+                * 例子
+                    ```sql
+                    SELECT Name,
+                        CASE Answer
+                            WHEN 1 THEN '喜歡'
+                            WHEN 2 THEN '不喜歡'
+                            WHEN 3 THEN '還OK'
+                        END
+                    FROM questionnaire;
                     ```
 
-                * UNION ALL
+            * 類似 if/else 的用法
+                ```sql
+                CASE
+                    WHEN condition THEN result
+                    [WHEN···]
+                    [ELSE result]
+                END;
+                ```
+
+                * 如果是放在 begin end 中需要加上 case，如果放在 select 后面不需要
+                * 例子
                     ```sql
-                    SELECT column_name(s) FROM table_name1
-                    UNION ALL
-                    SELECT column_name(s) FROM table_name2;
-                    ```
-                    * UNION 會去掉重覆的，UNION ALL 則不會
-        * 分支查詢
-            * CASE
-                * CASE 類似於程式語言裡的 if/then/else 語句，用來作邏輯判斷。
-                * 語法
-                    * 類似 switch 的用法
-                        ```sql
-                        CASE expression
-                            WHEN value THEN result
-                            [WHEN···]
-                            [ELSE result]
-                        END;
-                        ```
-
-                        * 如果是放在 begin end 中需要加上 case，如果放在 select 后面不需要
-                        * 例子
-                            ```sql
-                            SELECT Name,
-                                CASE Answer
-                                    WHEN 1 THEN '喜歡'
-                                    WHEN 2 THEN '不喜歡'
-                                    WHEN 3 THEN '還OK'
-                                END
-                            FROM questionnaire;
-                            ```
-
-                    * 類似 if/else 的用法
-                        ```sql
+                    SELECT Name,
                         CASE
-                            WHEN condition THEN result
-                            [WHEN···]
-                            [ELSE result]
-                        END;
-                        ```
+                            WHEN Answer=1 THEN '喜歡'
+                            WHEN Answer=2 THEN '不喜歡'
+                            WHEN Answer=3 THEN '還OK'
+                        END
+                    FROM questionnaire;
+                    ```
 
-                        * 如果是放在 begin end 中需要加上 case，如果放在 select 后面不需要
-                        * 例子
-                            ```sql
-                            SELECT Name,
-                                CASE
-                                    WHEN Answer=1 THEN '喜歡'
-                                    WHEN Answer=2 THEN '不喜歡'
-                                    WHEN Answer=3 THEN '還OK'
-                                END
-                            FROM questionnaire;
-                            ```
+##### 函式
 
-* 函式
-    * 字串函數 (SQL String Functions)
-        * concat 拼接
-        * substr 截取子串
-        * upper 转换成大写
-        * lower 转换成小写
-        * trim 去前后指定的空格和字符
-        * ltrim 去左边空格
-        * rtrim 去右边空格
-        * replace 替换
-        * lpad 左填充
-        * rpad 右填充
-        * instr 返回子串第一次出现的索引
-        * length 获取字节个数
-    * 數值函數 (SQL Mathematical Functions)
-        * round 四舍五入
-        * rand 随机数
-        * floor 向下取整
-        * ceil 向上取整
-        * mod 取余
-        * truncate 截断
-    * 聚合函數 (SQL Aggregate Functions) (會合併欄位)
-        * sum 求和
-        * max 最大值
-        * min 最小值
-        * avg 平均值
-        * count 计数
-            * `COUNT(expr)` ，返回 SELECT 語句檢索的行中 expr 的值不為NULL的數量。結果是一個BIGINT值。如果查詢結果沒有命中任何記錄，則返回0
-            * 執行效果上：
-                * `count(*)`
-                    * 包含所有列，相當於行數，會包含值為NULL
-                    * `COUNT(*)` 是SQL92定義的標準統計行數的語法，因為他是標準語法，所以MySQL資料庫對他進行過很多優化。
-                        * 使用 MyISAM 的狀況
-                            * MyISAM 不支持事務，MyISAM中的鎖是表級鎖，同一張表上面的操作需要串行進行，所以 MyISAM
-                              做了一個簡單的優化，那就是它可以把表的總行數單獨記錄下來，如果從一張表中使用 `COUNT(*)`
-                              進行查詢的時候，可以直接返回這個記錄下來的數值就可以了，當然前提是不能有where條件。
-                        * 使用 InnoDB 的狀況
-                            * 而InnoDB支持事務，並且支持行級鎖，所以可能表的行數可能會被併發修改，那麼緩存記錄下來的總行數就不準確了。但是 InnoDB 還是針對 `COUNT(*)` 語句做了些優化的。從MySQL 8.0.13開始，針對InnoDB的SELECT COUNT(*) FROM tbl_name語句，確實在掃表的過程中做了一些優化。前提是查詢語句中不包含WHERE或GROUP BY等條件。
-                    * `COUNT(*)` 的目的只是為了統計總行數，根本不關心自己查到的具體值，所以如果能夠在掃表的過程中，選擇一個成本較低的索引進行的話，那就可以大大節省時間。
-                        * 我們知道，InnoDB中索引分為聚簇索引（主鍵索引）和非聚簇索引（非主鍵索引），聚簇索引的葉子節點中保存的是整行記錄，而非聚簇索引的葉子節點中保存的是該行記錄的主鍵的值。
-                        * 所以，相比之下，非聚簇索引要比聚簇索引小很多，所以MySQL會優先選擇最小的非聚簇索引來掃表。所以，當我們建表的時候，除了主鍵索引以外，創建一個非主鍵索引還是有必要的。
-                * `count(1)`
-                    * 包含所有列，相當於行數，會包含值為NULL
-                    * 在 InnoDB 中 `COUNT(*)` 和 `COUNT(1)` 實現上沒有區別，而且效率一樣，因為COUNT(*)
-                      是SQL92定義的標準統計行數的語法，並且效率高，所以請直接使用COUNT(*)查詢表的行數。
-                        * MySQL官方文檔："InnoDB handles SELECT COUNT(*) and SELECT COUNT(1) operations in the same way.
-                          There is no performance difference."
-                * `count(列名)`
-                    * 只包括列名那一列，在統計結果的時候，會忽略列值為 NULL
-                    * 他的查詢就比較簡單粗暴了，就是進行全表掃瞄，然後判斷指定字段的值是不是為NULL，不為NULL則累加。
-                    * 相比COUNT(*)，COUNT(字段)多了一個步驟就是判斷所查詢的字段是否為NULL，所以他的性能要比COUNT(*)慢。
-    * 時間相關
-        * now 当前系统日期+时间
-        * curdate 当前系统日期
-        * curtime 当前系统时间
-        * str_to_date 将字符转换成日期
-        * date_format 将日期转换成字符
-    * 其他
-        * version 版本
-        * database 当前库
-        * user 当前连接用户
+字串函數 (SQL String Functions)：
+
+* concat 拼接
+* substr 截取子串
+* upper 转换成大写
+* lower 转换成小写
+* trim 去前后指定的空格和字符
+* ltrim 去左边空格
+* rtrim 去右边空格
+* replace 替换
+* lpad 左填充
+* rpad 右填充
+* instr 返回子串第一次出现的索引
+* length 获取字节个数
+
+數值函數 (SQL Mathematical Functions)：
+
+* round 四舍五入
+* rand 随机数
+* floor 向下取整
+* ceil 向上取整
+* mod 取余
+* truncate 截断
+
+聚合函數 (SQL Aggregate Functions) (會合併欄位)：
+
+* sum 求和
+* max 最大值
+* min 最小值
+* avg 平均值
+* count 计数
+    * `COUNT(expr)` ，返回 SELECT 語句檢索的行中 expr 的值不為NULL的數量。結果是一個BIGINT值。如果查詢結果沒有命中任何記錄，則返回0
+    * 執行效果上：
+        * `count(*)`
+            * 包含所有列，相當於行數，**會包含值為NULL**
+            * `COUNT(*)` 是SQL92定義的標準統計行數的語法，因為他是標準語法，所以MySQL資料庫對他進行過很多優化。
+                * 使用 MyISAM 的狀況
+                    * MyISAM 不支持事務，MyISAM中的鎖是表級鎖，同一張表上面的操作需要串行進行，所以 MyISAM
+                        做了一個簡單的優化，那就是它可以把表的總行數單獨記錄下來，如果從一張表中使用 `COUNT(*)`
+                        進行查詢的時候，可以直接返回這個記錄下來的數值就可以了，當然前提是不能有where條件。
+                * 使用 InnoDB 的狀況
+                    * 而InnoDB支持事務，並且支持行級鎖，所以可能表的行數可能會被併發修改，那麼緩存記錄下來的總行數就不準確了。但是 InnoDB 還是針對 `COUNT(*)` 語句做了些優化的。從MySQL 8.0.13開始，針對InnoDB的SELECT COUNT(*) FROM tbl_name語句，確實在掃表的過程中做了一些優化。前提是查詢語句中不包含WHERE或GROUP BY等條件。
+            * `COUNT(*)` 的目的只是為了統計總行數，根本不關心自己查到的具體值，所以如果能夠在掃表的過程中，選擇一個成本較低的索引進行的話，那就可以大大節省時間。
+                * 我們知道，InnoDB中索引分為聚簇索引（主鍵索引）和非聚簇索引（非主鍵索引），聚簇索引的葉子節點中保存的是整行記錄，而非聚簇索引的葉子節點中保存的是該行記錄的主鍵的值。
+                * 所以，相比之下，非聚簇索引要比聚簇索引小很多，所以MySQL會優先選擇最小的非聚簇索引來掃表。所以，當我們建表的時候，除了主鍵索引以外，創建一個非主鍵索引還是有必要的。
+        * `count(1)`
+            * 包含所有列，相當於行數，**會包含值為NULL**
+            * 在 InnoDB 中 `COUNT(*)` 和 `COUNT(1)` 實現上沒有區別，而且效率一樣，因為COUNT(*)
+                是SQL92定義的標準統計行數的語法，並且效率高，所以請直接使用COUNT(*)查詢表的行數。
+                * MySQL官方文檔："InnoDB handles SELECT COUNT(*) and SELECT COUNT(1) operations in the same way.
+                    There is no performance difference."
+        * `count(列名)`
+            * 只包括列名那一列，在統計結果的時候，**會忽略列值為 NULL**
+            * 他的查詢就比較簡單粗暴了，就是進行全表掃瞄，然後判斷指定字段的值是不是為NULL，不為NULL則累加。
+            * 相比COUNT(*)，COUNT(字段)多了一個步驟就是判斷所查詢的字段是否為NULL，所以他的性能要比COUNT(*)慢。
+
+時間相關：
+
+* now 当前系统日期+时间
+* curdate 当前系统日期
+* curtime 当前系统时间
+* str_to_date 将字符转换成日期
+* date_format 将日期转换成字符
+
+其他：
+
+* version 版本
+* database 当前库
+* user 当前连接用户
 
 #### 資料控制語言 (DCL)
 
