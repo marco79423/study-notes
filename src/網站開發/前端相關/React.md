@@ -586,9 +586,9 @@ handleClick = () => {
             * 實現HostConfig協議(源碼在 ReactDOMHostConfig.js 中), 能夠將react-reconciler包構造出來的fiber樹表現出來, 生成 dom 節點(瀏覽器中), 生成字符串(ssr).
     * 構造器 `react-reconciler`
         * 管理 react 應用狀態的輸入和結果的輸出，將輸入信號最終轉換成輸出信號傳遞給渲染器。是 react 得以運行的核心包(綜合協調 react-dom, react, scheduler 各包之間的調用與配合)
-        * 接受輸入(scheduleUpdateOnFiber)，將 fiber 樹生成邏輯封裝到一個回調函數中(涉及fiber樹形結構, fiber.updateQueue隊列, 調和算法等)，把此回調函數(performSyncWorkOnRoot或performConcurrentWorkOnRoot) 送入 scheduler 進行調度。scheduler會控制回調函數執行的時機，回調函數執行完成後得到全新的 fiber 樹，再調用渲染器(如react-dom, react-native等)將 fiber 樹形結構最終反映到界面上
+        * 接受輸入(scheduleUpdateOnFiber)，將 fiber 樹生成邏輯封裝到一個回調函數中(涉及fiber樹形結構, fiber.updateQueue隊列, 調和算法等)，把此回調函數(performSyncWorkOnRoot 或 performConcurrentWorkOnRoot) 送入 scheduler 進行調度。scheduler會控制回調函數執行的時機，回調函數執行完成後得到全新的 fiber 樹，再調用渲染器(如react-dom, react-native等)將 fiber 樹形結構最終反映到界面上
         * 有 3 個核心職責:
-            * 裝載渲染器, 渲染器必須實現HostConfig協議(如: react-dom), 保證在需要的時候, 能夠正確調用渲染器的 api, 生成實際節點(如: dom 節點).
+            * 裝載渲染器, 渲染器必須實現 HostConfig 協議(如: react-dom), 保證在需要的時候, 能夠正確調用渲染器的 api, 生成實際節點(如: dom 節點).
             * 接收 react-dom 包(初次render) 和 react 包(後續更新setState)發起的更新請求.
             * 將 fiber 樹的構造過程包裝在一個回調函數中，並將此回調函數傳入到 scheduler 包等待調度.
 
@@ -607,6 +607,37 @@ handleClick = () => {
 * 紅色方塊代表入口函數, 綠色方塊代表出口函數.
 * package 之間的調用脈絡就是通過板塊間的入口和出口函數連接起來的.
 
+### 啟動 React
+
+在 react 17 中有 3 種啟動方式：
+
+* legacy 模式
+    * 這是當前 React app 使用的方式. 這個模式不支持新功能(concurrent 支持的所有功能)
+        ```js
+        // LegacyRoot
+        ReactDOM.render(<App />, document.getElementById('root'), dom => {}); // 支持callback回調, 參數是一個dom對象
+        ```
+* Blocking 模式
+    * 目前正在實驗中, 它僅提供了 concurrent 模式的小部分功能, 作為遷移到 concurrent 模式的第一個步驟
+        ```js
+        // BlockingRoot
+        // 1. 創建ReactDOMRoot對象
+        const reactDOMBlockingRoot = ReactDOM.createBlockingRoot(
+          document.getElementById('root'),
+        );
+        // 2. 調用render
+        reactDOMBlockingRoot.render(<App />); // 不支持回調
+        ```
+* Concurrent 模式
+    * 目前在實驗中, 未來穩定之後，打算作為 React 的默認開發模式. 這個模式開啟了所有的新功能.
+        ```js
+        // ConcurrentRoot
+        // 1. 創建ReactDOMRoot對象
+        const reactDOMRoot = ReactDOM.createRoot(document.getElementById('root'));
+        // 2. 調用render
+        reactDOMRoot.render(<App />); // 不支持回調
+        ```
+
 ### React 工作循環 (workLoop)
 
 ![react-workloop](./images/react-workloop.png)
@@ -618,7 +649,7 @@ React 有兩大工作循環，用於控制 react 應用的執行過程，可分�
     * 任務調度循環是以二叉堆(Binary heap)為數據結構(詳見react 算法之堆排序), 循環執行堆的頂點, 直到堆被清空.
     * 任務調度循環的邏輯偏向宏觀, 它調度的是每一個任務(task), 而不關心這個任務具體是干什麼的
         * 理論上甚至可以將 Scheduler 包脫離 react 使用
-    * 具體任務其實就是執行回調函數 performSyncWorkOnRoot 或 performConcurrentWorkOnRoot.
+    * 具體任務其實就是執行回調函數 (performSyncWorkOnRoot 或 performConcurrentWorkOnRoot)
 * fiber 構造循環
     * 源碼位於 `react-reconciler` 的 ReactFiberWorkLoop.js, 控制 fiber 樹的構造, 整個過程是一個深度優先遍歷.
     * fiber 構造循環是以樹為數據結構, 從上至下執行深度優先遍歷
@@ -633,7 +664,7 @@ React 有兩大工作循環，用於控制 react 應用的執行過程，可分�
 * 輸入
     * 將每一次更新(如: 新增, 刪除, 修改節點之後)視為一次更新需求(目的是要更新DOM節點).
 * 注冊調度任務
-    * react-reconciler 收到更新需求之後, 並不會立即構造fiber樹, 而是去調度中心scheduler注冊一個新任務task, 即把更新需求轉換成一個task.
+    * react-reconciler 收到更新需求之後, 並不會立即構造fiber樹, 而是去調度中心scheduler注冊一個新任務task, 即把更新需求轉換成一個 task.
 * 執行調度任務(輸出)
     * 調度中心 scheduler 通過任務調度循環來執行 task(task的執行過程又回到了react-reconciler包中)
         * fiber 構造循環是 task 的實現環節之一, 循環完成之後會構造出最新的 fiber 樹.
@@ -686,7 +717,7 @@ function scheduleUpdateOnFiber(fiber: Fiber, lane: Lane, eventTime: number) {
 }
 ```
 
-### 注冊調度任務
+#### 注冊調度任務
 
 ```js
 // ... 省略部分無關代碼
@@ -735,6 +766,150 @@ function ensureRootIsScheduled(root: FiberRoot, currentTime: number) {
   root.callbackNode = newCallbackNode;
 }
 ensureRootIsScheduled的邏
+```
+
+#### 執行任務回調
+
+```js
+function performSyncWorkOnRoot(root) {
+  let lanes;
+  let exitStatus;
+
+  lanes = getNextLanes(root, NoLanes);
+  // 1. fiber樹構造
+  exitStatus = renderRootSync(root, lanes);
+
+  // 2. 異常處理: 有可能fiber構造過程中出現異常
+  if (root.tag !== LegacyRoot && exitStatus === RootErrored) {
+    // ...
+  }
+
+  // 3. 輸出: 渲染fiber樹
+  const finishedWork: Fiber = (root.current.alternate: any);
+  root.finishedWork = finishedWork;
+  root.finishedLanes = lanes;
+  commitRoot(root);
+
+  // 退出前再次檢測, 是否還有其他更新, 是否需要發起新調度
+  ensureRootIsScheduled(root, now());
+  return null;
+}
+```
+
+```js
+function performConcurrentWorkOnRoot(root) {
+  const originalCallbackNode = root.callbackNode;
+
+  // 1. 刷新 pending 狀態的 effects, 有可能某些 effect 會取消本次任務
+  const didFlushPassiveEffects = flushPassiveEffects();
+  if (didFlushPassiveEffects) {
+    if (root.callbackNode !== originalCallbackNode) {
+      // 任務被取消, 退出調用
+      return null;
+    } else {
+      // Current task was not canceled. Continue.
+    }
+  }
+  // 2. 獲取本次渲染的優先級
+  let lanes = getNextLanes(
+    root,
+    root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
+  );
+  // 3. 構造fiber樹
+  let exitStatus = renderRootConcurrent(root, lanes);
+
+  if (
+    includesSomeLane(
+      workInProgressRootIncludedLanes,
+      workInProgressRootUpdatedLanes,
+    )
+  ) {
+    // 如果在render過程中產生了新的update, 且新update的優先級與最初render的優先級有交集
+    // 那麼最初render無效, 丟棄最初render的結果, 等待下一次調度
+    prepareFreshStack(root, NoLanes);
+  } else if (exitStatus !== RootIncomplete) {
+    // 4. 異常處理: 有可能fiber構造過程中出現異常
+    if (exitStatus === RootErrored) {
+      // ...
+    }.
+    const finishedWork: Fiber = (root.current.alternate: any);
+    root.finishedWork = finishedWork;
+    root.finishedLanes = lanes;
+    // 5. 輸出: 渲染fiber樹
+    finishConcurrentRender(root, exitStatus, lanes);
+  }
+
+  // 退出前再次檢測, 是否還有其他更新, 是否需要發起新調度
+  ensureRootIsScheduled(root, now());
+  if (root.callbackNode === originalCallbackNode) {
+    // 渲染被阻斷, 返回一個新的performConcurrentWorkOnRoot函數, 等待下一次調用
+    return performConcurrentWorkOnRoot.bind(null, root);
+  }
+  return null;
+}
+```
+
+performConcurrentWorkOnRoot 與 performSyncWorkOnRoot 的不同之處：
+
+* performConcurrentWorkOnRoot 支援中斷渲染:
+    * 調用 performConcurrentWorkOnRoot函數時, 首先檢查是否處於 render 過程中, 是否需要恢復上一次渲染。如果本次渲染被中斷，最後返回一個新的 performConcurrentWorkOnRoot 函數，等待下一次調用.
+
+#### 輸出
+
+在輸出階段，commitRoot的實現邏輯是在 commitRootImpl 函數中，其主要邏輯是處理副作用隊列, 將最新的 fiber 樹結構反映到 DOM 上。
+
+核心邏輯分為 3 個步驟:
+
+* commitBeforeMutationEffects
+    * dom 變更之前, 主要處理副作用隊列中帶有 Snapshot,Passive標記的fiber節點.
+* commitMutationEffects
+    * dom 變更, 界面得到更新。主要處理副作用隊列中帶有Placement, Update, Deletion, Hydrating標記的fiber節點.
+* commitLayoutEffects
+    * dom 變更後, 主要處理副作用隊列中帶有Update | Callback標記的fiber節點.
+
+```js
+function commitRootImpl(root, renderPriorityLevel) {
+  // 設置局部變量
+  const finishedWork = root.finishedWork;
+  const lanes = root.finishedLanes;
+
+  // 清空FiberRoot對象上的屬性
+  root.finishedWork = null;
+  root.finishedLanes = NoLanes;
+  root.callbackNode = null;
+
+  // 提交階段
+  let firstEffect = finishedWork.firstEffect;
+  if (firstEffect !== null) {
+    const prevExecutionContext = executionContext;
+    executionContext |= CommitContext;
+    
+    // 階段1: dom突變之前
+    nextEffect = firstEffect;
+    do {
+      commitBeforeMutationEffects();
+    } while (nextEffect !== null);
+
+    // 階段2: dom突變, 界面發生改變
+    nextEffect = firstEffect;
+    do {
+      commitMutationEffects(root, renderPriorityLevel);
+    } while (nextEffect !== null);
+    root.current = finishedWork;
+
+    // 階段3: layout 階段, 調用生命週期componentDidUpdate和回調函數等
+    nextEffect = firstEffect;
+    do {
+      commitLayoutEffects(root, lanes);
+    } while (nextEffect !== null);
+
+    nextEffect = null;
+    executionContext = prevExecutionContext;
+  }
+  
+  ensureRootIsScheduled(root, now());
+  return null;
+}
 ```
 
 ## Next.js
