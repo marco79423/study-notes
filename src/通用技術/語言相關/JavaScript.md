@@ -66,17 +66,16 @@ Web Worker 有以下幾個使用注意點：
 
 ### Service Worker
 
-Service workers 主要是提供詳細的瀏覽器和網絡/緩存間的代理服務。
+Service workers 主要是提供詳細的瀏覽器和網絡/緩存間的代理服務。它本質上是一種能在瀏覽器後台運行的獨立線程，能夠在網頁關閉後持續運行，能夠攔截網絡請求並根據網絡是否可用來採取適當的動作、更新來自服務器的的資源，從而實現攔截和加工網絡請求、消息推送、靜默更新、事件同步等一系列功能，是 PWA 應用的核心技術之一。
+
+與普通 JS 運行環境相比，Service Workers 有如下特點：
+
+* 無法直接訪問 DOM ， 可通過 postMessage 發送消息與頁面通信；
+* 能夠控制頁面發送網絡請求；
+* 必須在 HTTPS 協議下運行；
+* 開發過程中可以通過 localhost 使用 service worker。
 
 ![worker-2](./images/worker-2.jfif)
-
-Service workers 的生命週期：
-
-![worker-3](./images/worker-3.png)
-
-知識點：
-
-![worker-4](./images/worker-4.png)
 
 和 HTTP 緩存比較：
 
@@ -93,6 +92,154 @@ Service workers 的生命週期：
 * 出於安全考量，Service workers 只能由 HTTPS 承載；
 * 某些瀏覽器的用戶隱私模式，Service Worker 不可用
 * 其生命週期與頁面無關（關聯頁面未關閉時，它也可以退出，沒有關聯頁面時，它也可以啟動）。
+
+應用場景：
+
+* 離線緩存
+    * 配合 CacheStorage 可以將應用中不變化的資源或者很少變化的資源長久的存儲在用戶端，提升加載速度、降低流量消耗、降低服務器壓力，提高請求速度，讓用戶體驗更加絲滑
+* 消息推送
+    * 激活沉睡的用戶，推送即時消息、公告通知，激發更新等。如web資訊客戶端、web即時通訊工具、h5游戲等運營產品。
+* 事件同步
+    * 確保web端產生的任務即使在用戶關閉了web頁面也可以順利完成。如web郵件客戶端、web即時通訊工具等。
+* 定時同步
+    * 週期性的觸發Service Worker腳本中的定時同步事件，可借助它提前刷新緩存內容
+* 結合CacheStorage、 Push API 和 Notification API
+
+#### 生命週期
+
+Service Worker 的生命週期完全獨立於網頁。生命週期 (install -> waiting -> activate -> fetch)：
+
+![worker-5](./images/worker-5.png)
+
+完成流程：
+
+![worker-3](./images/worker-3.png)
+
+其中， install 事件是 Service Worker 獲取的第一個事件，並且只發生一次。
+
+#### 主要邏輯 & API
+
+* register
+* install
+* activate
+* fetch
+* skipWaiting
+
+```js
+if ('serviceWorker' in navigator) {
+    // 為了防止作用域污染，將安裝前注銷所有已生效的 Service Worker
+    navigator.serviceWorker.getRegistrations()
+        .then(regs => {
+            for (let reg of regs) {
+                reg.unregister()
+            }
+            navigator.serviceWorker.register('./sw.js')
+        })
+}
+
+// sw.js
+console.log('service worker 注冊成功')
+
+self.addEventListener('install', () => {
+    // 安裝回調的邏輯處理
+    console.log('service worker 安裝成功')
+})
+
+self.addEventListener('activate', () => {
+    // 激活回調的邏輯處理
+    console.log('service worker 激活成功')
+})
+
+self.addEventListener('fetch', event => {
+    console.log('service worker 抓取請求成功: ' + event.request.url)
+})
+```
+
+#### 「waitUntil 機制」
+
+`ExtendableEvent.waitUntil()` 方法告訴事件分發器該事件仍在進行。這個方法也可以用於檢測進行的任務是否成功。在服務工作線程中，這個方法告訴瀏覽器事件一直進行，直至 promise resolve，瀏覽器不應該在事件中的異步操作完成之前終止服務工作線程。
+
+* skipWaiting
+    * Service Worker 一旦更新，需要等所有的終端都關閉之後，再重新打開頁面才能激活新的 Service Worker，這個過程太復雜了。通常情況下，開發者希望當 Service Worker 一檢測到更新就直接激活新的 Service Worker。如果不想等所有的終端都關閉再打開的話，只能通過 skipWaiting 的方法了。
+
+    * Service Worker 在全局提供了一個 skipWaiting() 方法，skipWaiting() 在 waiting 期間調用還是在之前調用並沒有什麼不同。一般情況下是在 install 事件中調用它。
+
+* clients.claim
+    * 如果使用了 skipWaiting 的方式跳過 waiting 狀態，直接激活了 Service Worker，可能會出現其他終端還沒有受當前終端激活的 Service Worker 控制的情況，切回其他終端之後，Service Worker 控制頁面的效果可能不符合預期，尤其是如果 Service Worker 需要動態攔截第三方請求的時候。
+
+    * 為了保證 Service Worker 激活之後能夠馬上作用於所有的終端，通常在激活 Service Worker 後，通過在其中調用 self.clients.claim() 方法控制未受控制的客戶端。self.clients.claim() 方法返回一個 Promise，可以直接在 waitUntil() 方法中調用，如下代碼所示：
+        ```js
+        self.addEventListener('activate', event => {
+            event.waitUntil(
+                self.clients.claim()
+                    .then(() => {
+                        // 返回處理緩存更新的相關事情的 Promise
+                    })
+            )
+        })
+        ```
+
+#### 如何處理 Service Worker 的更新
+
+* 如果目前尚未有活躍的 SW ，那就直接安裝並激活。
+* 如果已有 SW 安裝著，向新的 swUrl 發起請求，獲取內容和和已有的 SW 比較。如沒有差別，則結束安裝。如有差別，則安裝新版本的 SW（執行 install 階段），之後令其等待（進入 waiting 階段）
+* 如果老的 SW 控制的所有頁面 「全部關閉」，則老的 SW 結束運行，轉而激活新的 SW（執行 activated 階段），使之接管頁面。
+
+方法：
+
+* skipWaiting
+    * 問題：同一個頁面，前半部分的請求是由 sw.v1.js 控制，而後半部分是由 sw.v2.js 控制。這兩者的不一致性很容易導致問題，甚至網頁報錯崩潰
+
+* skipWaiting + 刷新
+    ```js
+    let refreshing = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) {
+            return
+        }
+        refreshing = true;
+        window.location.reload();
+    });
+    ```
+    * 問題：毫無徵兆的刷新頁面的確不可接受，影響用戶體驗
+* 給用戶一個提示
+    * 大致的流程是：
+        * 瀏覽器檢測到存在新的（不同的）SW 時，安裝並讓它等待，同時觸發 updatefound 事件
+        * 我們監聽事件，彈出一個提示條，詢問用戶是不是要更新 SW
+        * 如果用戶確認，則向處在等待的 SW 發送消息，要求其執行 skipWaiting 並取得控制權
+        * 因為 SW 的變化觸發 controllerchange 事件，我們在這個事件的回調中刷新頁面即可
+    * 問題：
+        * 弊端一：過於復雜
+        * 弊端二：刷新邏輯的實現必須通過 JS 完成更新
+
+#### Debug
+
+![worker-6](./images/worker-6.png)
+
+* Offline
+    * 復選框可以將 DevTools 切換至離線模式。它等同於 Network 窗格中的離線模式。
+* Update on reload
+    * 復選框可以強制 Service Worker 線程在每次頁面加載時更新。
+* Bypass for network
+    * 復選框可以繞過 Service Worker 線程並強制瀏覽器轉至網絡尋找請求的資源。
+* Update
+    * 按鈕可以對指定的 Service Worker 線程執行一次性更新。
+* Push
+    * 按鈕可以在沒有負載的情況下模擬推送通知。
+* Sync
+    * 按鈕可以模擬後台同步事件。
+* Unregister
+    * 按鈕可以注銷指定的 Service Worker 線程。
+* Source
+    * 告訴當前正在運行的 Service Worker 線程的安裝時間，鏈接是 Service Worker 線程源文件的名稱。點擊鏈接會將定向並跳轉至 Service Worker 線程來源。
+* Status
+    * 告訴 Service Worker 線程的狀態。此行上的數字指示 Service Worker 線程已被更新的次數。如果啟用 update on reload 復選框，接下來會注意到每次頁面加載時此數字都會增大。在狀態旁邊會看到 start 按鈕（如果 Service Worker 線程已停止）或 stop 按鈕（如果 Service Worker 線程正在運行）。Service Worker 線程設計為可由瀏覽器隨時停止和啟動。使用 stop 按鈕明確停止 Service Worker 線程可以模擬這一點。停止 Service Worker 線程是測試 Service Worker 線程再次重新啟動時的代碼行為方式的絕佳方法。它通常可以揭示由於對持續全局狀態的不完善假設而引發的錯誤。
+* Clients
+    * 告訴 Service Worker 線程作用域的原點。如果已啟用 show all 復選框，focus 按鈕將非常實用。在此復選框啟用時，系統會列出所有注冊的 Service Worker 線程。如果這時候點擊正在不同標簽中運行的 Service Worker 線程旁的 focus 按鈕，Chrome 會聚焦到該標簽。
+
+#### 知識點
+
+![worker-4](./images/worker-4.png)
 
 ### Worklet
 
@@ -175,3 +322,7 @@ console.log(JSON.stringify(value));
         const vConsole = new VConsole()
         console.log('Hello world')
         ```
+
+## 參考文章
+
+* [[科普] Service Worker 入門指南](http://mp.weixin.qq.com/s?__biz=Mzg3OTYwMjcxMA==&mid=2247487147&idx=1&sn=77096d7a944c83e50a23bc806dfe5565&chksm=cf00b3d2f8773ac4a1251e14bc546b351328f008890dad56534b5f6d1fc204b37d029bebf09b#rd)
