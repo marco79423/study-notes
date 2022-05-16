@@ -347,6 +347,104 @@ Flexbox 是CSS 彈性盒子佈局模塊（Flexible Box Layout Module）的縮寫
 
 要使用 flexbox，需要在想要進行 flex 佈局的父元素上應用 display: flex，這樣所有直接子元素都將會按照 flex 進行佈局
 
+flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的。
+
+![flexbox-0](./images/flexbox-0.png)
+
+```css
+.container {
+  display: flex;
+}
+```
+
+![flexbox-1](./images/flexbox-1.png)
+
+* 主軸相關
+    * flex-direction
+        * 設定主軸 (main axis) 的方向，可讓主軸旋轉。
+            * row
+                * 主軸為橫向。
+                    ![flexbox-2](./images/flexbox-2.png)
+            * row-reverse
+                * 主軸為橫向，但反序排列。
+                    ![flexbox-3](./images/flexbox-3.png)
+            * column
+                * 主軸為直向。
+                    ![flexbox-4](./images/flexbox-4.png)
+            * column-reverse
+                * 主軸為直向，但反序排列。
+                    ![flexbox-5](./images/flexbox-5.png)
+    * justify-content
+        * 主軸的對齊方式
+            * flex-start
+                * 靠左對齊。
+                    ![flexbox-6](./images/flexbox-6.png)
+            * flex-end
+                * 靠右對齊。
+                    ![flexbox-7](./images/flexbox-7.png)
+            * center
+                * 置中對齊。
+                    ![flexbox-8](./images/flexbox-8.png)
+            * space-between
+                * 每個小方塊擁有相同的間隔，但與父容器之間沒有間隔
+                    ![flexbox-9](./images/flexbox-9.png)
+                    * 此例會有 10px 的空隙是因為方塊預設設有 10px 的 margin
+            * space-around
+                * 每個小方塊之間與父容器有間隔，但小方塊與父容器之間的間隔是小方塊彼此間隔的一半
+                    ![flexbox-10](./images/flexbox-10.png)
+            * space-evenly
+                * 每個小方塊之間和與父容器之間擁有相同的間隔。
+                    ![flexbox-11](./images/flexbox-11.png)
+    * flex-wrap
+        * 設定小方塊是要強制排成一列或依照容器的包圍而排成多列。
+            * wrap
+                * 小方塊依照容器的大小分列排列
+                    ![flexbox-18](./images/flexbox-18.png)
+            * wrap-reverse
+                * 概念同 wrap，只是順序相反。
+                    ![flexbox-19](./images/flexbox-19.png)
+            * nowrap
+                * 小方塊排成一列不折行，可使用 flex-direction 調整主軸方向，即小方塊對齊的方向。
+                    ![flexbox-20](./images/flexbox-20.png)
+    * flex-basis
+        * 更改主軸 (main axis) 的預設屬性值，現在主軸是水平的，位於主軸上的屬性是 width。
+        * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
+    * flex-grow
+        * 每個區塊 (這裡是指小方塊) 可在主軸上佔容器的多少部份，或說是如何分配剩餘空間
+    * flex-shrink
+        * 與 flex-grow 相反，flex-grow 是膨脹，flex-shrink 是縮小
+    * flex
+        * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
+            * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
+* 交叉軸相關
+    * align-items
+        * 交叉軸 (cross axis) 的對齊方式
+            * flex-start
+                * 若小方塊不等高，則會依容器的頂端對齊，類似過去使用的 vertical-align: top。
+                    ![flexbox-12](./images/flexbox-12.png)
+            * flex-end
+                * 若小方塊不等高，則會依容器底部對齊，類似過去使用的 vertical-align: bottom。
+                    ![flexbox-13](./images/flexbox-13.png)
+            * stretch
+                * 小方塊不設定寬、高、間距，充滿整個容器。
+                    ![flexbox-14](./images/flexbox-14.png)
+            * baseline
+                * 若小方塊不等高，則會依容器的基準線對齊，類似過去使用的 vertical-align: baseline。
+                    ![flexbox-15](./images/flexbox-15.png)
+            * center
+                * 若小方塊不等高，則會依容器的中線對齊，類似過去使用的 vertical-align: middle。
+                    ![flexbox-16](./images/flexbox-16.png)
+    * align-self
+        * 設定單一元素的對齊方式，會覆寫父層 align-items 的設定。
+            ![flexbox-17](./images/flexbox-17.png)
+            ```css
+            .red {
+                background: red;
+                height: 30px;
+                align-self: flex-start;
+            }
+            ```
+
 #### Grid
 
 Flexbox 用於設計橫向或縱向的佈局，而 Grid 佈局則被設計用於同時在兩個維度上把元素按行和列排列整齊。
@@ -1091,3 +1189,5 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 * [層疊與繼承](https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance)
 * [現代 CSS 解決方案：CSS 數學函數之 calc](https://mp.weixin.qq.com/s?__biz=Mzg2MDU4MzU3Nw==&mid=2247491089&idx=1&sn=84aecbf783859c930bf57660b46d06ef&chksm=ce257de7f952f4f17b49c890910d995362a1a7247fdf20bd427d868a15cef08e1c3d9e68eba1)
 * [现代 CSS 解决方案：数学函数之 min、max、clamp](https://mp.weixin.qq.com/s/a6CxCvmhQz4Os4j_60gnOg)
+* [圖解 Flexbox 基本屬性](https://cythilya.github.io/2017/04/04/flexbox-basics/)
+* [圖解 Flexbox 進階屬性](https://cythilya.github.io/2017/04/06/flexbox-advance/)
