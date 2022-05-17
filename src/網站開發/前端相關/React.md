@@ -351,15 +351,19 @@ React 的狀態更新可以分為兩類：
 * 過渡更新（Transition updates）
     * 將 UI 從一個視圖過渡到另一個視圖。不需要即時響應，有些延遲是可以接受的。
 
-React 並不能自動識別哪些更新是優先級更高的，所以默認情況下， React 所有的更新都是緊急更新。
+React 並不能自動識別哪些更新是優先級更高的，所以默認情況下， React 所有的更新都是緊急更新。因為 React 沒有能力自動識別。所以它提供了 startTransition讓我們手動指定哪些更新是緊急的，哪些是非緊急的。
 
 ```js
 const [inputValue, setInputValue] = useState();
 
 const onChange = (e)=>{
-  setInputValue(e.target.value); // 緊急的
-  // 更新搜索列表
-  setSearchQuery(e.target.value); // 非緊急的
+  // 緊急更新：
+  setInputValue(input);
+
+  // 標記回調函數內的更新為非緊急更新：
+  startTransition(() => {
+    setSearchQuery(input);
+  });
 }
 
 return (
@@ -369,17 +373,90 @@ return (
 
 此例用戶的鍵盤輸入操作後，`setInputValue` 會立即更新用戶的輸入到界面上，是緊急更新。而 `setSearchQuery` 是根據用戶輸入，查詢相應的內容，是非緊急的。
 
-但是 React 確實沒有能力自動識別。所以它提供了 startTransition讓我們手動指定哪些更新是緊急的，哪些是非緊急的。
+被 startTransition 包裹的 setState 觸發的渲染被標記為不緊急渲染，意味著他們可以被其他緊急渲染所搶佔。這種渲染優先級的調整手段可以幫助我們解決各種性能偽瓶頸，提升用戶體驗。
+
+### hooks
+
+#### useId
+
+useId 是一個 API，用於在客戶端和服務器上生成唯一 ID，同時避免水合不匹配。使用示例：
 
 ```js
-// 緊急的
-setInputValue(e.target.value);
-
-startTransition(() => {
-  setSearchQuery(input); // 非緊急的
-});
-
+function Checkbox() {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id}>選擇框</label>
+      <input type="checkbox" name="sex" id={id} />
+    </div>
+  );
+}
 ```
+
+#### useInsertionEffect
+
+useInsertionEffect 的工作原理大致 useLayoutEffect 相同，只是此時無法訪問 DOM 節點的引用。
+
+因此推薦的解決方案是使用這個 Hook 來插入樣式表（或者如果你需要刪除它們，可以引用它們）：
+
+```js
+function useCSS(rule) {
+  useInsertionEffect(() => {
+    if (!isInserted.has(rule)) {
+      isInserted.add(rule);
+      document.head.appendChild(getStyleForRule(rule));
+    }
+  });
+  return rule;
+}
+function Component() {
+  let className = useCSS(rule);
+  return<div className={className} />;
+}
+```
+
+#### useTransition
+
+useTransition 是非常常見的需求。幾乎所有可能導致組件掛起的點擊或交互操作都需要使用 useTransition，以避免意外隱藏用戶正在交互的內容。
+
+這可能會導致組件存在大量重復代碼。通常建議把 useTransition 融合到應用的設計系統組件中。例如，我們可以把 useTransition 邏輯抽取到我們自己的 `<Button>` 組件：
+
+```js
+function Button({ children, onClick }) {
+  const [startTransition, isPending] = useTransition();
+
+  function handleClick() {
+    startTransition(() => {
+      onClick();
+    });
+  }
+
+  return (
+    <button onClick={handleClick} disabled={isPending}>
+      {children} {isPending ? '加載中' : null}
+    </button>
+  );
+}
+```
+
+#### useDeferredValue
+
+返回一個延遲響應的值，這通常用於在具有基於用戶輸入立即渲染的內容，以及需要等待數據獲取的內容時，保持接口的可響應性。
+
+```js
+import { useDeferredValue } from 'react';
+
+const deferredValue = useDeferredValue(value);
+```
+
+useDeferredValue 與 useTransition 的異同：
+
+* 相同：useDeferredValue 本質上和內部實現與 useTransition 一樣都是標記成了延遲更新任務。
+* 不同：useTransition 是把更新任務變成了延遲更新任務，而 useDeferredValue 是產生一個新的值，這個值作為延時狀態。
+
+與 debounce 的區別：
+
+* debounce 即 setTimeout 總是會有一個固定的延遲，而 useDeferredValue 的值只會在渲染耗費的時間下滯後，在性能好的機器上，延遲會變少，反之則變長。
 
 ## 開發技巧
 
@@ -612,7 +689,7 @@ handleClick = () => {
 在 react 17 中有 3 種啟動方式：
 
 * legacy 模式
-    * 這是當前 React app 使用的方式. 這個模式不支持新功能(concurrent 支持的所有功能)
+    * 這是當前 React app 使用的方式。這個模式不支持新功能(concurrent 支持的所有功能)
         ```js
         // LegacyRoot
         ReactDOM.render(<App />, document.getElementById('root'), dom => {}); // 支持callback回調, 參數是一個dom對象
@@ -931,3 +1008,4 @@ function commitRootImpl(root, renderPriorityLevel) {
 * [重新认识 React 生命周期](https://blog.hhking.cn/2018/09/18/react-lifecycle-change/)
 * [React 18 全覽](https://mp.weixin.qq.com/s/N6MBhe4fkHO49ZqVNBPflQ)
 * [7kms/react-illustration-series](https://github.com/7kms/react-illustration-series)
+* [React 18 超全升級指南](https://mp.weixin.qq.com/s/4FRgKNeKrdMZZgEaQERrrA)
