@@ -411,8 +411,42 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
         * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
     * flex-grow
         * 每個區塊 (這裡是指小方塊) 可在主軸上佔容器的多少部份，或說是如何分配剩餘空間
+        * 計算方式
+            假設剩餘空間為 x，三個元素的 flex-grow 分別為 a，b，c。設 sum 為 a + b + c。那麼三個元素將得到剩餘空間分別是 `x * a / sum`、`x * b / sum`、`x * c / sum`
+            * 例子：
+                * 父元素寬度 500px，三個子元素的 width 分別為 100px，150px，100px。於是剩餘空間為 150px
+                * 三個元素的 flex-grow 分別是 1，2，3，於是 sum 為 6
+                * 則
+                    ```plain
+                    三個元素所得到的多餘空間分別是：
+                    150 * 1 / 6 = 25px
+                    150 * 2 / 6 = 50px
+                    150 * 3 / 6 = 75px
+
+                    三個元素最終的寬度分別為：
+                    100px + 25px = 125px
+                    150px + 50px = 200px
+                    100px + 75px = 175px
+                    ```
     * flex-shrink
         * 與 flex-grow 相反，flex-grow 是膨脹，flex-shrink 是縮小
+        * 元素本身的寬度也會影響收縮多少
+        * 例子：
+            * 父元素 500px。三個子元素分別設置為 150px，200px，300px (溢出 150px)。三個子元素的 flex-shrink 的值分別為 1，2，3。
+                * 具體的計算方式為：每個元素收縮的權重為其 flex-shrink 乘以其寬度。
+                    ```plain
+                    總權重為： 1 * 150 + 2 * 200 + 3 * 300 = 1450
+
+                    三個元素分別收縮：
+                    150 * 1(flex-shrink) * 150(width) / 1450 = -15.5
+                    150 * 2(flex-shrink) * 200(width) / 1450 = -41.4
+                    150 * 3(flex-shrink) * 300(width) / 1450 = -93.1
+                    
+                    最終寬度為：
+                    150 - 15.5 = 134.5
+                    200 - 41.4 = 158.6
+                    300 - 93.1 = 206.9
+                    ```
     * flex
         * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
             * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
@@ -1191,3 +1225,4 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 * [现代 CSS 解决方案：数学函数之 min、max、clamp](https://mp.weixin.qq.com/s/a6CxCvmhQz4Os4j_60gnOg)
 * [圖解 Flexbox 基本屬性](https://cythilya.github.io/2017/04/04/flexbox-basics/)
 * [圖解 Flexbox 進階屬性](https://cythilya.github.io/2017/04/06/flexbox-advance/)
+* [詳解 flex-grow 與 flex-shrink](https://github.com/xieranmaya/blog/issues/9)
