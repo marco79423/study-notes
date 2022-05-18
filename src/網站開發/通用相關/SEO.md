@@ -31,6 +31,25 @@ SEO 並不僅僅是建構搜尋引擎友善的網頁，SEO 可以讓網頁更容
 * [Google蜂鳥演算法](https://www.newscan.com.tw/all-seo/google-hummingbird.htm)
     * 與之前發布的「熊貓演算法」和「企鵝演算法」更新不同，後者最初是作為Google現有算法的附件發佈的，目前「蜂鳥演算法」已徹底轉變成為核心算法引用， 雖然核心算法中許多先前組件還是保持著，但「蜂鳥演算法」表明Google開始深入了解搜尋者「查詢資料的意圖為何?」，並將其與相關結果進行匹配。
 
+
+### CSR
+
+SEO 背後的流程是 crawling → indexing → ranking 三個階段，而另一件重要的事是「沒有渲染的內容是不會被加入到 indexing 的」。
+
+在 google search engine 團隊不斷的努力，CSR 網站實際上是可以參與 SEO 的，並不像是第一次跟伺服器拿到 HTML 後，發現裡面只有一個 `<div>` 後，就不理這個網站了。
+
+googlebot 有所謂 second wave of indexing 技術，如果一個網站有需要被渲染的需求，亦即像是等待 JavaScript 把內容渲染出來，而 googlebot 遇到這種情況會先丟到 render queue 裡面，等待有資源處理渲染任務後才會回來做這件事。
+
+![seo-3](./images/seo-3.png)
+
+但 googlebot 每天都要處理數量非常龐大的網站，它必須要有些機制判斷有些內容實際上不必參與 SEO，也就是 render budget 的評估機制。
+
+render budget 包括像是等待渲染的時間太久、很少人去的網站等因素，則會造成 googlebot 評估一個網站「不用等到全部的內容渲染完畢後才 indexing」，因此這種情況下只有部分內容會進入到 indexing 跟 ranking 的階段。所以如果比較重要的內容是在 JavaScript 渲染階段才會出現在畫面上，googlebot 有機會不將這些重要的內容納入 indexing 中，最終將會不利於 SEO。
+
+綜合上述，CSR 實際上雖然可以參與 SEO，但是不利於內容變動快速的網站，因為 CSR 沒辦法讓 googlebot 快速地拿到需要的內容。這時候 SSR 跟 SSG 就能夠發揮效用，googlebot 不必經過 second wave of indexing 就可以迅速地跟伺服器拿到資料，因此有利於內容變動快速的網站做 SEO。
+
+如果說伺服器可以承受負擔，而且 SSG 跟 SSR 對於 SEO 從內容上來看都比較好，但 SEO 有很多項指標，而如果全面使用 SSR，把所有資料都在伺服器端處理，其實也不一定有利於 SEO，而且頁面中的有些內容其實不必參與 SEO。因此 SSR 只需把「對使用者有價值的資料」渲染完畢，把剩下的部分交由 CSR 處理就行了，這樣使用者可以更快地看到內容，有利於「First Contentful Paint」的評分。
+
 ### Bing
 
 Bing 前身是 MSN Live Search，服務的對象比互聯網世界小得多。所以 Bing 是從原來一個小引擎逐步發展。
