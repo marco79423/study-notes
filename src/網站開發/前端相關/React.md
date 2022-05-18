@@ -20,6 +20,48 @@
 
 ## 概念
 
+### CSR vs SSR vs SSG
+
+#### CSR (Client Side Rendering)
+
+CSR 如同其名，是將渲染資料的所有過程都交由瀏覽器端處理，使用者在瀏覽網站時，第一次跟伺服器請求的 HTML 檔裡面幾乎不包含任何的內容，伺服器並沒有傳入資料到 HTML。接著，後續會再透過載入的 bundle，也就是 JavaScript 的檔案，再讓 JS 執行 AJAX 跟伺服器請求資料，最後將資料渲染到畫面上。
+
+例子：
+
+```html
+<html>
+    <head>
+        <link href="/static/css/main.css" rel="stylesheet">
+    </head>
+    <body>
+        <div id="app"></div>
+    </body>
+    <script src="/static/js/bundle.js"></script>
+</html>
+```
+
+而且因為 bundle 需要包含呼叫 API 的程式碼，一般來說整體會檔案大小會比較大一點，因此載入的時間就會稍微長一些。在載入完之後，也需要呼叫 API 也是一段時間成本。
+
+但是 CSR 也不是沒有優點，因為 bundle 在一開始就載入進來，後續渲染畫面就不用不斷地跟伺服器端交互，體感上會比 SSR 快，而且在切換頁面的使用者體驗也會更好。使用 CSR 對於伺服器來說，也會有較小的負擔。
+
+#### SSR (Server Side Rendering)
+
+在過去的時代，傳統的 SSR 像是 PHP 透過伺服器端處理任何的資料，然後再直接編譯成 HTML 檔案，最後使用者看到的就是完整包含資料的 HTML。
+
+但這種傳統的做法有一個缺點是在切換頁面時，瀏覽器的畫面很明顯地閃爍，在這種情況下瀏覽網站的使用者體驗 (UX) 不是很好。
+
+後來因為 SPA 開始逐漸盛行，使用者切換頁面不必再因為畫面不斷閃爍，而感到體驗不佳，但因為資料都是在瀏覽器端由 AJAX 發送請求跟伺服器端拿資料，如此一來 google 的爬蟲就沒辦法拿到資料，對於有礙於 SEO。
+
+因此，其中一個解決辦法就是 SSR，但是不像似過去傳統的 SSR，而是保有 SPA 換頁時不會閃爍的優點，還可以讓伺服器動態地注入資料到 HTML 的檔案中，讓瀏覽器端第一次請求拿到的 HTML 就已經包含所有的資料，因此 google 爬蟲也就可以順利地爬到網站中的內容。
+
+網頁的資料都是動態的，而且使用者在看到瀏覽網頁時還不用等待 API 回來後，再透過 JS 渲染資料到畫面上，大部分的時候這種方式的使用者體驗更好。但問題就在於使用 SSR 就必須有個伺服器一直處理使用者的請求，一直產生有資料的 HTML，並送到瀏覽器端，這樣的工作對於伺服器來說是一個負擔。
+
+#### SSG (Static Side Generation)
+
+SSG 意味著所有的內容都在 bulid 的時候都打包進入檔案中，所以使用者在瀏覽網站時，就可以拿到完整的 HTML 檔案。優點除了可以有利於 SEO 之外，還有因為每次使用者拿到的 HTML 內容都不會變，所以還可以讓 HTML 被 cache 在 CDN 上，很適合用在資料變動較小的網站中，像是部落格、產品介紹頁這種應用中。
+
+但使用 SSG 這項技術時，除了必須考量到頁面資料更新頻率的問題，再者要衡量隨著應用越來越大時，打包的時間也會隨之增長。
+
 ### Retained-mode GUI v.s. Immediate-mode GUI
 
 * Retained mode GUI
@@ -457,6 +499,12 @@ useDeferredValue 與 useTransition 的異同：
 與 debounce 的區別：
 
 * debounce 即 setTimeout 總是會有一個固定的延遲，而 useDeferredValue 的值只會在渲染耗費的時間下滯後，在性能好的機器上，延遲會變少，反之則變長。
+
+## useEvent
+
+(等確定再說)
+
+[引起大范围讨论的useEvent到底是干嘛的？](https://mp.weixin.qq.com/s/N9L7d43StIAGH89-WPASQA)
 
 ## 開發技巧
 
@@ -991,8 +1039,81 @@ function commitRootImpl(root, renderPriorityLevel) {
 
 ## Next.js
 
-* Image
-    * [像前端专家一样设计 Image 组件](https://mp.weixin.qq.com/s/zuU3NLmrl2GwqxiSZApEMQ)
+Next.js 是一個基於 React 的框架，它同時支援 SSR (Server Side Rendering) 與 SSG (Static Side Generation) 兩種方法，不需要很多的設定就可以讓網站同時有這兩種功能。
+
+Next.js 在設計上可以混用兩種方法，像是 /page-a 希望能夠 SSR，因為網站內容很常改變，需要 API 支援變動頻繁的資料；而 /page-b 則是使用 SSG 則是可以用在內容較不常改變的頁面，例如 Landing Page 或部落格等。
+
+Next.js 還是一個全端框架，它除了 React 的部分外，也提供了建立 API 的功能。如果一個新的專案，在還沒有建構 API 的服務之前，考慮使用 Next.js 的 API routes 是一個選項。
+
+### next.config.js
+
+### Server Side Rendering (SSR)
+
+#### getServerSideProps
+
+要在 Next.js 使用 SSR 要搭配 getServerSideProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
+
+```js
+import { GetServerSideProps } from "next";
+
+export const getServerSideProps = async () => {
+  return {
+    props: {},
+  };
+};
+```
+
+### Static Side Generation (SSG)
+
+#### getStaticProps
+
+要在 Next.js 使用 SSG 要搭配 getStaticProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
+
+### Routing
+
+在 Next.js 可以分為三種的 routing 方式，分別為：
+
+* static routes
+* dynamic routes
+* catch all routes
+
+### Document
+
+Document 只會在伺服器端渲染，而且只會渲染一次，在 `<Head>` 裡面的設定讓整個專案所有的頁面都會是一樣的，因此官方在 Next.js 10 的版本中建議使用者不要再 `<Head>` 裡面使用像是 `<title>` 的 tag，它應該被使用在 next/head 裡面。
+
+適合在 Document 中設定的是像 google analytics、google font 這類所有的頁面都會用到的函式庫，或是全域 bootstrap css 等，在伺服器端處理完畢後，才將 HTML 回傳給使用者。
+
+```js
+import Document, { Html, Head, Main, NextScript } from "next/document";
+
+class MyDocument extends Document {
+  static async getInitialProps(ctx) {
+    const initialProps = await Document.getInitialProps(ctx);
+    return { ...initialProps };
+  }
+
+  render() {
+    // 需要客製化 render() 要注意不能刪除： <Html> <Head> <Main> <NextScript>
+    return (
+      <Html> 
+        <Head />
+        <body>
+          <Main />
+          <NextScript />
+        </body>
+      </Html>
+    );
+  }
+}
+
+export default MyDocument;
+```
+
+### 其他議題
+
+#### Image
+
+* [像前端专家一样设计 Image 组件](https://mp.weixin.qq.com/s/zuU3NLmrl2GwqxiSZApEMQ)
 
 ## 工具庫
 
@@ -1009,3 +1130,5 @@ function commitRootImpl(root, renderPriorityLevel) {
 * [React 18 全覽](https://mp.weixin.qq.com/s/N6MBhe4fkHO49ZqVNBPflQ)
 * [7kms/react-illustration-series](https://github.com/7kms/react-illustration-series)
 * [React 18 超全升級指南](https://mp.weixin.qq.com/s/4FRgKNeKrdMZZgEaQERrrA)
+* [從零開始學習 Next.js 系列](https://ithelp.ithome.com.tw/users/20110504/ironman/4269)
+* [Day03 - 深入淺出 CSR、SSR 與 SSG](https://ithelp.ithome.com.tw/articles/10266781)
