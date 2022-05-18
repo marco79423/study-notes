@@ -1,4 +1,4 @@
-# 設計相關學習筆記
+# UI / UX 學習筆記
 
 ## 畫草圖的工類
 
@@ -1048,6 +1048,86 @@ animation: six 3s infinite cubic-bezier(0.5,0,0.5,1);
 }
 ```
 
+## Debounce （去抖動）
+
+所謂 Debounce，是讓使用者在觸發相同事件（如卷軸）的情境下，停止觸發綁定事件的效果，直到使用者停止觸發相同事件。
+
+以現實的例子來說，就是排隊搭公車的時候，司機在開門後，會待每一個乘客都上車後，最後才會關上門。
+
+簡易實作：
+
+```js
+function debounce(func, delay=250) {
+  let timer = null;
+ 
+  return () => {
+    let context = this;
+    let args = arguments;
+ 
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      func.apply(context, args);
+    }, delay)
+  }
+}
+```
+
+簡單來說，就是在函數域加入一個計時器，如果事件一直觸發，便刷新計時器，直至計時器時限內沒有觸發該事件，便執行事件行為。
+
+用例：
+
+```js
+function handleScroll() {
+  console.log(window.scrollY)
+}
+window.addEventListener('scroll', debounce(handleScroll));
+```
+
+## Throttle (節閥)
+
+Throttle 是另一種減緩事件觸發方法，它與Debounce的差異是，為使用者觸發相同事件時提供間隔，控制特定時間內事件觸發的次數。
+
+以現實例子來說，就像日本庭院常見的那個盛水的竹子裝置（名為鹿威），流水一直下來，但竹子會等水盛滿（時間到），才會把水排出。
+
+
+簡易實作：
+
+```js
+function throttle(func, timeout = 250) {
+  let last;
+  let timer;
+ 
+  return function () {
+    const context = this;
+    const args = arguments;
+    const now = +new Date();
+ 
+    if (last && now < last + timeout) {
+      clearTimeout(timer)
+      timer = setTimeout(function () {
+        last = now
+        func.apply(context, args)
+      }, timeout)
+    } else {
+      last = now
+      func.apply(context, args)
+    }
+  }
+}
+```
+
+Throttle實現方法是在函數域加入一個計時器並記錄最新一次執行的時間點，並把現在的時間點與記錄的時間點再比較，如果差距超過設定時限，便允許再次執行事件任務，並記下新的執行時間點。
+
+用例：
+
+```js
+function handleScroll() {
+  console.log(window.scrollY)
+}
+window.addEventListener('scroll', throttle(handleScroll, 500));  // 500ms才允許再次執行
+```
+
 ## 參考資料
 
 * [網頁動畫的十二原則](https://mp.weixin.qq.com/s/gLpTNnLWiQrS9h_Qfa9stg)
+* [Debounce & Throttle — 那些前端開發應該要知道的小事(一)](https://medium.com/@alexian853/debounce-throttle-%E9%82%A3%E4%BA%9B%E5%89%8D%E7%AB%AF%E9%96%8B%E7%99%BC%E6%87%89%E8%A9%B2%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E5%B0%8F%E4%BA%8B-%E4%B8%80-76a73a8cbc39)

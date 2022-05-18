@@ -2,7 +2,6 @@
 
 ## 設計
 
-* [設計相關](設計相關.md)
 
 ## 基礎知識
 
@@ -14,6 +13,7 @@
 
 * [Node.js](Node.js.md)
 * [WebAssembly](WebAssembly.md)
+
 
 * [其他議題](其他議題.md)
 
