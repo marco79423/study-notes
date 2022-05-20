@@ -742,6 +742,7 @@ handleClick = () => {
         // LegacyRoot
         ReactDOM.render(<App />, document.getElementById('root'), dom => {}); // 支持callback回調, 參數是一個dom對象
         ```
+        ![react-process-legacy](./images/react-process-legacy.png)
 * Blocking 模式
     * 目前正在實驗中, 它僅提供了 concurrent 模式的小部分功能, 作為遷移到 concurrent 模式的第一個步驟
         ```js
@@ -753,6 +754,7 @@ handleClick = () => {
         // 2. 調用render
         reactDOMBlockingRoot.render(<App />); // 不支持回調
         ```
+        ![react-process-blocking](./images/react-process-blocking.png)
 * Concurrent 模式
     * 目前在實驗中, 未來穩定之後，打算作為 React 的默認開發模式. 這個模式開啟了所有的新功能.
         ```js
@@ -762,6 +764,7 @@ handleClick = () => {
         // 2. 調用render
         reactDOMRoot.render(<App />); // 不支持回調
         ```
+        ![react-process-concurrent](./images/react-process-concurrent.png)
 
 ### React 工作循環 (workLoop)
 
@@ -1049,6 +1052,9 @@ Next.js 還是一個全端框架，它除了 React 的部分外，也提供了�
 
 ### Server Side Rendering (SSR)
 
+* getServerSideProps
+    * 在使用者進入網頁時，每一次發送請求伺服器都會抓取資料
+
 #### getServerSideProps
 
 要在 Next.js 使用 SSR 要搭配 getServerSideProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
@@ -1065,6 +1071,11 @@ export const getServerSideProps = async () => {
 
 ### Static Side Generation (SSG)
 
+* getStaticProps
+    * 在 build 的時候抓取資料
+* getStaticPaths
+    * 在使用 dynamic routes 時使用
+
 #### getStaticProps
 
 要在 Next.js 使用 SSG 要搭配 getStaticProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
@@ -1076,6 +1087,12 @@ export const getServerSideProps = async () => {
 * static routes
 * dynamic routes
 * catch all routes
+
+#### dynamic routes 的地雷
+
+在使用 router.query 時要注意「第一次 render 時拿不到值」的問題，因為 Next.js 有 Automatic Static Optimization 的機制，在第一個階段 (第一次渲染) 會先執行 pre-rendering 產生靜態的 HTML，這時候 router.query 會是空的 {} ，在第二個階段 (第二次渲染) 時才能夠從 router.query 中拿到值。
+
+[`router.query` returns undefined parameter on first render in Next.js](https://github.com/vercel/next.js/discussions/11484)
 
 ### Document
 
