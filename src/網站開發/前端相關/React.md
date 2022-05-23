@@ -74,7 +74,9 @@ SSG 意味著所有的內容都在 bulid 的時候都打包進入檔案中，所
 
 React 會先將元件都 render 成 virtual DOM，它會自己找出有變動的部份，然後只重繪這些變動。既享有 immediate-mode 的好處，也不用擔心 UI 效能問題 (至少是減少對於效能的影響)
 
-## JSX
+## 基礎
+
+### JSX
 
 * Facebook
 * A JavaScript syntax extension that looks similar to XML
@@ -94,7 +96,120 @@ React 會先將元件都 render 成 virtual DOM，它會自己找出有變動的
     * 需要 tool 將 JSX 轉為普通的 JS
     * 聽到「轉為普通的 JS」，就會想到 Babel !!
 
-## 生命周期
+### 啟動 React
+
+```js
+export function createRoot(
+  container: Container,
+  options?: RootOptions,
+): RootType {
+  return new ReactDOMRoot(container, options);
+}
+
+function ReactDOMRoot(container: Container, options: void | RootOptions) {
+  // 创建一个fiberRoot对象, 并将其挂载到this._internalRoot之上
+  this._internalRoot = createRootImpl(container, ConcurrentRoot, options);
+}
+```
+
+無論哪一個模式，在 ReactDOM(Blocking)Root 的創建過程中, 都會調用一個相同的函數createRootImpl。
+
+```js
+function createRootImpl(
+  container: Container,
+  tag: RootTag,
+  options: void | RootOptions,
+) {
+  // ... 省略部分源碼(有關hydrate服務端渲染等, 暫時用不上)
+  // 1. 創建fiberRoot
+  const root = createContainer(container, tag, hydrate, hydrationCallbacks); // 注意RootTag的傳遞
+  // 2. 標記dom對象, 把dom和fiber對象關聯起來
+  markContainerAsRoot(root.current, container);
+  // ...省略部分無關代碼
+  return root;
+}
+
+export function createContainer(
+  containerInfo: Container,
+  tag: RootTag,
+  hydrate: boolean,
+  hydrationCallbacks: null | SuspenseHydrationCallbacks,
+): OpaqueRoot {
+  // 創建fiberRoot對象
+  return createFiberRoot(containerInfo, tag, hydrate, hydrationCallbacks); // 注意RootTag的傳遞
+}
+
+export function createFiberRoot(
+  containerInfo: any,
+  tag: RootTag,
+  hydrate: boolean,
+  hydrationCallbacks: null | SuspenseHydrationCallbacks,
+): FiberRoot {
+  // 創建fiberRoot對象 ()
+  const root: FiberRoot = (new FiberRootNode(containerInfo, tag, hydrate): any);
+
+  // 1. 這裡創建了`react`應用的首個`fiber`對象, 稱為`HostRootFiber`
+  const uninitializedFiber = createHostRootFiber(tag);
+  root.current = uninitializedFiber;
+  uninitializedFiber.stateNode = root;
+  // 2. 初始化HostRootFiber的updateQueue
+  initializeUpdateQueue(uninitializedFiber);
+
+  return root;
+}
+
+export function createHostRootFiber(tag: RootTag): Fiber {
+  // fiber.mode屬性, 會與 3 種RootTag(ConcurrentRoot,BlockingRoot,LegacyRoot)關聯起來
+  let mode;
+  if (tag === ConcurrentRoot) {
+    mode = ConcurrentMode | BlockingMode | StrictMode;
+  } else if (tag === BlockingRoot) {
+    mode = BlockingMode | StrictMode;
+  } else {
+    mode = NoMode;
+  }
+  return createFiber(HostRoot, null, null, mode); // 注意這裡設置的mode屬性是由RootTag決定的
+}
+```
+
+更新：
+
+```js
+ReactDOMRoot.prototype.render = ReactDOMBlockingRoot.prototype.render = function(
+  children: ReactNodeList,
+): void {
+  const root = this._internalRoot;
+  // 執行更新
+  updateContainer(children, root, null, null);
+};
+
+export function updateContainer(
+  element: ReactNodeList,
+  container: OpaqueRoot,
+  parentComponent: ?React$Component<any, any>,
+  callback: ?Function,
+): Lane {
+  const current = container.current;
+  // 1. 獲取當前時間戳, 計算本次更新的優先級
+  const eventTime = requestEventTime();
+  const lane = requestUpdateLane(current);
+
+  // 2. 設置fiber.updateQueue
+  const update = createUpdate(eventTime, lane);
+  update.payload = { element };
+  callback = callback === undefined ? null : callback;
+  if (callback !== null) {
+    update.callback = callback;
+  }
+  enqueueUpdate(current, update);
+
+  // 3. 進入reconciler運作流程中的`輸入`環節
+  scheduleUpdateOnFiber(current, lane, eventTime);
+  return lane;
+}
+```
+
+### 生命周期
 
 (React 舊的生命周期)
 ![react-life-cycle-old](./images/react-life-cycle-old.png)
@@ -123,7 +238,7 @@ React 16.3 新增的生命周期方法
 
 * 錯誤處理（Error Handling）
 
-### 創建階段 Mounting
+#### 創建階段 Mounting
 
 組件實例創建並插入 DOM 時，按順序調用以下方法：
 
@@ -133,12 +248,12 @@ React 16.3 新增的生命周期方法
 * render()
 * componentDidMount()
 
-#### constructor()
+##### constructor()
 
 * 常用於初始化 state，給事件處理函數綁定 this
 * ES6 子類的構造函數必須執行一次 super()。React 如果構造函數中要使用 this.props，必須先執行 super(props)
 
-#### static getDerivedStateFromProps()
+##### static getDerivedStateFromProps()
 
 * 當創建時、接收新的 props 時、setState 時、forceUpdate 時會執行這個方法
 * 父組件傳入新的 props 時，用來和當前的 state 對比，判斷是否需要更新 state。以前一般使用 componentWillReceiveProps 做這個操作
@@ -171,7 +286,7 @@ class ExampleComponent extends React.Component {
 }
 ```
 
-#### componentWillMount()/UNSAFE_componentWillMount()
+##### componentWillMount()/UNSAFE_componentWillMount()
 
 * 這個要被淘汰了
 * 如果有定義getDerivedStateFromProps 就會忽略這個函式
@@ -183,7 +298,7 @@ class ExampleComponent extends React.Component {
 
 可以使用 setState，不會觸發 re-render
 
-#### render()
+##### render()
 
 每個類組件中，render() 唯一必須的方法。
 
@@ -198,7 +313,7 @@ render() 正如其名，作為渲染用，可以返回下面幾種類型：
 
 裡面不應該包含副作用，應該作為純函數。
 
-#### componentDidMount()
+##### componentDidMount()
 
 組件完成裝載（已經插入 DOM 樹）時，觸發該方法。這個階段已經獲取到真實的 DOM。
 
@@ -209,7 +324,7 @@ render() 正如其名，作為渲染用，可以返回下面幾種類型：
 
 可以使用 setState，觸發re-render，影響性能。
 
-### 更新階段 Updating
+#### 更新階段 Updating
 
 按順序調用以下方法：
 
@@ -221,7 +336,7 @@ render() 正如其名，作為渲染用，可以返回下面幾種類型：
 * getSnapshotBeforeUpdate()
 * componentDidUpdate()
 
-#### componentWillReceiveProps()/UNSAFE_componentWillReceiveProps()（being deprecated）
+##### componentWillReceiveProps()/UNSAFE_componentWillReceiveProps()（being deprecated）
 
 這個方法在接收新的 props 時調用，需要注意的是，如果父組件導致組件重新渲染，即使 props 沒有更改，也會調用此方法。
 
@@ -248,11 +363,11 @@ class ExampleComponent extends React.Component {
 
 可以使用 setState
 
-#### static getDerivedStateFromProps()
+##### static getDerivedStateFromProps()
 
 同 Mounting 時所述一致。
 
-#### shouldComponentUpdate()
+##### shouldComponentUpdate()
 
 在接收新的 props 或新的 state 時，在渲染前會觸發該方法。
 
@@ -262,7 +377,7 @@ class ExampleComponent extends React.Component {
 
 PureComponent 的原理就是對 props 和 state 進行淺對比（shallow comparison），來判斷是否觸發渲染。
 
-#### componentWillUpdate()/UNSAFE_componentWillUpdate()
+##### componentWillUpdate()/UNSAFE_componentWillUpdate()
 
 當接收到新的 props 或 state 時，在渲染前執行該方法。
 
@@ -270,11 +385,11 @@ PureComponent 的原理就是對 props 和 state 進行淺對比（shallow compa
 
 不能使用 setState
 
-#### render()
+##### render()
 
 同 Mounting 時所述一致。
 
-#### getSnapshotBeforeUpdate()
+##### getSnapshotBeforeUpdate()
 
 這個方法在 render() 之後，componentDidUpdate() 之前調用。
 
@@ -319,7 +434,7 @@ class ScrollingList extends React.Component {
 }
 ```
 
-#### componentDidUpdate()
+##### componentDidUpdate()
 
 這個方法是在更新完成之後調用，第三個參數 snapshot 就是 getSnapshotBeforeUpdate 的返回值。
 
@@ -327,13 +442,13 @@ class ScrollingList extends React.Component {
 
 可以使用 setState，會觸發 re-render，所以要注意判斷，避免導致死循環。
 
-### 卸載階段 Unmounting
+#### 卸載階段 Unmounting
 
 按順序調用以下方法：
 
 * componentWillUnmount()
 
-#### componentWillUnmount
+##### componentWillUnmount
 
 在組件卸載或者銷毀前調用。這個方法主要用來做一些清理工作，例如：
 
@@ -343,13 +458,13 @@ class ScrollingList extends React.Component {
 
 不能使用 setState
 
-### 錯誤處理 Error Handling
+#### 錯誤處理 Error Handling
 
 按順序調用以下方法：
 
 * componentDidCatch()
 
-#### componentDidCatch
+##### componentDidCatch
 
 任何子組件在渲染期間，生命週期方法中或者構造函數 constructor 發生錯誤時調用。
 
@@ -500,7 +615,7 @@ useDeferredValue 與 useTransition 的異同：
 
 * debounce 即 setTimeout 總是會有一個固定的延遲，而 useDeferredValue 的值只會在渲染耗費的時間下滯後，在性能好的機器上，延遲會變少，反之則變長。
 
-## useEvent
+### useEvent
 
 (等確定再說)
 
@@ -1079,6 +1194,97 @@ export const getServerSideProps = async () => {
 #### getStaticProps
 
 要在 Next.js 使用 SSG 要搭配 getStaticProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
+
+##### Incremental Static Regeneration
+
+要使用 Incremental Static Regeneration 這個功能，在 getStaticPaths 中的 fallback 就必須是 true 或 'blocking' 其中一種 (對於使用者來說兩個的體驗差別是有沒有 fallback page)。
+
+revalidate 是 getStaticProps 的一個選擇性參數，它可以用來決定一個頁面多久會重新打包一次。
+
+```js
+export async function getStaticProps(context) {
+  const res = await fetch(`https://.../data`)
+  const data = await res.json()
+
+  return {
+    props: {},
+    revalidate: 60,  // 60 秒鐘後重新打包
+  }
+}
+```
+
+實際上運作的方式如下：
+
+* 60 秒以前
+    * 這時不論跟伺服器請求幾次這個頁面，都會回應同樣的 HTML 給使用者
+* 60 秒以後
+    * 當使用者瀏覽頁面時看到的仍然是舊的內容，但是伺服器發現這個頁面已經不再被 cache，所以會重新執行 getStaticProps ，進行重新打包的流程。
+    * 在打包完成之後，Next.js 會更新 cache，並且當有使用者瀏覽該頁面時，看到的就會是新的內容。
+
+以 revalidate: 60 作為範例，Next.js 會修改 header 中的 Cache-Control 數值， s-maxage 會等於 revalidate 設定的數值。
+
+```http
+Cache-Control: s-maxage=60, stale-while-revalidate
+```
+
+#### getStaticPaths
+
+因為 Dynamic routes 可以匹配近乎是無上限的 pattern，但不可能真的產生無上限的 HTML 檔案，所以需要使用 getStaticPaths 事先定義哪些頁面需要產生 HTML 檔案。
+
+語法跟 getStaticProps 很像，皆是在 component 外面定義一個 async 的 function，名稱即是 getStaticPaths ，回傳值包含兩個 key，分別是 paths 與 fallback。
+
+在 getStaticPaths 我們需要回傳一個物件，物件中必須包含兩個 key，分別為 params 與 fallback，params 定義的是 SSG 對應的路由有哪些， fallback 則是定義使用者瀏覽 params 沒有定義的頁面時的對應方式。
+
+多層級的定義方式：
+
+```js
+export async const getStaticPaths: GetStaticPaths = () => {
+  return {
+    // pages/posts/[year]/[month]/[day].tsx
+    paths: [
+      { params: { year: '2021', month: '7', day: '24' } },
+      { params: { year: '2021', month: '9', day: '28' } }
+    ],
+    fallback: true
+  };
+}
+```
+
+catch all routes 的定義方式：
+
+```js
+export async const getStaticPaths: GetStaticPaths = () => {
+  return {
+    // pages/posts/[...date].tsx
+    paths: [
+      { params: { date: ['2021', '7', '24'] } },
+      { params: { date: ['2021', '9', '28'] } }
+    ],
+    fallback: true
+  };
+}
+```
+
+還有一種是 optional catch all rotues，例如 `pages/posts/[[...date]].tsx` 就可以匹配 /posts 、 /posts/123 、 /posts/2021/7/24 多種的路徑。
+
+其中 fallback 允許傳入三種值：
+
+* false
+    * fallback 為 false 的意思是說當使用者瀏覽沒有定義在 getStaticPaths 中的頁面時，會回傳 404 的頁面。
+    * 適合用在較為靜態的網站，例如部落格、較小的產品型錄網頁等，只有等網頁的管理者新增內容時，重新讓 Next.js 打包後，才會有新的頁面產生。
+* true
+    * 當使用者瀏覽沒有在 getStaticPaths 中定義的頁面時，Next.js 並不會回應 404 的頁面，而是回應 fallback 的頁面給使用者。
+    * 這個流程會呼叫 getStaticProps ，在伺服器產生資料前，使用者瀏覽的是 fallback 的頁面，在 getStaticProps 執行完後，同樣由 props 注入資料到網頁中，使用者這時就能看到完整的頁面。
+    * 而經過這個流程的頁面，該頁面會被加入到 pre-rendering 頁面中，下次如果再有同樣頁面的請求時，伺服器並不會再次的重新呼叫 getServerSideProps ，產生新的頁面，而是回應已經產生的頁面給使用者。
+    * 如果當一個使用者瀏覽當前不存在的頁面時，Next.js 會做以下幾件事情：
+        * 即使該頁面不存在 Next.js 不會回傳 404 頁面，Next.js 會開始動態地生成新的頁面。
+        * 在生成頁面時， router.isFallback 會一直為 true ，因次可以用條件式渲染 loading 情況下的頁面，而這時從 props 中拿到的 product 是 undefined。
+        * 而在 HTML 生成完畢後，使用者就會看到完整的商品介紹頁面。
+* 'blocking' [官方推薦]
+    * 在 getStaticPaths 使用這個設定時，跟 fallback: true 一樣，在使用者瀏覽不存的頁面時，伺服器不會回傳 404 的頁面，而是執行 getStaticProps ，走 pre-rendering 的流程。
+    * 但是與 fallback: true 不一樣的點在於沒有 router.isFallback 的狀態可以使用，而是讓頁面卡在 getStaticProps 的階段，等待執行完後回傳結果給使用者。
+    * 所以使用者體驗會非常像似 getServerSideProps ，但優點是下次使用者再次瀏覽同一個頁面時，伺服器可以直接回傳已經生成的 HTML 檔案，往後甚至可以藉由 CDN 的 cache 提升頁面的載入速度。
+    * 'blocking' 的好處是有利於 SEO，雖然對於會執行 JavaScript 的 Google 爬蟲沒有影響，但是像是 Facebook 或 Twitter 等不會執行 JavaScript 的爬蟲， 'blocking' 才能確保爬蟲拿到的資料是完整的。
 
 ### Routing
 
