@@ -45,9 +45,9 @@ Google 在官方部落格中針對使用者體驗推出了新的 3 項 Core web 
 
 LCP 會偵測的項目：
 
-* 圖片
-* svg 向量圖片
-* 影片 (預覽大圖)
+* `<img>` 元素
+* `<svg>` 元素
+* `<video>` 元素
 * 透過 url() 的 CSS 功能載入背景圖片的元素
 * 包含文字的區塊級元素 (block-level elements) 或行內元素 (inline elements)
 
