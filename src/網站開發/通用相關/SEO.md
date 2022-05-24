@@ -31,6 +31,105 @@ SEO 並不僅僅是建構搜尋引擎友善的網頁，SEO 可以讓網頁更容
 * [Google蜂鳥演算法](https://www.newscan.com.tw/all-seo/google-hummingbird.htm)
     * 與之前發布的「熊貓演算法」和「企鵝演算法」更新不同，後者最初是作為Google現有算法的附件發佈的，目前「蜂鳥演算法」已徹底轉變成為核心算法引用， 雖然核心算法中許多先前組件還是保持著，但「蜂鳥演算法」表明Google開始深入了解搜尋者「查詢資料的意圖為何?」，並將其與相關結果進行匹配。
 
+### 網站核心指標 (Core web  vitals)
+
+Google 在官方部落格中針對使用者體驗推出了新的 3 項 Core web vitals (暫譯網站核心指標)。
+
+![seo-4](./images/seo-4.png)
+
+#### 網站載入速度 (LCP, Largest Contentful Paint）
+
+在 LCP 之前有另外一個指標 First Contentful Paint (FCP)，FCP 針對網站中的第一個元素的載入，但如果只針對第一元素，對使用者來說仍然是看不到重要的內容的，因此 Google 針對這樣的情形另外制定了一個全新的指標 – LCP。
+
+與 FCP 不同的是，LCP 更加注重頁面中最大元素的載入速度。而 Google 是怎麼判定最大元素呢？當頁面在載入的過程中，Google 會去抓取頁面可視範圍中最大的元素，並會隨時針對可視範圍中的內容改變，直到頁面完全載入後，才會將頁面中最大的元素訂為 LCP。
+
+LCP 會偵測的項目：
+
+* 圖片
+* svg 向量圖片
+* 影片 (預覽大圖)
+* 透過 url() 的 CSS 功能載入背景圖片的元素
+* 包含文字的區塊級元素 (block-level elements) 或行內元素 (inline elements)
+
+通常 LCP 可以針對以下 4 大點來進行優化：
+
+* 減少伺服器回應時間
+    * 針對主機進行優化
+    * 使用較近的 CDN 主機
+    * 使用網頁快取
+    * 讓第三方的資源提早載入
+* 排除禁止轉譯的資源
+    * 降低 JavaScript 阻擋時間
+    * 降低 CSS 阻擋時間
+* 加快資源載入的時間
+    * 圖片大小優化
+    * 預先載入重要資源
+    * 將文字檔案進行壓縮
+    * 根據使用者的網路狀態提供不同的內容
+    * 使用 service worker
+* 避免使用客戶端渲染(CSR)
+    * 若必須使用 CSR ，建議優化 JavaScript ，避免渲染時使用太多資源
+    * 盡量在伺服器端完成頁面渲染，讓用戶端取得已渲染好的內容
+
+#### 可開始互動的時間 (FID, First Input Delay）
+
+有些網站，雖然已經有內容顯示，但不管使用者怎麼與頁面互動都沒有任何回饋，所以 Google 針對這樣的情形制定了另一個指標 – First Input Delay (FID)
+
+什麼是 FID：
+
+首次輸入 (First Input) 與頁面上的響應元件 (responsive elements) 息息相關。這些響應元件可能是連結、按鈕或是跳出式元素 (pop-ups)。
+
+輸入延遲 (Input Delay) 通常發生於瀏覽器的主執行序過度繁忙，而導致頁面內容無法正確地與使用者進行互動。舉例來說，可能瀏覽器正在載入一支相當肥大的 JavaScript 檔案，導致其他元素不能被載入而延遲可互動的時間。
+
+常見延遲的問題有：
+
+* 點選連結或按鈕載入內容延遲
+* 文字對話框無法立即輸入文字
+* 打開下拉式選單畫面延遲
+* 無法勾選對話方塊
+
+優化的方式：
+
+* 減少JavaScript運作的時間
+* 降低網站的 request 數並降低檔案大小
+* 減少主執行序的工作
+* 降低第三方程式碼的影響
+
+#### 頁面穩定性 (CLS, Cumulative Layout Shift）
+
+你是不是也有過這樣的經驗呢？當你正在使用一個頁面時，突然跳出一個按鈕或廣告，導致點擊到非目標按鈕或功能。Google 對於此情形建立了一個頁面穩定性的指標 – CLS。
+
+可預期的版面配置轉移 (Expected layout shifts)：
+
+當你在 web.dev 的網站中，點選內容回饋的收合功能，這時候頁面因為收合而導致的版面配置轉移是可以預期的。因此， Google不會將此判定為是頁面的不穩定性。
+
+![seo-5](./images/seo-5.png)
+
+不可預期的版面配置轉移(Un-expected layout shifts)：
+
+不可預期的版面配置轉移通常是因為網頁內的元素載入順序不同而造成的。在 Google 提供的範例裡，由於 Click Me! 的按鈕是在文字方塊載入後才載入的，導致使用者在閱讀到一半時出現內容位移的情形，這種對於使用者來說不可預期的版面配置轉移就會影響 CLS 指標的分數。
+
+![seo-6](./images/seo-6.png)
+
+優化的方式：
+
+* 透過 CSS 語法，為網頁中的元素提供預留的空位，避免載入後導致頁面中的內容移動
+* 透過 `<preload>` 的方式，將會導致頁面內容移動的元素提前載入 (字體、圖片等)
+
+#### 測試 Core Web Vitals 的方式
+
+![seo-7](./images/seo-7.webp)
+
+#### 其他優化指標
+
+* 行動版頁面
+    * Google已經宣布會將行動版的使用者體驗作為參考項目之一，網站的排名也會將是否符合行動裝置使用作為一個參考指標。
+* 網站瀏覽安全性
+    * 當網站含有釣魚內容或可能導致網站使用者中毒的狀況，Google 會將其從搜尋結果上移除。可以透過 Google Search Console 中的「安全性問題」來確認。
+* HTTPS/SSL 設定
+    * 網站中的傳輸過程需要經由 SSL 進行加密，避免訊息被中途攔截導致資訊外洩。
+* 避免蓋版廣告
+    * 蓋板式廣告很容易對使用者造成使用上的不便。如果網頁上出現這些類型的跳出式蓋版廣告，那可能就要進行修改了。
 
 ### CSR
 
@@ -240,3 +339,4 @@ SERP 為 Search Engine Results Page 縮寫，中文直譯為「搜尋引擎結�
 
 * [SEO教學 - SEO初學者指南](https://www.newscan.com.tw/all-seo/seo-guide.htm)
 * [Bing SEO, Yahoo SEO, Google SEO 優化分別和比較](https://blog.welldevelop.com/bing-seo%E5%92%8Cgoogle-seo%E5%84%AA%E5%8C%96%E7%9A%84%E5%88%86%E5%88%A5%E6%AF%94%E8%BC%83/)
+* [Google網站核心指標Core web vitals(LCP、FID、CLS)是什麼？5大SEO UX重點優化項目](https://awoo.ai/zh-hant/blog/core-web-vitals-guide/)
