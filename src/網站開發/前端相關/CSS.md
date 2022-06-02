@@ -479,6 +479,12 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             }
             ```
 
+##### Flexbox 學習工具
+
+[Flexbox Froggy](https://flexboxfroggy.com/#zh-tw)
+
+一個幫助學習 CSS Flexbox 的在線遊戲，一共 24 關。
+
 #### Grid
 
 Flexbox 用於設計橫向或縱向的佈局，而 Grid 佈局則被設計用於同時在兩個維度上把元素按行和列排列整齊。
