@@ -534,6 +534,52 @@ return (
 
 ### hooks
 
+#### useEffect
+
+React中有兩個重要的概念：
+
+* Rendering code（渲染代碼）
+    * Rendering code 指「開發者編寫的組件渲染邏輯」，最終會返回一段JSX。
+        ```js
+        function App() {
+          const [name, update] = useState('Marco');
+          
+          return <div>Hello {name}</div>;
+        }
+        ```
+    * 特點是：應該是「不帶副作用的純函數」。
+* Event handlers（事件處理器）
+    * Event handlers是「組件內部包含的函數」，用於執行用戶操作，可以包含副作用。
+    * 下面這些操作都屬於Event handlers：
+        * 更新input輸入框
+        * 提交表單
+        * 導航到其他頁面
+
+但是，並不是所有副作用都能在Event handlers中解決。
+
+比如，在一個聊天室中，「發送消息」是用戶觸發的，應該交給Event handlers處理。
+
+除此之外，聊天室需要隨時保持和服務端的長連接，「保持長連接」的行為屬於副作用，但並不是用戶行為觸發的。
+
+對於這種：在視圖渲染後觸發的副作用，就屬於effect，應該交給 useEffect 處理。
+
+但不應該濫用，當你希望狀態a變化後「發起請求」，首先應該明確，你的需求是：
+
+* 「狀態a變化，接下來需要發起請求」
+* 「某個用戶行為需要發起請求，請求依賴狀態a作為參數」？
+
+如果是後者，這是用戶行為觸發的副作用，那麼相關邏輯應該放在 Event handlers 中。
+
+當編寫組件時，應該盡量將組件編寫為純函數。
+
+對於組件中的副作用，首先應該明確：
+
+是「用戶行為觸發的」還是「視圖渲染後主動觸發的」？
+
+對於前者，將邏輯放在 Event handlers 中處理。
+
+對於後者，使用 useEffect 處理。
+
 #### useId
 
 useId 是一個 API，用於在客戶端和服務器上生成唯一 ID，同時避免水合不匹配。使用示例：
@@ -1355,3 +1401,4 @@ export default MyDocument;
 * [React 18 超全升級指南](https://mp.weixin.qq.com/s/4FRgKNeKrdMZZgEaQERrrA)
 * [從零開始學習 Next.js 系列](https://ithelp.ithome.com.tw/users/20110504/ironman/4269)
 * [Day03 - 深入淺出 CSR、SSR 與 SSG](https://ithelp.ithome.com.tw/articles/10266781)
+* [React新文檔：不要濫用effect哦](https://mp.weixin.qq.com/s/h7GiH_s8e8wM0CDS_tF_3w)
