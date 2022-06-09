@@ -1,5 +1,73 @@
 # HTML 學習筆記
 
+## img
+
+### 懶加載
+
+懶加載是一種常見的技術，通過按需加載資源來減少網頁的數據使用。
+
+如今懶加載已經是一種 Web 標准，大部分的主流瀏覽器都支持通過 loading="lazy" 屬性使用懶加載。
+
+```html
+<!-- with img tag -->
+<img src="bits.jpeg" loading="lazy" alt="an image of a laptop" />
+
+<!-- with IFrame -->
+<iframe src="about-page.html" loading="lazy"></iframe>
+```
+
+一旦啟用懶加載，只有當用戶滾動到需要該內容顯示的地方才會去加載。
+
+懶加載肯定可以提升應用性能以及用戶體驗，這也是為什麼它已成為開發者在開發應用時的首選優化措施。
+
+懶加載可以實現兩種優勢：
+
+* 減少頁面加載時間（PLT）
+    * 通過延遲資源加載減少首屏頁面加載時間。
+* 優化資源消耗
+    * 通過資源懶加載優化系統資源使用，這在內存以及處理能力較低的移動設備上效果比較好。
+
+懶加載會對性能的負面影響：
+
+* 減慢快速滾動的速度
+    * 如果你有一個 Web 應用 (比如在線商店) 需要讓用戶可以快速上下滾動以及導航。對這樣的應用使用懶加載會減慢滾動速度，因為我們需要等待數據加載完成。這會降低應用性能以及引發用戶體驗問題。
+
+* 因為內容變化而導致的延遲
+    * 如果沒有為懶加載的圖片定義的 width 和 height 屬性，那麼在圖片渲染過程中會出現明顯的延遲。因為資源在頁面初始化時沒有加載，瀏覽器不知道適用於頁面佈局的內容尺寸。
+    * 一旦內容加載完成，而用戶滾動到特定視圖中，瀏覽器需要處理內容以及再一次改變頁面佈局。這會使其他元素移位，也會帶來糟糕的用戶體驗。
+
+* 內容緩沖
+    * 如果你在應用中使用非必要的懶加載，這會導致內容緩沖。當用戶快速向下滾動而資源卻還在下載中時會發生這種情況。尤其是帶寬連接較慢時會發生這種情況，這會影響網頁渲染速度。
+
+使用懶加載的時機：
+
+1. 在正確的地方懶加載正確的資源
+    * 如果一個需要很多資源的冗長的網頁，可以考慮使用懶加載，但只能針對用戶視圖外或者被折疊的內容使用。
+    * 確保你沒有懶加載後台任務執行所需的資源，比如 JavaScript 組件，背景圖片或者其他多媒體內容。
+    * 可以使用谷歌瀏覽器的 Lighthouse 工具來檢查，識別那些可添加懶加載屬性的資源。
+2. 懶加載那些不妨礙網頁使用的內容
+    * 懶加載最好是用於不重要的非必需的 Web 資源。另外，如果資源沒有像預期那樣懶加載，那麼不要忘記錯誤處理和提供良好的用戶體驗。
+    * 注意原生懶加載依然沒有被所有平台和瀏覽器普遍支持。如果你在使用一個庫或者自定義的 JavaScript 腳本，那麼這不會對所有用戶都生效。
+
+3. 懶加載對搜索引擎優化（SEO）而言不重要的資源
+    * 隨著內容懶加載，網站將逐漸渲染，這也就是說某些內容在首屏加載時並不可用，但我們並不希望 SEO 遺漏我們重要的業務數據。所以不要將懶加載用在針對 SEO 的
+
+## iframe
+
+```html
+<body>
+  <iframe>
+  </iframe>
+  <script>
+    const win = frames[0].window;
+    console.assert(win.globalThis !== globalThis); // true
+    console.assert(win.Array !== Array); // true
+  </script>
+</body>
+```
+
+每個 iframe 都有一個獨立的運行環境，document 的全局對象不同於 iframe 的全局對象，類似的，全局對象上的 Array 肯定也不同。
+
 ## Event
 
 ### target 和 currentTarget 的差別
@@ -44,22 +112,6 @@ addEventListener 是為元素綁定事件的方法，他接收三個參數：
 
 * e.target：觸發事件的元素
 * e.currentTarget：綁定事件的元素
-
-## iframe
-
-```html
-<body>
-  <iframe>
-  </iframe>
-  <script>
-    const win = frames[0].window;
-    console.assert(win.globalThis !== globalThis); // true
-    console.assert(win.Array !== Array); // true
-  </script>
-</body>
-```
-
-每個 iframe 都有一個獨立的運行環境，document 的全局對象不同於 iframe 的全局對象，類似的，全局對象上的 Array 肯定也不同。
 
 ## Open Graph
 
@@ -205,3 +257,4 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 
 * [連 OG 都不知道還好意思說自己開發過 H5？](https://mp.weixin.qq.com/s/DiLZZaJ8ru2VqOEzB1EIbA)
 * [e.target 和 e.currentTarget 的区别？你到底知不知道？](https://mp.weixin.qq.com/s/B3AHkbdr7wlQB8-Fk5CgTg)
+* [過度使用懶加載對 Web 性能的影響](https://mp.weixin.qq.com/s/4Oo4FtNO-mviTiS_dPT1Uw)
