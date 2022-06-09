@@ -1211,14 +1211,28 @@ Next.js 還是一個全端框架，它除了 React 的部分外，也提供了�
 
 ### next.config.js
 
-### Server Side Rendering (SSR)
+### page
 
-* getServerSideProps
-    * 在使用者進入網頁時，每一次發送請求伺服器都會抓取資料
+#### 重要函式
 
-#### getServerSideProps
+* Server Side Rendering (SSR)
+    * getServerSideProps
+        * 在使用者進入網頁時，每一次發送請求伺服器都會抓取資料
+* Static Side Generation (SSG)
+    * getStaticProps
+        * 在 build 的時候抓取資料
+    * getStaticPaths
+        * 在使用 dynamic routes 時使用
+
+##### getInitialProps
+
+Next.js 9.3 版本後，官方不推薦使用。
+
+##### getServerSideProps
 
 要在 Next.js 使用 SSR 要搭配 getServerSideProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
+
+getServerSideProps 只會跑在伺服器端，不會跑在瀏覽器端。
 
 ```js
 import { GetServerSideProps } from "next";
@@ -1230,18 +1244,23 @@ export const getServerSideProps = async () => {
 };
 ```
 
-### Static Side Generation (SSG)
+如果一個頁面使用 getServerSideProps：
 
-* getStaticProps
-    * 在 build 的時候抓取資料
-* getStaticPaths
-    * 在使用 dynamic routes 時使用
+* 如果直接請求這個頁面，每次請求都會執行一次 getServerSideProps，然後頁面就會預渲染。
+* 如果請求是藉由 `next/link` 或是 `next/router`，那麼就會送一個 API 請求到伺服器，一樣會執行 getServerSideProps，但這次只會回傳 JSON。
 
-#### getStaticProps
+伺服器引用的函式庫之類的 Next 也會自動在 Client Side 的時候刪除。
+
+注意事項：
+
+* 只在有需要在渲染的時候 fetch 資料(如授權、地理位置)時使用，若不需要其實可以考慮在 client side 抓取或是直接用 getStaticProps
+* 如果以成本面來看，由於 SSG 不需要每次使用者瀏覽頁面時都重新執行 getStaticProps ，可以直接回傳靜態的 HTML 給使用者，甚至可以仰賴 CDN 的 cache 大量減少伺服器的成本。反之， getServerSideProps 每次使用者瀏覽一個頁面時時都要讓伺服器執行 getServeSideProps 中的程式碼，如果大多數頁面都是 SSR 將會對伺服器造成負擔。
+
+##### getStaticProps
 
 要在 Next.js 使用 SSG 要搭配 getStaticProps 這個 function，在 component 外面會 export 一個非同步的 function，它執行完裡面的程式後，將 props 傳入到 component 裡面。
 
-##### Incremental Static Regeneration
+###### Incremental Static Regeneration
 
 要使用 Incremental Static Regeneration 這個功能，在 getStaticPaths 中的 fallback 就必須是 true 或 'blocking' 其中一種 (對於使用者來說兩個的體驗差別是有沒有 fallback page)。
 
@@ -1273,7 +1292,7 @@ export async function getStaticProps(context) {
 Cache-Control: s-maxage=60, stale-while-revalidate
 ```
 
-#### getStaticPaths
+##### getStaticPaths
 
 因為 Dynamic routes 可以匹配近乎是無上限的 pattern，但不可能真的產生無上限的 HTML 檔案，所以需要使用 getStaticPaths 事先定義哪些頁面需要產生 HTML 檔案。
 
@@ -1345,6 +1364,24 @@ export async const getStaticPaths: GetStaticPaths = () => {
 在使用 router.query 時要注意「第一次 render 時拿不到值」的問題，因為 Next.js 有 Automatic Static Optimization 的機制，在第一個階段 (第一次渲染) 會先執行 pre-rendering 產生靜態的 HTML，這時候 router.query 會是空的 {} ，在第二個階段 (第二次渲染) 時才能夠從 router.query 中拿到值。
 
 [`router.query` returns undefined parameter on first render in Next.js](https://github.com/vercel/next.js/discussions/11484)
+
+#### API Routing
+
+API routes 的概念與前端頁面一樣，都是使用 file-based routing，所有的 API 都會放在 pages/api 這個資料夾底下，例如 pages/api/products 即是對應 api/products 這個 endpoint。
+
+在這這資料夾中的所有檔案將不會被當作頁面的 url，因此在 pages/api 中的檔案都不會被打包近客戶端的 bundle 中，如果使用者在瀏覽器的網址列輸入 api/products ，即是跟伺服器端請求 API，而並非是一個頁面。
+
+```js
+export default function handler(req, res) {
+  if (req.method === "GET") {
+    res.status(200).json({ products: [{ name: "item" }] });
+  } else if (req.method === "POST") {
+    // 建立產品資料
+  } else if (req.method === "DELETE") {
+    // 刪除產品資料
+  }
+}
+```
 
 ### Document
 
