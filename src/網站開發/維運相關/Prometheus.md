@@ -450,6 +450,28 @@ Pushgateway 被設計為一個監控指標的緩存，這意味著它不會主�
 
 在拉模式下，Prometheus可以更容易的查看監控目標實例的健康狀態，並且可以快速定位故障，但在推模式下，由於不會對客戶端進行主動探測，因此對目標實例的健康狀態也變得一無所知。
 
+## Exporter
+
+### cAdvisor
+
+    It is container advisor.
+
+* It provides resource usage, performance characteristics & related information about the containers running on the cloud.
+* It is an open-source tool & runs as a daemon process in the background collecting, processing & aggregating useful DevOps information.
+    * native support for Docker
+    * enables us to track historical resource usage with histograms & stuff
+
+開源的單節點Agent，負責監控容器資源使用情況與性能，採集機器上所有Container的Memory、網絡使用情況、文件系統和CPU等數據。
+
+cAdvisor雖然好用，但有些缺點：
+
+* 僅能監控基礎資源利用情況，無法分析應用的實際性能
+* 不具備長期存儲和趨勢分析能力。
+
+### Kube-state-metrics
+
+輪詢Kubernetes API，並將Kubernetes的結構化信息轉換為metrics。
+
 ## 參考資料
 
 * [號稱下一代監控系統，來看看它有多強！](https://mp.weixin.qq.com/s/hrZfFmbyn_4ZzJOpK_-0ZQ)
