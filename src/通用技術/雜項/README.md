@@ -15,7 +15,7 @@
 * CAD軟件就是讓設計師能夠在電腦上畫圖的軟件，可以說，CAD軟件的出現徹底解放了設計師們手中的作圖工具，以往通過手工繪制的圖紙可以放在電腦上來完成。
 
 ### CAE（計算機輔助工程）
-   
+
 * CAE全程叫Computer Aided Engineering (計算機輔助工程)，就是把設計出來的產品，通過軟件的方法進行仿真分析，來驗證設計出來的產品是否達到規定的要求
 * 單論代碼數量，世界上最大的軟件公司是美國的軍火商巨頭——洛克希德·馬丁，他們做的軟件大部分僅供自己使用，不對外銷售，其中就包括CAE軟件
 * CAE軟件是工業軟件裡面開發難度最大的一類軟件，但也是最重要的一款軟件。
@@ -37,4 +37,52 @@
 * 先來者有肉吃，後來者連湯都喝不到
     * 工業軟件不同於應用級軟件，它要有足夠的健壯性與工程性，它要求絲毫不能差錯，一旦哪個環節出現問題，造成損失就難以估量，但是軟件一定會有bug，要想消除這些bug，必須經過大量的的用戶來充當“小白鼠”進行使用反饋測試，可如果一款軟件本身用戶量就很少，軟件廠商怎麼能獲得用戶回饋從而修復漏洞呢，所以，這就造成一個“強者愈強，弱者愈弱”的現象。
 
-來源： [这才是中国被卡脖子最严重的软件！](https://mp.weixin.qq.com/s/u7jBite9x3RFFn7q7ICHTQ)
+
+## Base64
+
+* Base64 是一種基於 64 個可列印字元來表示二進位資料的表示方法。
+* 每 6 個位元(Bit) 對應某個可列印字元，所以 3 個位元組(Bytes) 會對應 4 個 Base64 的顯示字元
+* Base64 的可列印字元包括字母 A-Z、a-z、數字0-9，共 62 個字元 (26 + 26 + 10)，另外兩個可列印符號在不同的系統中而不同。
+    * 一些如 uuencode 的其他編碼方法，和之後 BinHex 的版本使用不同的 64 字元集來代表 6 個二進位數字，但是不被稱為Base64。
+* Base64常用於在通常處理文字資料的場合，表示、傳輸、儲存一些二進位資料，包括MIME的電子郵件及XML的一些複雜資料。
+* 編碼從 000000 到 111111 依序是 `大寫 ABC` 到 `小寫 abc` 到 `數字 0-9` ，最後再加上 `+`, `-`。
+* 如果要編碼的位元組數不能被 3 整除，最後會多出 1 個或 2 個位元組，那麼可以使用下面的方法進行處理：
+    1. 先使用 0 位元組值在末尾補足，使其能夠被 3 整除，然後再進行Base64的編碼。
+    2. 接著在編碼後的 Base64 文字後加上一個或兩個 `=` 號，代表補足的位元組數。
+* 簡單來說就是缺幾位補幾個 0，然後補幾個 0 後面就要再加幾個 `=`
+* 應用
+    * MIME
+        * 使用的字元包括大小寫拉丁字母各26個、數字10個、加號+和斜槓/，共64個字元，等號=用來作為字尾用途。
+    * URL
+        * 標準的Base64並不適合直接放在URL裡傳輸，因為URL編碼器會把標準Base64中的 `/` 和 `+` 字元變為形如 `%XX` 的形式，而這些 `%` 號在存入資料庫時還需要再進行轉換，因為 ANSI SQL 中已將 `%` 號用作萬用字元。為解決此問題，可採用一種用於URL的改進Base64編碼，它不在末尾填充 `=` 號，並將標準Base64中的 `+` 和 `/` 分別改成了`-`和 `_`，這樣就免去了在URL編解碼和資料庫儲存時所要做的轉換，避免了編碼資訊長度在此過程中的增加，並統一了資料庫、表單等處物件識別碼的格式。
+* 在 JavaScript 中，有兩個函數被分別用來處理解碼和編碼 base64 字符串： `atob` 和 `btoa`。
+    * 在多數瀏覽器中，使用 btoa() 對 Unicode 字符串進行編碼都會觸發 InvalidCharacterError 異常。
+        * 一種選擇是轉義任何擴展字符，以便實際編碼的字符串是原始字符的 ASCII 表示形式。考慮這個例子，代碼來自 Johan Sundström：
+            ```js
+            // ucs-2 string to base64 encoded ascii
+            function utoa(str) {
+                return window.btoa(unescape(encodeURIComponent(str)));
+            }
+            // base64 encoded ascii to ucs-2 string
+            function atou(str) {
+                return decodeURIComponent(escape(window.atob(str)));
+            }
+            // Usage:
+            utoa('✓ à la mode'); // 4pyTIMOgIGxhIG1vZGU=
+            atou('4pyTIMOgIGxhIG1vZGU='); // "✓ à la mode"
+
+            utoa('I \u2661 Unicode!'); // SSDimaEgVW5pY29kZSE=
+            atou('SSDimaEgVW5pY29kZSE='); // "I ♡ Unicode!"
+            ```
+        * 更好、更可靠、性能更優異的解決方案是使用類型化數組進行轉換。
+* Base64 格式的字符串或文件的尺寸約是原始尺寸的 133%（增加了大約 33%）。如果編碼的數據很少，增加的比例可能會更高。例如：字符串"a"的 length === 1 進行 Base64 編碼後是"YQ=="的length === 4，尺寸增加了 300%。
+* 參考實作
+    * https://github.com/MaxArt2501/base64-js
+    * https://github.com/waitingsong/base64
+    * https://github.com/beatgammit/base64-js
+
+## 參考文章
+
+* [这才是中国被卡脖子最严重的软件！](https://mp.weixin.qq.com/s/u7jBite9x3RFFn7q7ICHTQ)
+* [Base64 - 維基百科，自由的百科全書](https://zh.wikipedia.org/zh-tw/Base64)
+* [Base64 的編碼與解碼 - 術語表 | MDN](https://developer.mozilla.org/zh-CN/docs/Glossary/Base64)
