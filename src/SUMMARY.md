@@ -33,8 +33,6 @@
         * [Mercurial](通用技術/工具相關/Mercurial.md)
         * [Jetbrains IDE](通用技術/工具相關/Jetbrains_IDE.md)
     * [雜項](通用技術/雜項/README.md)
-        * [Regex](通用技術/雜項/Regex.md)
-        * [雜項](通用技術/雜項/雜項.md)
 
 * [網站開發](./網站開發/README.md)
     * [通用相關](./網站開發/通用相關/README.md)
