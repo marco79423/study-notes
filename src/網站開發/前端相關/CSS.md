@@ -586,6 +586,27 @@ HTML 表格對於顯示表格數據是很好的，過去也常常使用表格來
 
 ![css-9](./images/css-9.jpg)
 
+## 屬性
+
+### cursor
+
+cursor 屬性設置鼠標指針的類型，在鼠標指針懸停在元素上時顯示相應樣式。
+
+```css
+cursor: auto;
+cursor: pointer;
+...
+cursor: zoom-out;
+/* 使用圖片 */
+cursor: url(hand.cur)
+/* 使用圖片，並且設置 fallback 兜底 */
+cursor: url(hand.cur), pointer;
+```
+
+![css-25](./images/css-25.png)
+
+* 特殊玩法： [有意思的鼠標指針交互探究](https://mp.weixin.qq.com/s/sb6Ze7ew-fDYt3m1mHkpig)
+
 ## 函數
 
 在 CSS 中，其實存在各種各樣的函數。具體分為：
