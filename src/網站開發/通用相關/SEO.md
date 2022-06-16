@@ -37,6 +37,8 @@ Google 在官方部落格中針對使用者體驗推出了新的 3 項 Core web 
 
 ![seo-4](./images/seo-4.png)
 
+Google 更指出若 75% 以上的使用者在網站中的瀏覽體驗都能夠通過以上 3 種指標，就能夠大幅的提升使用者的搜尋體驗，甚至能夠讓原本因等待而離開的使用者減少 24%！
+
 #### 最大內容渲染 (LCP, Largest Contentful Paint）
 
 在 LCP 之前有另外一個指標 First Contentful Paint (FCP)，FCP 針對網站中的第一個元素的載入，但如果只針對第一元素，對使用者來說仍然是看不到重要的內容的，因此 Google 針對這樣的情形另外制定了一個全新的指標 – LCP。

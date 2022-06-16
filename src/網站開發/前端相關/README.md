@@ -10,6 +10,7 @@
 
 * [安全](安全.md)
 * [監控](監控.md)
+* [效能](效能.md)
 
 * [Node.js](Node.js.md)
 * [WebAssembly](WebAssembly.md)
