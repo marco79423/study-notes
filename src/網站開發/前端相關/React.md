@@ -1385,7 +1385,9 @@ export default function handler(req, res) {
 
 ### Document
 
-Document 只會在伺服器端渲染，而且只會渲染一次，在 `<Head>` 裡面的設定讓整個專案所有的頁面都會是一樣的，因此官方在 Next.js 10 的版本中建議使用者不要再 `<Head>` 裡面使用像是 `<title>` 的 tag，它應該被使用在 next/head 裡面。
+Document 只會在伺服器端渲染，而且只會渲染一次。
+
+在 `<Head>` 裡面的設定讓整個專案所有的頁面都會是一樣的，因此官方在 Next.js 10 的版本中建議使用者不要再 `<Head>` 裡面使用像是 `<title>` 的 tag，它應該被使用在 next/head 裡面。
 
 適合在 Document 中設定的是像 google analytics、google font 這類所有的頁面都會用到的函式庫，或是全域 bootstrap css 等，在伺服器端處理完畢後，才將 HTML 回傳給使用者。
 
@@ -1399,7 +1401,6 @@ class MyDocument extends Document {
   }
 
   render() {
-    // 需要客製化 render() 要注意不能刪除： <Html> <Head> <Main> <NextScript>
     return (
       <Html> 
         <Head />
@@ -1414,6 +1415,13 @@ class MyDocument extends Document {
 
 export default MyDocument;
 ```
+
+需要客製化 render() 要注意不能刪除：
+
+* `<Html>`
+* `<Head>`
+* `<Main>`
+* `<NextScript>`
 
 ### 其他議題
 
