@@ -1,8 +1,7 @@
 # Docker 相關
 
-## 學習資源
+Docker 是當前流行的 Linux 容器解決方案
 
-* [Docker 系列](https://medium.com/lily-engineer/docker/home)
 
 ## 基礎概念
 
@@ -12,10 +11,20 @@ Docker技術的三大核心概念，分別是：
 * 容器（Container）
 * 倉庫（Repository）
 
+## 基礎原理
+
+利用 Namespaces 、Cgroups 以及聯合文件系統UnionFS 實現了同一主機上容器進程間的相互隔離。
+
+* NameSpaces
+    * 隔離進程，讓進程只能訪問到本命名空間裡的掛載目錄、PID、NetWork 等資源
+* Cgroups
+    * 限制進程能使用的計算機系統各項資源的上限，包括 CPU、內存、磁盤、網絡帶寬等等
+* 聯合文件系統 UnionFS
+    * 保存一個操作系統的所有文件和目錄，在它基礎之上添加應用運行依賴的文件。創建容器進程的時候給進程指定Mount Namespace 把鏡像文件掛載到容器裡，用 chroot 把進程的 Root目錄切換到掛載的目錄裡，從而讓容器進程各自擁有獨立的操作系統目錄。
+
 ## 基本操作
 
-
-## 實用命令
+### 實用命令
 
 * 刪除所有 docker container 和 images
     * 法一
@@ -51,6 +60,11 @@ Docker技術的三大核心概念，分別是：
 * 對數據丟失不敏感的業務（例如用戶搜索商品）就可以利用數據庫分片來來增加實例數，從而增加吞吐量。
 * docker適合跑輕量級或分佈式數據庫，當docker服務掛掉，會自動啟動新容器，而不是繼續重啟容器服務。
 
+## 學習資源
+
+* [Docker 系列](https://medium.com/lily-engineer/docker/home)
+
 ## 參考文章
 
 * [你在 Docker 中跑 MySQL？恭喜你，可以下崗了！](https://mp.weixin.qq.com/s/LaADoyFEqfOPHtQ_XByI4Q)
+* [解惑篇｜Docker和 K8s 到底啥关系？想学K8s，必须得先学 Docker 吗？](https://mp.weixin.qq.com/s?__biz=MzUzNTY5MzU2MA==&mid=2247493651&idx=1&sn=e9793e68375e5ef2c48e7cf8a53459f8&chksm=fa833984cdf4b09281adad62b748c9567536fd56c9a659cff800ac154be168b25e8c59f39f44&token=2015934396)
