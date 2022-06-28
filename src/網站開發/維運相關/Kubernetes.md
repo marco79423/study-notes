@@ -2,11 +2,15 @@
 
 ## 概念
 
+Kubernetes 是一套結合了容器編排和集群調度管理的大規模分佈式系統解決方案。，它源自 Google 內部大規模集群管理系統 Borg，自 2015 年開源後得到開源社群的全力支援，IBM、惠普、微軟、RedHat等業界巨頭紛紛加入，成為後來的 CNCF 組織（Cloud Native Computing Foundation，雲原生計算基金會）首個畢業的項目。
+
+K8s 具備完善的集群管理能力，包括多層次的安全防護和准入機制、多租戶應用支撐能力、透明的服務注冊和服務發現機制、內建負載均衡器、故障發現和自我修復能力、服務滾動升級和線上擴容、可擴展的資源自動調度機制、多粒度的資源配額管理能力。還提供完善的管理工具，涵蓋開發、部署測試、運維監控等各個環節。
+
 Kubernetes 這個單詞來自於希臘語，含義是舵手或領航員。K8S 是它的縮寫，用 8 字替代了 ubernete 這8個字符。
 
-K8S 並不是一件全新的發明。它的前身，是 Google 自己搗鼓了十多年的 Borg 系統
-
 ## 架構
+
+K8s 採用Master / Work Node（最初稱為Minion，後改名Node） 的結構，Master Node（主節點）控制整個集群，Work Node（從節點）為集群提供計算能力。使用者可以通過命令行或者 Web 控制台頁面的方式來操作集群。
 
 K8S 集群分為兩個部分：
 
@@ -16,26 +20,40 @@ K8S 集群分為兩個部分：
     * 控制器管理器 (Kubernetes Controller Manager) [kube-controller-manager]
     * etcd
     * DNS
-* 一群Node節點（計算節點）
+* 一群 Node 節點（計算節點）
     * kubelet
     * 代理 kube-proxy
     * Container Runtime
 
 一看就明白：Master 節點主要還是負責管理和控制；Node 節點是工作負載節點，裡面是具體的容器。
 
+下圖可以清楚地表示出 K8s 的整體架構
+
+![k8s-5](./images/k8s-5.png)
+
 ### Master 節點 (主節點)
 
-Kubernetes 運作的指揮中心，可以簡化看成一個特化的 Node 負責管理所有其他 Node。
+Master 節點是運作的指揮中心，K8s 集群的大腦，負責向外開放集群的 API，調度和管理整個集群，可以看成一個特化的 Node 負責管理所有其他 Node。
+
+集群至少要有一個 Master節點，如果在生產環境中要達到高可用，還需要配置 Master 集群。
+
+![k8s-6](./images/k8s-6.png)
+
+Master 主要包含 API Server、Scheduler、Controllers 三個組成部分， 以及用作存儲的 etcd，它用來儲存整個集群的狀態。
 
 包含四個組件：
 
-* kube-apiserver
+* API Server (kube-apiserver)
     * 整個系統的對外接口，供客戶端和其它組件調用，相當於「營業廳」
+    * kubernetes 最重要的核心元件之一，提供資源操作的唯一入口（其他模塊通過API Server查詢或修改資源對象，只有API Server才能直接操作etcd），並提供認證、授權、訪問控制、API 注冊和發現等機制。
 * kube-scheduler
-    * 負責對集群內部的資源進行調度，相當於「調度室」
+    * 負責對集群內部的資源進行調度，相當於「調度室」，能按照預定的調度策略將 Pod 調度到相應的 Node 上  
 * kube-controller-manager
     * 負責管理控制器，相當於「大總管」
+    * 通過 API Server 查詢要控制的資源對象的預期狀態，它檢查其管控的對象的當前狀態，確保它們始終處於預期的工作狀態，它們的工作包括比如故障檢測、自動擴充、減少、滾動更新等。
 * etcd
+    * 由 CoreOS 開發，是一個高可用、強一致性的鍵值存儲，為 Kubernetes 集群提供儲存服務，類似於 zookeeper。它會存儲集群的整個配置和狀態。
+    * 主節點通過查詢 etcd 以檢查節點，容器的現狀。
 
 #### API 服務器 (Kubernetes API Server) [kube-apiserver]
 
@@ -49,6 +67,7 @@ Kubernetes 運作的指揮中心，可以簡化看成一個特化的 Node 負責
 
 * 負責對集群內部的資源進行調度，監視那些新創建的未指定運行節點的 Pod，並選擇節點讓 Pod 在上面運行。
 * 調度決策考慮的因素包括單個 Pod 和 Pod 集合的資源需求、硬件/軟件/策略約束、親和性和反親和性規範、數據位置、工作負載間的干擾和最後時限。
+* 如果是只有一個節點的集群，Master 也會同時作為 Work Node。
 
 #### 控制器管理器 (Kubernetes Controller Manager) [kube-controller-manager]
 
@@ -105,7 +124,7 @@ Node 啟動後會做一系列的自檢工作：
 每個 Node 中都有三個組件：
 
 * kubelet
-    * 主要負責監視指派到它所在 Node 上的 Pod，包括創建、修改、監控、刪除等
+    * K8s 集群的每個工作節點上都會運行一個 kubelet 程序，維護容器的生命週期，它接收並執行Master 節點發來的指令，管理節點上的 Pod 及 Pod 中的容器。同時也負責Volume（CVI）和網絡（CNI）的管理。
 * kube-proxy
     * 主要負責為Pod對象提供代理。
 * Container Runtime
