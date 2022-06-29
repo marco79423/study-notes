@@ -241,3 +241,7 @@
         * Pixel Recurrent Neural Network
         * Variation Auto-encoder (VAE)
         * Generative Adversarial Network (GAN)
+
+## Deepfakes
+
+* [AI 换脸术「Deepfakes」8 年进化史](https://mp.weixin.qq.com/s/qTLBqbyItB_h1mOx_9Hzkg)
