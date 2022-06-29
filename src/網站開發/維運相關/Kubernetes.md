@@ -138,6 +138,10 @@ Node 啟動後會做一系列的自檢工作：
 
 Node 上的 k8s 代表，為該 Node 的管理員，負責管理該 Node 上的所有 Pods 的狀態並負責與 Master 溝通，包括創建、修改、監控、刪除等。
 
+每個 kubelet 程序會在 API Server 上注冊節點自身的信息，定期向 Master 節點匯報自身節點的資源使用情況，並通過cAdvisor 監控節點和容器的資源。
+
+通過運行 kubelet，節點將自身的 CPU，RAM 和存儲等計算機資源變成集群的一部分，相當於是放進了集群統一的資源管理池中，交由 Master 統一調配。
+
 * Kubelet 是在叢集中每個節點上執行的代理程式，且其監視來自 API 伺服器的工作要求。 其可確保要求的工作單位正在執行且狀況良好。
 * 負責監控與主組件的通信並管理運行中的 Pod
     * kubelet 會監視節點，並確保定每個節點的排程容器都如預期執行。 Kubelet 只管理由 Kubernetes 建立的容器。 當目前的節點無法執行工作時，其不負責重新排程工作在其他節點上執行。
@@ -154,11 +158,19 @@ Node 上的 k8s 代表，為該 Node 的管理員，負責管理該 Node 上的�
 
 該 Node 真正負責容器執行的程式，以 Docker 容器為例其對應的 Container Runtime 就是 Docker Engine
 
+容器運行時負責與容器實現進行通信，完成像容器鏡像庫中拉取鏡像，然後啟動和停止容器等操作， 引入容器運行時另外一個原因是讓 K8s 的架構與具體的某一個容器實現解耦，不光是 Docker 能運行在 K8s 之上，同樣也讓 K8s 的發展按自己的節奏進行。
+
+想要運行在 k8s 生態裡的容器，只要實現 CRI （Container Runtime Interface） 即可，Container Runtime 會負責調用CRI 裡定義的方法完成容器管理，不單獨執行 docker run 之類的操作。這個也是 K8s 發現 Docker 制約了它的發展在 1.5 後引入的。
+
 ## 資源
 
 ### Pod
 
-Kubernetes 運作的最小單位，一個 Pod 對應到一個應用服務（Application） ，舉例來說一個 Pod 可能會對應到一個 API Server。
+Pod 是 Kubernetes 運作的最小單位。應用程序運行在容器裡，而容器又被分裝在 Pod 裡。一個 Pod 裡可以有多個容器，也可以有多個容器。沒有統一的標准，是單個還是多個，看要運行的應用程序的性質。不過一個 Pod 裡只有一個主容器，剩下的都是輔助主容器工作的。
+
+比如做服務網格 Istio 的 Envoy 網關，就是放在Pod的輔助容器運行來實現流量控制的。 這就是 K8s 的容器設計模式裡最常用的一種模式：sidecar。
+
+顧名思義，sidecar 指的就是我們可以在一個Pod中，啟動一個輔助容器，來完成一些獨立於主進程（主容器）之外的工作。
 
 pod 有獨立的 ip 地址，也有自己的 hostname，利用 namespace 進行資源隔離，相當於一個獨立沙箱環境。pod 內部封裝的是容器，可以封裝一個，或者多個容器（通常是一組相關的容器）
 
@@ -941,3 +953,4 @@ quality of service (QoS)
 * [[Kubernetes] Deployment Overview](https://godleon.github.io/blog/Kubernetes/k8s-Deployment-Overview/)
 * [通俗理解 Kubernetes 中的服務，搞懂後真香](https://blog.csdn.net/qq_43280818/article/details/107164860)
 * [K8s中大量Pod是Evicted狀態，這是咋回事？](https://mp.weixin.qq.com/s/hUNZkt4XDgJaubsYQyKG3w)
+* [K8s 长什么样？一文道清它的整体架构](https://mp.weixin.qq.com/s/9oEw81fBZxiMacxdR5Sobw)
