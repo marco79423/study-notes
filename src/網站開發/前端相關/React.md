@@ -209,6 +209,235 @@ export function updateContainer(
 }
 ```
 
+
+### hooks
+
+#### useEffect
+
+React中有兩個重要的概念：
+
+* Rendering code（渲染代碼）
+    * Rendering code 指「開發者編寫的組件渲染邏輯」，最終會返回一段JSX。
+        ```js
+        function App() {
+          const [name, update] = useState('Marco');
+          
+          return <div>Hello {name}</div>;
+        }
+        ```
+    * 特點是：應該是「不帶副作用的純函數」。
+* Event handlers（事件處理器）
+    * Event handlers是「組件內部包含的函數」，用於執行用戶操作，可以包含副作用。
+    * 下面這些操作都屬於Event handlers：
+        * 更新input輸入框
+        * 提交表單
+        * 導航到其他頁面
+
+但是，並不是所有副作用都能在Event handlers中解決。
+
+比如，在一個聊天室中，「發送消息」是用戶觸發的，應該交給Event handlers處理。
+
+除此之外，聊天室需要隨時保持和服務端的長連接，「保持長連接」的行為屬於副作用，但並不是用戶行為觸發的。
+
+對於這種：在視圖渲染後觸發的副作用，就屬於effect，應該交給 useEffect 處理。
+
+但不應該濫用，當你希望狀態a變化後「發起請求」，首先應該明確，你的需求是：
+
+* 「狀態a變化，接下來需要發起請求」
+* 「某個用戶行為需要發起請求，請求依賴狀態a作為參數」？
+
+如果是後者，這是用戶行為觸發的副作用，那麼相關邏輯應該放在 Event handlers 中。
+
+當編寫組件時，應該盡量將組件編寫為純函數。
+
+對於組件中的副作用，首先應該明確：
+
+是「用戶行為觸發的」還是「視圖渲染後主動觸發的」？
+
+對於前者，將邏輯放在 Event handlers 中處理。
+
+對於後者，使用 useEffect 處理。
+
+#### useId
+
+useId 是一個 API，用於在客戶端和服務器上生成唯一 ID，同時避免水合不匹配。使用示例：
+
+```js
+function Checkbox() {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id}>選擇框</label>
+      <input type="checkbox" name="sex" id={id} />
+    </div>
+  );
+}
+```
+
+#### useInsertionEffect
+
+useInsertionEffect 的工作原理大致 useLayoutEffect 相同，只是此時無法訪問 DOM 節點的引用。
+
+因此推薦的解決方案是使用這個 Hook 來插入樣式表（或者如果你需要刪除它們，可以引用它們）：
+
+```js
+function useCSS(rule) {
+  useInsertionEffect(() => {
+    if (!isInserted.has(rule)) {
+      isInserted.add(rule);
+      document.head.appendChild(getStyleForRule(rule));
+    }
+  });
+  return rule;
+}
+function Component() {
+  let className = useCSS(rule);
+  return<div className={className} />;
+}
+```
+
+#### useTransition
+
+useTransition 是非常常見的需求。幾乎所有可能導致組件掛起的點擊或交互操作都需要使用 useTransition，以避免意外隱藏用戶正在交互的內容。
+
+這可能會導致組件存在大量重復代碼。通常建議把 useTransition 融合到應用的設計系統組件中。例如，我們可以把 useTransition 邏輯抽取到我們自己的 `<Button>` 組件：
+
+```js
+function Button({ children, onClick }) {
+  const [startTransition, isPending] = useTransition();
+
+  function handleClick() {
+    startTransition(() => {
+      onClick();
+    });
+  }
+
+  return (
+    <button onClick={handleClick} disabled={isPending}>
+      {children} {isPending ? '加載中' : null}
+    </button>
+  );
+}
+```
+
+#### useDeferredValue
+
+返回一個延遲響應的值，這通常用於在具有基於用戶輸入立即渲染的內容，以及需要等待數據獲取的內容時，保持接口的可響應性。
+
+```js
+import { useDeferredValue } from 'react';
+
+const deferredValue = useDeferredValue(value);
+```
+
+useDeferredValue 與 useTransition 的異同：
+
+* 相同：useDeferredValue 本質上和內部實現與 useTransition 一樣都是標記成了延遲更新任務。
+* 不同：useTransition 是把更新任務變成了延遲更新任務，而 useDeferredValue 是產生一個新的值，這個值作為延時狀態。
+
+與 debounce 的區別：
+
+* debounce 即 setTimeout 總是會有一個固定的延遲，而 useDeferredValue 的值只會在渲染耗費的時間下滯後，在性能好的機器上，延遲會變少，反之則變長。
+
+#### useEvent
+
+(等確定再說)
+
+[引起大范围讨论的useEvent到底是干嘛的？](https://mp.weixin.qq.com/s/N9L7d43StIAGH89-WPASQA)
+
+
+
+
+## 開發技巧
+
+### 最好一個副作用一個 effect
+
+在執行副作用（side effect）時，很多 React 開發者會試圖在單次 useEffect 調用中執行多個副作用。
+
+```jsx
+export default function App() {
+  const [posts, setPosts] = React.useState([]);
+  const [comments, setComments] = React.useState([]);
+
+  React.useEffect(() => {
+    // 獲取帖子數據
+    fetch("https://jsonplaceholder.typicode.com/posts")
+      .then((res) => res.json())
+      .then((data) => setPosts(data));
+
+    // 獲取評論數據
+    fetch("https://jsonplaceholder.typicode.com/comments")
+      .then((res) => res.json())
+      .then((data) => setComments(data));
+  }, []);
+
+  return (
+    <div>
+      <PostsList posts={posts} />
+      <CommentsList comments={comments} />
+    </div>
+  );
+}
+```
+
+與其把所有副作用都擠在一個 effect hook 裡，不如通過多次調用把它們放在獨立的 hook 裡。這種做法允許我們把不同的操作分離到不同的 effect 中，更好地做到關注點分離。比起類組件中的生命週期函數，React hooks 的一個主要優勢就是更好地關注點分離。
+
+類組件中每個生命週期函數只能調用一次，所以無法將副作用分離到多個函數裡。例如，只能把組件掛載後要執行的所有操作都包含在一個 `componentDidMount` 函數裡。
+
+React hooks 的主要優勢就是能夠讓我們根據功能來組織代碼。我們不僅能夠將組件渲染之後要執行的操作分離到多個 effect，還可以移動 state 相關代碼的位置。
+
+```jsx
+export default function App() {
+  // 獲取帖子數據
+  const [posts, setPosts] = React.useState([]);
+  React.useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/posts")
+      .then((res) => res.json())
+      .then((data) => setPosts(data));
+  }, []);
+
+  // 獲取評論數據
+  const [comments, setComments] = React.useState([]);
+  React.useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/comments")
+      .then((res) => res.json())
+      .then((data) => setComments(data));
+  }, []);
+
+  return (
+    <div>
+      <PostsList posts={posts} />
+      <CommentsList comments={comments} />
+    </div>
+  );
+}
+```
+
+這意味著我們可以把 state 和其相關的 effect 放在一起，使得代碼結構清晰、功能一目瞭然。
+
+### 請求資料
+
+```js
+useEffect(() => {
+  let ignore = false;
+
+  async function startFetching() {
+    const json = await fetchTodos(userId);
+    if (!ignore) {
+      setTodos(json);
+    }
+  }
+
+  startFetching();
+
+  return () => {
+    ignore = true;
+  };
+}, [userId]);
+```
+
+## 進階
+
 ### 生命周期
 
 (React 舊的生命周期)
@@ -475,8 +704,6 @@ class ScrollingList extends React.Component {
 * 服務端渲染 (Server side rendering)
 * 錯誤邊界本身(而不是子組件)拋出的錯誤
 
-## 進階
-
 ### Concurrent Mode
 
 Concurrent Mode（以下簡稱 CM）翻譯叫並發模式，本身並不是一個功能，而是一個底層設計，它使 React 能夠同時准備多個版本的 UI。
@@ -531,208 +758,6 @@ return (
 此例用戶的鍵盤輸入操作後，`setInputValue` 會立即更新用戶的輸入到界面上，是緊急更新。而 `setSearchQuery` 是根據用戶輸入，查詢相應的內容，是非緊急的。
 
 被 startTransition 包裹的 setState 觸發的渲染被標記為不緊急渲染，意味著他們可以被其他緊急渲染所搶佔。這種渲染優先級的調整手段可以幫助我們解決各種性能偽瓶頸，提升用戶體驗。
-
-### hooks
-
-#### useEffect
-
-React中有兩個重要的概念：
-
-* Rendering code（渲染代碼）
-    * Rendering code 指「開發者編寫的組件渲染邏輯」，最終會返回一段JSX。
-        ```js
-        function App() {
-          const [name, update] = useState('Marco');
-          
-          return <div>Hello {name}</div>;
-        }
-        ```
-    * 特點是：應該是「不帶副作用的純函數」。
-* Event handlers（事件處理器）
-    * Event handlers是「組件內部包含的函數」，用於執行用戶操作，可以包含副作用。
-    * 下面這些操作都屬於Event handlers：
-        * 更新input輸入框
-        * 提交表單
-        * 導航到其他頁面
-
-但是，並不是所有副作用都能在Event handlers中解決。
-
-比如，在一個聊天室中，「發送消息」是用戶觸發的，應該交給Event handlers處理。
-
-除此之外，聊天室需要隨時保持和服務端的長連接，「保持長連接」的行為屬於副作用，但並不是用戶行為觸發的。
-
-對於這種：在視圖渲染後觸發的副作用，就屬於effect，應該交給 useEffect 處理。
-
-但不應該濫用，當你希望狀態a變化後「發起請求」，首先應該明確，你的需求是：
-
-* 「狀態a變化，接下來需要發起請求」
-* 「某個用戶行為需要發起請求，請求依賴狀態a作為參數」？
-
-如果是後者，這是用戶行為觸發的副作用，那麼相關邏輯應該放在 Event handlers 中。
-
-當編寫組件時，應該盡量將組件編寫為純函數。
-
-對於組件中的副作用，首先應該明確：
-
-是「用戶行為觸發的」還是「視圖渲染後主動觸發的」？
-
-對於前者，將邏輯放在 Event handlers 中處理。
-
-對於後者，使用 useEffect 處理。
-
-#### useId
-
-useId 是一個 API，用於在客戶端和服務器上生成唯一 ID，同時避免水合不匹配。使用示例：
-
-```js
-function Checkbox() {
-  const id = useId();
-  return (
-    <div>
-      <label htmlFor={id}>選擇框</label>
-      <input type="checkbox" name="sex" id={id} />
-    </div>
-  );
-}
-```
-
-#### useInsertionEffect
-
-useInsertionEffect 的工作原理大致 useLayoutEffect 相同，只是此時無法訪問 DOM 節點的引用。
-
-因此推薦的解決方案是使用這個 Hook 來插入樣式表（或者如果你需要刪除它們，可以引用它們）：
-
-```js
-function useCSS(rule) {
-  useInsertionEffect(() => {
-    if (!isInserted.has(rule)) {
-      isInserted.add(rule);
-      document.head.appendChild(getStyleForRule(rule));
-    }
-  });
-  return rule;
-}
-function Component() {
-  let className = useCSS(rule);
-  return<div className={className} />;
-}
-```
-
-#### useTransition
-
-useTransition 是非常常見的需求。幾乎所有可能導致組件掛起的點擊或交互操作都需要使用 useTransition，以避免意外隱藏用戶正在交互的內容。
-
-這可能會導致組件存在大量重復代碼。通常建議把 useTransition 融合到應用的設計系統組件中。例如，我們可以把 useTransition 邏輯抽取到我們自己的 `<Button>` 組件：
-
-```js
-function Button({ children, onClick }) {
-  const [startTransition, isPending] = useTransition();
-
-  function handleClick() {
-    startTransition(() => {
-      onClick();
-    });
-  }
-
-  return (
-    <button onClick={handleClick} disabled={isPending}>
-      {children} {isPending ? '加載中' : null}
-    </button>
-  );
-}
-```
-
-#### useDeferredValue
-
-返回一個延遲響應的值，這通常用於在具有基於用戶輸入立即渲染的內容，以及需要等待數據獲取的內容時，保持接口的可響應性。
-
-```js
-import { useDeferredValue } from 'react';
-
-const deferredValue = useDeferredValue(value);
-```
-
-useDeferredValue 與 useTransition 的異同：
-
-* 相同：useDeferredValue 本質上和內部實現與 useTransition 一樣都是標記成了延遲更新任務。
-* 不同：useTransition 是把更新任務變成了延遲更新任務，而 useDeferredValue 是產生一個新的值，這個值作為延時狀態。
-
-與 debounce 的區別：
-
-* debounce 即 setTimeout 總是會有一個固定的延遲，而 useDeferredValue 的值只會在渲染耗費的時間下滯後，在性能好的機器上，延遲會變少，反之則變長。
-
-### useEvent
-
-(等確定再說)
-
-[引起大范围讨论的useEvent到底是干嘛的？](https://mp.weixin.qq.com/s/N9L7d43StIAGH89-WPASQA)
-
-## 開發技巧
-
-### 最好一個副作用一個 effect
-
-在執行副作用（side effect）時，很多 React 開發者會試圖在單次 useEffect 調用中執行多個副作用。
-
-```jsx
-export default function App() {
-  const [posts, setPosts] = React.useState([]);
-  const [comments, setComments] = React.useState([]);
-
-  React.useEffect(() => {
-    // 獲取帖子數據
-    fetch("https://jsonplaceholder.typicode.com/posts")
-      .then((res) => res.json())
-      .then((data) => setPosts(data));
-
-    // 獲取評論數據
-    fetch("https://jsonplaceholder.typicode.com/comments")
-      .then((res) => res.json())
-      .then((data) => setComments(data));
-  }, []);
-
-  return (
-    <div>
-      <PostsList posts={posts} />
-      <CommentsList comments={comments} />
-    </div>
-  );
-}
-```
-
-與其把所有副作用都擠在一個 effect hook 裡，不如通過多次調用把它們放在獨立的 hook 裡。這種做法允許我們把不同的操作分離到不同的 effect 中，更好地做到關注點分離。比起類組件中的生命週期函數，React hooks 的一個主要優勢就是更好地關注點分離。
-
-類組件中每個生命週期函數只能調用一次，所以無法將副作用分離到多個函數裡。例如，只能把組件掛載後要執行的所有操作都包含在一個 `componentDidMount` 函數裡。
-
-React hooks 的主要優勢就是能夠讓我們根據功能來組織代碼。我們不僅能夠將組件渲染之後要執行的操作分離到多個 effect，還可以移動 state 相關代碼的位置。
-
-```jsx
-export default function App() {
-  // 獲取帖子數據
-  const [posts, setPosts] = React.useState([]);
-  React.useEffect(() => {
-    fetch("https://jsonplaceholder.typicode.com/posts")
-      .then((res) => res.json())
-      .then((data) => setPosts(data));
-  }, []);
-
-  // 獲取評論數據
-  const [comments, setComments] = React.useState([]);
-  React.useEffect(() => {
-    fetch("https://jsonplaceholder.typicode.com/comments")
-      .then((res) => res.json())
-      .then((data) => setComments(data));
-  }, []);
-
-  return (
-    <div>
-      <PostsList posts={posts} />
-      <CommentsList comments={comments} />
-    </div>
-  );
-}
-```
-
-這意味著我們可以把 state 和其相關的 effect 放在一起，使得代碼結構清晰、功能一目瞭然。
 
 ## 內部實作
 
