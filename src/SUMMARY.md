@@ -1,6 +1,6 @@
 # Summary
 
-[兩大類的學習筆記](./README.md)
+[兩大類隨手記](./README.md)
 
 ----
 
