@@ -68,6 +68,18 @@ Prometheus Server 觸發 Alert Definition 定義的事件，並發送給 AelertM
 
 ![prometheus-3](./images/prometheus-3.png)
 
+## 基本名稱
+
+* Sample
+    * sample 表示實際的時間序列資料，包含以下內容：
+        * 一個精度為 float64 的值
+        * 一個以 ms 為最小單位的 timestamp
+* Instance
+    * 泛指 Prometheus 擷取監控資料的 HTTP(s) endpoint，一般會是一個運行中的 process。
+* Job
+    * 一群 instance 的集合稱為一個 Job，一般會是用來收集相同目的的資料
+    * 例如：因為 scalability & reliability 而讓同一個 process 跑在多台機器上，然後同時監控多台機器中的該 process。
+
 ## 資料模型
 
 Prometheus 儲存的資料為時間序列，主要以 Metrics name 以及一系列的唯一標籤(key-value)組成，不同標籤表示不同時間序列。
@@ -190,6 +202,16 @@ Prometheus 儲存的資料為時間序列，主要以 Metrics name 以及一系�
         * 自 1970 年以來最後一次收集垃圾時間，精確到秒數
     * go_memstats_gc_cpu_fraction (Gauge)
         * 自程序啟動以來，GC 使用的該程序可用 CPU 時間，精確到分鐘
+
+Prometheus 除了收集 instance metrics 外，還會有其他自動產生並帶上相對應 label 的資料，例如：
+
+* `up{job="<job-name>", instance="<instance-id>"}`
+    * 1 表示 instance 目前很健康，可以正常取得 metric 資料；若 0 則反之
+* `scrape_duration_seconds{job="<job-name>", instance="<instance-id>"}`
+    * 擷取 metric 資料的時間間隔
+* `scrape_samples_post_metric_relabeling{job="<job-name>", instance="<instance-id>"}`
+    * 有多少個 sample
+* `scrape_samples_scraped{job="<job-name>", instance="<instance-id>"}`
 
 ## Job 與 Instance
 
@@ -374,18 +396,189 @@ Prometheus 默認的配置文件分為四個部分：
 * alerting
     * 關於 Alertmanager 的配置
 
-## 告警和通知
+## scrape_config
 
-Prometheus 的告警功能被分成兩部分：一個是告警規則的配置和檢測，並將告警發送給 Alertmanager，另一個是 Alertmanager，它負責管理這些告警，去除重復數據，分組，並路由到對應的接收方式，發出報警。常見的接收方式有：Email、PagerDuty、HipChat、Slack、OpsGenie、WebHook 等。
+scrape_configs 主要用於配置拉取數據節點，每一個拉取配置主要包含以下參數：
 
-我們在上面介紹 Prometheus 的配置文件時瞭解到，它的默認配置文件 prometheus.yml 有四大塊：global、alerting、rule_files、scrape_config，其中 rule_files 塊就是告警規則的配置項，alerting 塊用於配置 Alertmanager
+* job_name
+    * 任務名稱
+* honor_labels
+    * 用於解決拉取數據標簽有沖突，當設置為 true, 以拉取數據為准，否則以服務配置為准
+* params
+    * 數據拉取訪問時帶的請求參數
+* scrape_interval
+    * 拉取時間間隔
+* scrape_timeout
+    * 拉取超時時間
+* metrics_path
+    * 拉取節點的 metric 路徑
+* scheme
+    * 拉取數據訪問協議
+* sample_limit
+    * 存儲的數據標簽個數限制，如果超過限制，該數據將被忽略，不入存儲
+    * 默認值為 0，表示沒有限制
+* relabel_configs
+    * 拉取數據重置標簽配置
+* metric_relabel_configs
+    * metric 重置標簽配置
+
+一份完整的 scrape_configs 配置大致為：
+
+```yaml
+job_name: <job_name>
+
+[ scrape_interval: <duration> | default = <global_config.scrape_interval> ]
+[ scrape_timeout: <duration> | default = <global_config.scrape_timeout> ]
+[ metrics_path: <path> | default = /metrics ]
+[ honor_labels: <boolean> | default = false ]
+[ scheme: <scheme> | default = http ]
+
+# Optional HTTP URL parameters.
+params:
+  [ <string>: [<string>, ...] ]
+
+# Sets the `Authorization` header on every scrape request with the
+# configured username and password.
+basic_auth:
+  [ username: <string> ]
+  [ password: <string> ]
+
+# Sets the `Authorization` header on every scrape request with
+# the configured bearer token. It is mutually exclusive with `bearer_token_file`.
+[ bearer_token: <string> ]
+
+# Sets the `Authorization` header on every scrape request with the bearer token
+# read from the configured file. It is mutually exclusive with `bearer_token`.
+[ bearer_token_file: /path/to/bearer/token/file ]
+
+# Configures the scrape request's TLS settings.
+tls_config:
+  [ <tls_config> ]
+
+# Optional proxy URL.
+[ proxy_url: <string> ]
+
+# List of Azure service discovery configurations.
+azure_sd_configs:
+  [ - <azure_sd_config> ... ]
+
+# List of Consul service discovery configurations.
+consul_sd_configs:
+  [ - <consul_sd_config> ... ]
+
+# List of DNS service discovery configurations.
+dns_sd_configs:
+  [ - <dns_sd_config> ... ]
+
+# List of EC2 service discovery configurations.
+ec2_sd_configs:
+  [ - <ec2_sd_config> ... ]
+
+# List of OpenStack service discovery configurations.
+openstack_sd_configs:
+  [ - <openstack_sd_config> ... ]
+
+# List of file service discovery configurations.
+file_sd_configs:
+  [ - <file_sd_config> ... ]
+
+# List of GCE service discovery configurations.
+gce_sd_configs:
+  [ - <gce_sd_config> ... ]
+
+# List of Kubernetes service discovery configurations.
+kubernetes_sd_configs:
+  [ - <kubernetes_sd_config> ... ]
+
+# List of Marathon service discovery configurations.
+marathon_sd_configs:
+  [ - <marathon_sd_config> ... ]
+
+# List of AirBnB's Nerve service discovery configurations.
+nerve_sd_configs:
+  [ - <nerve_sd_config> ... ]
+
+# List of Zookeeper Serverset service discovery configurations.
+serverset_sd_configs:
+  [ - <serverset_sd_config> ... ]
+
+# List of Triton service discovery configurations.
+triton_sd_configs:
+  [ - <triton_sd_config> ... ]
+
+# List of labeled statically configured targets for this job.
+static_configs:
+  [ - <static_config> ... ]
+
+# List of target relabel configurations.
+relabel_configs:
+  [ - <relabel_config> ... ]
+
+# List of metric relabel configurations.
+metric_relabel_configs:
+  [ - <relabel_config> ... ]
+
+# Per-scrape limit on number of scraped samples that will be accepted.
+# If more than this number of samples are present after metric relabelling
+# the entire scrape will be treated as failed. 0 means no limit.
+[ sample_limit: <int> | default = 0 ]
+```
+
+## Rules
+
+Prometheus 的告警功能被分成兩部分：
+
+* 一個是告警規則的配置和檢測，並將告警發送給 Alertmanager
+* 另一個是 Alertmanager，它負責管理這些告警，去除重復數據，分組，並路由到對應的接收方式，發出報警。
+
+Prometheus 中提供了兩種 rule type，分別是：
+
+* Recording Rule
+    * 用來協助預先處理 or 計算某些 metric 的值，透過 recording rule，將較為複雜的需求先計算完成，後續就可以直接使用，會比起每次都重新查詢 & 計算來的快的多且省資源
+* Alerting Rule
+    * 讓使用者可以透過 rometheus expression language expressions 自訂需要發送 alarm 的條件
+
+rule 在使用上有幾點需要注意：
+
+* rule 可以獨立成一個個單獨的檔案並 include，不一定要全部設定在主設定檔 prometheus.yml 上。
+* 透過送給 prometheus process SIGHUP 的訊號，可以在執行期間載入 rule
+
+Recording Rule 範例：
+
+```yaml
+groups:
+  - name: example
+    rules:
+    - record: job:http_inprogress_requests:sum
+      expr: sum(http_inprogress_requests) by (job)
+```
+
+Alerting Rule 範例：
+
+```yaml
+groups:
+- name: example
+  rules:
+  - alert: HighErrorRate
+    expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
+    # alert 成立後，進入 pending 狀態，持續超過 10 mins 則進入 firing 
+    for: 10m
+    # 為 alert 標記 tag
+    labels:
+      severity: page
+    # 可儲存較為複雜的 metadata 資訊
+    annotations:
+      summary: High request latency
+```
+
+rule_files 塊就是告警規則的配置項
 
 ```yaml
 rule_files:  
   - "alert.rules"  
 ```
 
-alert.rules
+與 Console Templates 搭配使用：
 
 ```yaml
 groups:  
@@ -411,7 +604,13 @@ groups:
       description: "{{ $labels.instance }} has a median request latency above 1s (current value: {{ $value }}s)"
 ```
 
-配置好後，需要重啟下 Prometheus server，然後訪問 http://localhost:9090/rules 可以看到剛剛配置的規則：
+配置好後，需要重啟下 Prometheus server，然後訪問 http://localhost:9090/rules 可以看到剛剛配置的規則
+
+## Alert
+
+alerting 塊用於配置 Alertmanager
+
+常見的接收方式有：Email、PagerDuty、HipChat、Slack、OpsGenie、WebHook 等。
 
 使用 Alertmanager 發送告警通知
 
@@ -461,7 +660,7 @@ Pushgateway 被設計為一個監控指標的緩存，這意味著它不會主�
     * native support for Docker
     * enables us to track historical resource usage with histograms & stuff
 
-開源的單節點Agent，負責監控容器資源使用情況與性能，採集機器上所有Container的Memory、網絡使用情況、文件系統和CPU等數據。
+開源的單節點 Agent，負責監控容器資源使用情況與性能，採集機器上所有Container的Memory、網絡使用情況、文件系統和CPU等數據。
 
 cAdvisor雖然好用，但有些缺點：
 
@@ -470,9 +669,10 @@ cAdvisor雖然好用，但有些缺點：
 
 ### Kube-state-metrics
 
-輪詢Kubernetes API，並將Kubernetes的結構化信息轉換為metrics。
+輪詢 Kubernetes API，並將Kubernetes的結構化信息轉換為 metrics。
 
 ## 參考資料
 
 * [號稱下一代監控系統，來看看它有多強！](https://mp.weixin.qq.com/s/hrZfFmbyn_4ZzJOpK_-0ZQ)
 * [Prometheus 介紹與基礎入門 (上)](https://www.inwinstack.com/zh/blog-tw/blog_other-tw/2156/)
+* [數據拉取配置 · Prometheus 實戰](https://songjiayang.gitbooks.io/prometheus/content/configuration/scrape_configs.html)
