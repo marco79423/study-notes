@@ -462,11 +462,11 @@ tls_config:
 azure_sd_configs:
   [ - <azure_sd_config> ... ]
 
-# List of Consul service discovery configurations.
+# 使用第三方組件 Consul ，完成動態服務發現
 consul_sd_configs:
   [ - <consul_sd_config> ... ]
 
-# List of DNS service discovery configurations.
+# 基於 DNS 服務發現
 dns_sd_configs:
   [ - <dns_sd_config> ... ]
 
@@ -478,7 +478,7 @@ ec2_sd_configs:
 openstack_sd_configs:
   [ - <openstack_sd_config> ... ]
 
-# List of file service discovery configurations.
+# 基於文件服務發現
 file_sd_configs:
   [ - <file_sd_config> ... ]
 
@@ -486,7 +486,7 @@ file_sd_configs:
 gce_sd_configs:
   [ - <gce_sd_config> ... ]
 
-# List of Kubernetes service discovery configurations.
+# 基於 Kubernetes 的服務發現，比如Pod、Service
 kubernetes_sd_configs:
   [ - <kubernetes_sd_config> ... ]
 
@@ -506,7 +506,7 @@ serverset_sd_configs:
 triton_sd_configs:
   [ - <triton_sd_config> ... ]
 
-# List of labeled statically configured targets for this job.
+# 靜態服務發現 (用於相對固定，不會經常性的發生變化的目標)
 static_configs:
   [ - <static_config> ... ]
 
@@ -523,6 +523,47 @@ metric_relabel_configs:
 # the entire scrape will be treated as failed. 0 means no limit.
 [ sample_limit: <int> | default = 0 ]
 ```
+
+### kubernetes_sd_configs
+
+Prometheus 集成了 Kubernetes 的自動服務發現，通過 kube-apiserver 提供的5種模式API來動態服務發現，它們分別是：基於 Node、Service、Pod、Endpoints 以及基於 ingress 的服務發現
+
+### relabel_configs
+
+relabel_configs 標簽主要是重新修改標簽，它僅僅是對採集過來的指標進行二次處理，我們要什麼、不要什麼、如何替換等
+
+```yaml
+relabel_configs:
+  - source_labels: [__address__]
+    regex: '(.*):10250'
+    replacement: '${1}:9100'
+    target_label: __address__
+    action: replace
+```
+
+欄位：
+
+* source_labels
+    * 原始的標簽，沒有經過 relabel 處理之前的名稱
+* target_label
+    * 目標的標簽，通過 action 動作處理之後的新名稱
+* regex
+    * 正則表達式，用於匹配源標簽值使用的
+* replacement
+    * replacement指定的替換後的標簽（target_label）對應的數值
+* actions:
+    * replace (替換)
+        * 根據 regex 來去匹配 source_labels 標簽上的值，並將並將匹配到的值寫入 target_label 中
+    * keep (保留)
+        * 只是收集匹配到 regex 的源標簽 source_labels，而會丟棄沒有匹配到的所有標簽
+    * drop (排除)
+        * 丟棄匹配到regex的源標簽，而會收集沒有匹配到的所有標簽，用於排除，與keep相反
+    * labeldrop
+        * 使用 regex 表達式匹配標簽，符合規則的標簽將從 target 實例中移除
+    * labelkeep
+        * 使用regex表達式匹配標簽，僅收集符合規則的target，不符合匹配規則的不收集
+    * labelmap
+        * 根據 regex 的定義去匹配Target實例所有標簽的名稱，並且以匹配到的內容為新的標簽名稱，其值作為新標簽的值；
 
 ## Rules
 
@@ -676,3 +717,4 @@ cAdvisor雖然好用，但有些缺點：
 * [號稱下一代監控系統，來看看它有多強！](https://mp.weixin.qq.com/s/hrZfFmbyn_4ZzJOpK_-0ZQ)
 * [Prometheus 介紹與基礎入門 (上)](https://www.inwinstack.com/zh/blog-tw/blog_other-tw/2156/)
 * [數據拉取配置 · Prometheus 實戰](https://songjiayang.gitbooks.io/prometheus/content/configuration/scrape_configs.html)
+* [第四篇 详解使用relabel_configs进行动态服务发现k8s 资源 - 墨天轮](https://www.modb.pro/db/50726)
