@@ -396,7 +396,7 @@ Prometheus 默認的配置文件分為四個部分：
 * alerting
     * 關於 Alertmanager 的配置
 
-## scrape_config
+### scrape_config
 
 scrape_configs 主要用於配置拉取數據節點，每一個拉取配置主要包含以下參數：
 
@@ -565,7 +565,7 @@ relabel_configs:
     * labelmap
         * 根據 regex 的定義去匹配Target實例所有標簽的名稱，並且以匹配到的內容為新的標簽名稱，其值作為新標簽的值；
 
-## Rules
+### Rules
 
 Prometheus 的告警功能被分成兩部分：
 
@@ -647,7 +647,7 @@ groups:
 
 配置好後，需要重啟下 Prometheus server，然後訪問 http://localhost:9090/rules 可以看到剛剛配置的規則
 
-## Alert
+### Alert
 
 alerting 塊用於配置 Alertmanager
 
@@ -711,6 +711,27 @@ cAdvisor雖然好用，但有些缺點：
 ### Kube-state-metrics
 
 輪詢 Kubernetes API，並將Kubernetes的結構化信息轉換為 metrics。
+
+## Prometheus 常用啟動參數
+
+* --config.file=/etc/prometheus/prometheus.yml
+    * 配置文件路徑
+* --storage.tsdb.path=/prometheus
+    * 存儲路徑，默認在data目錄下
+* --storage.tsdb.retention=720h
+    * 數據保留時間 
+* --web.enable-admin-api
+    * 控制對admin HTTP API的訪問，其中包括刪除時間序列等功能
+* --web.enable-lifecycle
+    * 熱加載 reload操作，如果不生效，刪除重建；
+* --web.max-connections=512
+    * 默認最大連接數
+* --alertmanager.timeout=10s
+    * 報警信息發送給alertmanager的超時時間
+* --query.timeout=2m
+    * 查詢超時間
+* --query.max-concurrency=20
+    * 並發查詢數，prometheus的默認採集指標中有一項，prometheus_engine_queries_concurrent_max可以拿到最大查詢並發數及查詢情況
 
 ## 參考資料
 
