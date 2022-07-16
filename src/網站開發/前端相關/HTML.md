@@ -1,5 +1,65 @@
 # HTML 學習筆記
 
+## link
+
+```html
+<link rel="prefetch" href="/style.css" as="style"/>
+<link rel="preload" href="/style.css" as="style"/>
+<link rel="preconnect" href="https://example.com"/>
+<link rel="dns-prefetch" href="https://example.com"/>
+<link rel="prerender" href="https://example.com"/>
+```
+
+瀏覽器對於資源的載入順序是有規則的，是以檔案類型來決定下載的優先順序，以 chrome 為例：
+
+* High priority
+    * style
+    * font
+    * XHR (sync)
+* Medium priority
+    * 位於可視區域的圖片
+    * Preload without as
+    * XHR (async)
+* Low priority
+    * favicon
+    * script async
+    * defer
+    * block
+    * 不在可視區域的圖片
+    * 媒體檔
+    * SVG
+
+### Preload VS Prefetch
+
+preload 與 prefetch 都是在提早取得將來會用到的資源，然而兩者的差別在於：
+
+* Preload：取得當前頁面的資源（例如字體 font）。
+* Prefetch：告訴瀏覽器「這些資源我待會會用到，先幫我下載吧！」
+
+preload 不同的是 prefetch 抓取的資源不限於當前頁面使用，也就是可以跨越 navigation，例如你很確定使用者會點擊下一頁，就可以使用 prefetch 預先抓取下一頁的資源。
+
+### Preconnect
+
+preconnect 相當於告訴瀏覽器：「這個網頁將會在不久的將來下載某個 domain 的資源，請先幫我建立好連線。」
+
+通常只會對確定短時間內就會用到的 domain 做 preconnect，因為如果 10 秒內沒有使用的話瀏覽器會自動把連線 close 掉
+
+* CDN：如果網站中有很多資源要從 CDN 拿取，可以 preconnect CDN 的域名，這在不能預先知道有哪些資源要抓取的情況，是蠻適合的 use case。
+* Streaming 串流媒體
+
+### DNS Preconnect
+
+跟 preconnect 類似，差別在於只提示瀏覽器預先處理第一步 DNS lookup 而已。也就是說
+
+    dns-preconnect = DNS look up
+    preconnect = DNS look up + TCP Handshake +  SSL Negotiation
+
+### Prerender
+
+prerender 比 prefetch 更進一步。不僅僅會下載對應的資源，還會對資源進行解析。解析過程中，如果需要其他的資源，可能會直接下載這些資源，基本上就是盡可能預先渲染下個頁面，這樣一來當用戶在從當前頁面跳轉到目標頁面時，瀏覽器可以快速的響應。適合用在用戶很高機率會轉到另一個頁面的狀況下使用
+
+不過瀏覽器支援度有點低。
+
 ## img
 
 ### 懶加載
@@ -258,3 +318,4 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 * [連 OG 都不知道還好意思說自己開發過 H5？](https://mp.weixin.qq.com/s/DiLZZaJ8ru2VqOEzB1EIbA)
 * [e.target 和 e.currentTarget 的区别？你到底知不知道？](https://mp.weixin.qq.com/s/B3AHkbdr7wlQB8-Fk5CgTg)
 * [過度使用懶加載對 Web 性能的影響](https://mp.weixin.qq.com/s/4Oo4FtNO-mviTiS_dPT1Uw)
+* [今晚，我想來點 Web 前端效能優化大補帖！](https://medium.com/starbugs/%E4%BB%8A%E6%99%9A-%E6%88%91%E6%83%B3%E4%BE%86%E9%BB%9E-web-%E5%89%8D%E7%AB%AF%E6%95%88%E8%83%BD%E5%84%AA%E5%8C%96%E5%A4%A7%E8%A3%9C%E5%B8%96-e1a5805c1ca2)
