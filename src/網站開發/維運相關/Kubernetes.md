@@ -929,14 +929,33 @@ k8s 提供兩個基本參數管理資源
 
 ![k8s-3](./images/k8s-3.png)
 
-quality of service (QoS)
+##### Quality of Service (QoS)
 
-* **Guaranteed**:
-    * For relatively predictable workloads (e.g. CPU-bound web servers, scheduled jobs), we can explicitly provision set resources for guaranteed QoS. To enable this, specify the limit or set the request equal to the limit.
-* **Burstable**:
-    * For workloads that need to consume more resources based on traffic or data (e.g. Elasticsearch, data analytics engine), we can set the request resources based on the steady-state usage, but give a higher limit to allow the workload to vertically scale.
-* **Best Effort**:
-    * Finally, for workloads with unknown resource usage, leave both the requests and limits unspecified to allow the workload to use all available resources on the node. From the scheduler perspective, these workloads are treated as the lowest priority and will be evicted before guaranteed or burstable workloads.
+Node 上會運行很多 Pod，當運行一段時間後，發現 Node 上的資源緊張了，這時 K8s 就會根據 QoS 類別來選擇 Kill 掉一部分Pod，那些會先被 Kill 掉？
+
+當然就是優先級最低的，也就是BestEffort，若BestEffort被Kill完了，還是緊張，接下來就是Kill中等優先級的，即Burstable，依次類推。
+
+QoS 的種類：
+
+* Guranteed
+    * 每個容器的CPU，RAM資源都設置了相同值的 requests 和 limits 屬性。
+    * 也就是：
+        * cpu.limits = cpu.requests
+        * memory.limits = memory.requests
+    * 這類 Pod 的運行優先級最高，但凡這樣配置了 cpu 和內存的 limits 和 requests，它會自動被歸為此類。
+* Burstable
+    * 每個容器至少定義了CPU 和 RAM 的 requests 屬性，那麼這類容器就會被自動歸為burstable，而此類就屬於中等優先級。
+    * 特殊例子：
+        * 初始
+            * PodA: 啟動時設置了memory.request=512M , memory.limits=1G
+            * PodB: 設置為: memory.requests=1G, memory.limits=2G
+        * 過程
+            * PodA: 運行了一段時間後，佔用了500M了，它可能還有繼續申請內存。
+            * PodB: 它則佔用了512M內存了，但它可能也還需要申請內存。
+        * 假設現在Node資源緊張了，會先kill誰？
+            * 會優先 kill PodA，因為它啟動時，說自己需要512M內存就夠了，但你現在這麼積極的申請內存，都快把你需求的內存吃完了，只能說明你太激進了，因此會先kill。　　　　而PodB，啟動時需要1G，但目前才用了1半，說明它比較溫和，因此不會先kill它。
+* BestEffort
+    * 如果容器沒有設置 requests 或 limits 就會被歸為此類，而此類別是最低優先級。
 
 #### 設計模式
 
