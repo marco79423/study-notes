@@ -1774,9 +1774,13 @@ key_len 計算公式： https://www.cnblogs.com/gomysql/p/4004244.html
 * 盡量使用inner join，避免left join
     * 參與聯合查詢的表至少為2張表，一般都存在大小之分。如果連接方式是inner join，在沒有其他過濾條件的情況下MySQL會自動選擇小表作為驅動表，但是left join在驅動表的選擇上遵循的是左邊驅動右邊的原則，即left join左邊的表名為驅動表。
 
-### Binlog
+### 日誌
 
-#### Binary Logging Formats
+MySQL日誌 主要包括錯誤日誌、查詢日誌、慢查詢日誌、事務日誌、二進制日誌幾大類。其中，比較重要的還要屬二進制日誌 binlog（歸檔日誌）和事務日誌 redo log（重做日誌）和 undo log（回滾日誌）。
+
+#### Binlog
+
+##### Binary Logging Formats
 
 * STATAMENT 是基於sql執行語句的（顯示記錄），相對於row佔用的存儲空間要少。用於數據同步的話還是要謹慎，需要保證主從機器之間的一致性（variables參數，Binlog日誌格式參數，表引擎，數據，索引等等），如果不能保證，用於恢復數據的情景還是要慎用（可以參考下面update where limit語句的例子）
 
@@ -1784,6 +1788,69 @@ key_len 計算公式： https://www.cnblogs.com/gomysql/p/4004244.html
 
 * MIXED格式是自動判斷並自動切換行和語句的策略，既然是自動，就不能保證完全符合每個業務場景，除非Server層面能做到絕對安全。。
 環境及參數說明
+
+#### Redo Log (重做日誌）
+
+redo log（重做日誌）是 InnoDB 存儲引擎獨有的，它讓 MySQL 擁有了崩潰恢復能力。
+
+比如 MySQL 實例掛了或宕機了，重啟時，InnoDB存儲引擎會使用 redo log恢復數據，保證數據的持久性與完整性。
+
+![mysql-16](./images/mysql-16.png)
+
+MySQL 中數據是以頁為單位，你查詢一條記錄，會從硬盤把一頁的數據加載出來，加載出來的數據叫數據頁，會放入到 Buffer Pool 中。
+
+後續的查詢都是先從 Buffer Pool 中找，沒有命中再去硬盤加載，減少硬盤 IO 開銷，提升性能。
+
+更新表數據的時候，也是如此，發現 Buffer Pool 裡存在要更新的數據，就直接在 Buffer Pool 裡更新。
+
+然後會把“在某個數據頁上做了什麼修改”記錄到重做日誌緩存（redo log buffer）裡，接著刷盤到 redo log 文件裡。
+
+![mysql-17](./images/mysql-17.png)
+
+理想情況，事務一提交就會進行刷盤操作，但實際上，刷盤的時機是根據策略來進行的。
+
+InnoDB 存儲引擎為 redo log 的刷盤策略提供了 innodb_flush_log_at_trx_commit 參數，它支持三種策略：
+
+* 設置為 0 的時候，表示每次事務提交時不進行刷盤操作
+* 設置為 1 的時候，表示每次事務提交時都將進行刷盤操作（默認值）
+* 設置為 2 的時候，表示每次事務提交時都只把 redo log buffer 內容寫入 page cache
+
+另外，InnoDB 存儲引擎有一個後台線程，每隔1 秒，就會把 redo log buffer 中的內容寫到文件系統緩存（page cache），然後調用 fsync 刷盤。也就是說，一個沒有提交事務的 redo log 記錄，也可能會刷盤。
+
+![mysql-18](./images/mysql-18.png)
+
+不同刷盤策略的流程圖：
+
+* innodb_flush_log_at_trx_commit=0
+    * 為0時，如果MySQL掛了或宕機可能會有1秒數據的丟失。
+        ![mysql-19](./images/mysql-19.png)
+* innodb_flush_log_at_trx_commit=1
+    * 為1時， 只要事務提交成功，redo log記錄就一定在硬盤裡，不會有任何數據丟失。
+    * 如果事務執行期間MySQL掛了或宕機，這部分日誌丟了，但是事務並沒有提交，所以日誌丟了也不會有損失。
+        ![mysql-20](./images/mysql-20.png)
+* innodb_flush_log_at_trx_commit=2
+    * 為2時， 只要事務提交成功，redo log buffer中的內容只寫入文件系統緩存（page cache）。
+    * 如果僅僅只是MySQL掛了不會有任何數據丟失，但是宕機可能會有1秒數據的丟失。
+        ![mysql-21](./images/mysql-21.png)
+
+硬盤上存儲的 redo log 日誌文件不只一個，而是以一個日誌文件組的形式出現的，每個的redo日誌文件大小都是一樣的。
+
+比如可以配置為一組4個文件，每個文件的大小是 1GB，整個 redo log 日誌文件組可以記錄4G的內容。
+
+它採用的是環形數組形式，從頭開始寫，寫到末尾又回到頭循環寫，如下圖所示。
+
+![mysql-22](./images/mysql-22.png)
+
+在個日誌文件組中還有兩個重要的屬性，分別是 write pos、checkpoint
+
+* write pos 是當前記錄的位置，一邊寫一邊後移
+* checkpoint 是當前要擦除的位置，也是往後推移
+
+每次刷盤 redo log 記錄到日誌文件組中，write pos 位置就會後移更新。
+
+每次 MySQL 加載日誌文件組恢復數據時，會清空加載過的 redo log 記錄，並把 checkpoint 後移更新。
+
+write pos 和 checkpoint 之間的還空著的部分可以用來寫入新的 redo log 記錄。
 
 ### 備份和還原
 
