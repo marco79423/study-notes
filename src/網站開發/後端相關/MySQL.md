@@ -1778,16 +1778,13 @@ key_len 計算公式： https://www.cnblogs.com/gomysql/p/4004244.html
 
 MySQL日誌 主要包括錯誤日誌、查詢日誌、慢查詢日誌、事務日誌、二進制日誌幾大類。其中，比較重要的還要屬二進制日誌 binlog（歸檔日誌）和事務日誌 redo log（重做日誌）和 undo log（回滾日誌）。
 
-#### Binlog
+* redo log（重做日誌）讓 InnoDB 存儲引擎擁有了崩潰恢復能力，保證事務的持久性
+* binlog（歸檔日誌）保證了 MySQL 集群架構的數據一致性。
+* undo log(回滾日誌) 來保證事務的原子性。
 
-##### Binary Logging Formats
+雖然它們都屬於持久化的保證，但是則重點不同。
 
-* STATAMENT 是基於sql執行語句的（顯示記錄），相對於row佔用的存儲空間要少。用於數據同步的話還是要謹慎，需要保證主從機器之間的一致性（variables參數，Binlog日誌格式參數，表引擎，數據，索引等等），如果不能保證，用於恢復數據的情景還是要慎用（可以參考下面update where limit語句的例子）
-
-* ROW 記錄包括了是EVENT TYPE，且是基於每行的,即你執行了一個DML操作，binlog中記錄的並不是具體的這個sql，而是針對該語句的每一行或者多行記錄各自生成記錄，這樣能有效避免主從下針對同一條sql而產生不同的結果（參考文中force indx的例子），這種方式無疑是最安全的，但是效率和空間上消耗是最大的。
-
-* MIXED格式是自動判斷並自動切換行和語句的策略，既然是自動，就不能保證完全符合每個業務場景，除非Server層面能做到絕對安全。。
-環境及參數說明
+在執行更新語句過程，會記錄 redo log 與 binlog 兩塊日誌，以基本的事務為單位，redo log 在事務執行過程中可以不斷寫入，而 binlog 只有在提交事務時才寫入，所以 redo log 與 binlog 的寫入時機不一樣。
 
 #### Redo Log (重做日誌）
 
@@ -1851,6 +1848,78 @@ InnoDB 存儲引擎為 redo log 的刷盤策略提供了 innodb_flush_log_at_trx
 每次 MySQL 加載日誌文件組恢復數據時，會清空加載過的 redo log 記錄，並把 checkpoint 後移更新。
 
 write pos 和 checkpoint 之間的還空著的部分可以用來寫入新的 redo log 記錄。
+
+#### Binlog（歸檔日誌）
+
+redo log 它是物理日誌，記錄內容是“在某個數據頁上做了什麼修改”，屬於 InnoDB 存儲引擎。
+
+而 binlog 是邏輯日誌，記錄內容是語句的原始邏輯，類似於“給 ID=2 這一行的 c 字段加 1”，屬於MySQL Server 層。
+
+不管用什麼存儲引擎，只要發生了表數據更新，都會產生 binlog 日誌。
+
+binlog 會記錄所有涉及更新數據的邏輯操作，並且是順序寫。
+
+binlog 日誌有三種格式，可以通過binlog_format參數指定：
+
+* statement
+    * 指定statement，記錄的內容是SQL語句原文，比如執行一條update T set update_time=now() where id=1，記錄的內容如下。
+        ![mysql-23](./images/mysql-23.png)
+    * 同步數據時，會執行記錄的SQL語句，但是有個問題，update_time=now()這裡會獲取當前系統時間，直接執行會導致與原庫的數據不一致 (改用 row 可以解決)
+* row
+    * 記錄的內容不再是簡單的SQL語句了，還包含操作的具體數據
+    * row格式記錄的內容看不到詳細信息，要通過mysqlbinlog工具解析出來。
+        ![mysql-24](./images/mysql-24.png)
+            * update_time=now()變成了具體的時間update_time=1627112756247，這樣可以為數據庫的恢復與同步帶來更好的可靠性。
+    * 但是這種格式，需要更大的容量來記錄，比較佔用空間，恢復與同步時會更消耗IO資源，影響執行速度 (可以用 mixed 折中方案)
+* mixed
+    * 記錄的內容是前兩者的混合。
+        * MySQL會判斷這條SQL語句是否可能引起數據不一致，如果是，就用row格式，否則就用statement格式。
+
+binlog的寫入時機也非常簡單，事務執行過程中，先把日誌寫到binlog cache，事務提交的時候，再把binlog cache寫到binlog文件中。
+
+因為一個事務的binlog不能被拆開，無論這個事務多大，也要確保一次性寫入，所以系統會給每個線程分配一個塊內存作為binlog cache。
+
+我們可以通過binlog_cache_size參數控制單個線程 binlog cache 大小，如果存儲內容超過了這個參數，就要暫存到磁盤（Swap）。
+
+![mysql-25](./images/mysql-25.png)
+
+write (寫進 cache) 和fsync (寫進硬碟) 的時機可以由參數 sync_binlog 控制，默認是 0：
+
+* 設置為 0，表示每次提交事務都只 write ，由系統自行判斷什麼時候執行fsync 。
+    * 雖然性能得到提升，但是機器宕機，page cache裡面的 binglog 會丟失。
+* 設置為 1，表示每次提交事務都會執行fsync，就如同binlog 日誌刷盤流程一樣。
+* 設置為 N(N>1)，表示每次提交事務都 write，但累積 N 個事務後才fsync。
+
+##### Binary Logging Formats
+
+* STATAMENT 是基於sql執行語句的（顯示記錄），相對於row佔用的存儲空間要少。用於數據同步的話還是要謹慎，需要保證主從機器之間的一致性（variables參數，Binlog日誌格式參數，表引擎，數據，索引等等），如果不能保證，用於恢復數據的情景還是要慎用（可以參考下面update where limit語句的例子）
+
+* ROW 記錄包括了是EVENT TYPE，且是基於每行的,即你執行了一個DML操作，binlog中記錄的並不是具體的這個sql，而是針對該語句的每一行或者多行記錄各自生成記錄，這樣能有效避免主從下針對同一條sql而產生不同的結果（參考文中force indx的例子），這種方式無疑是最安全的，但是效率和空間上消耗是最大的。
+
+* MIXED格式是自動判斷並自動切換行和語句的策略，既然是自動，就不能保證完全符合每個業務場景，除非Server層面能做到絕對安全。。
+環境及參數說明
+
+#### 兩階段提交
+
+如果 update，假設 id=2 的記錄，c 值是 0，把 c 值更新成 1，SQL 為 update T set c=1 where id=2。假設執行過程中寫完 redo log 日誌後，在寫入 binlog 日誌時發生異常，那麼之後用 binlog 日誌恢復數據時，就會少這一次更新，恢復出來的這一行 c 就會是 0，但是 redo log 日誌恢復，c 值卻是 1，這樣 redo log 與 binlog 兩份日誌之間的邏輯就不一致了。
+
+為了解決兩份日誌之間的邏輯一致問題，InnoDB 存儲引擎使用兩階段提交方案。原理很簡單，將redo log 的寫入拆成了兩個步驟 prepare 和 commit，這就是兩階段提交。
+
+![mysql-26](./images/mysql-26.png)
+
+使用兩階段提交後，寫入binlog時發生異常也不會有影響，因為MySQL根據redo log日誌恢復數據時，發現redo log還處於prepare階段，並且沒有對應binlog日誌，就會回滾該事務
+
+#### Undo log (回滾日誌)
+
+數據庫事務四大特性中有一個是原子性 ，具體來說就是 原子性是指對數據庫的一系列操作，要麼全部成功，要麼全部失敗，不可能出現部分成功的情況。
+
+我們知道如果想要保證事務的原子性，就需要在異常發生時，對已經執行的操作進行回滾，在 MySQL 中，恢復機制是通過 回滾日誌（undo log） 實現的，所有事務進行的修改都會先先記錄到這個回滾日誌中，然後再執行相關的操作。
+
+如果執行過程中遇到異常的話，我們直接利用 回滾日誌 中的信息將數據回滾到修改之前的樣子即可！並且，回滾日誌會先於數據持久化到磁盤上。這樣就保證了即使遇到數據庫突然宕機等情況，當用戶再次啟動數據庫的時候，數據庫還能夠通過查詢回滾日誌來回滾將之前未完成的事務。
+
+另外，MVCC 的實現依賴於：隱藏字段、Read View、undo log。在內部實現中，InnoDB 通過數據行的 DB_TRX_ID 和 Read View 來判斷數據的可見性，如不可見，則通過數據行的 DB_ROLL_PTR 找到 undo log 中的歷史版本。
+
+每個事務讀到的數據版本可能是不一樣的，在同一個事務中，用戶只能看到該事務創建 Read View 之前已經提交的修改和該事務本身做的修改。
 
 ### 備份和還原
 
@@ -2003,3 +2072,4 @@ SQL 處理的順序：
 * [18000 字的 SQL 优化大全，收藏直接起飞！](https://mp.weixin.qq.com/s?__biz=MzA5ODM5MDU3MA==&mid=2650881675&idx=2&sn=967dae1a639fddd2b5f855e185f4ecdb)
 * [是否該用 MongoDB？選擇資料庫前你該了解的事](https://tw.alphacamp.co/blog/mysql-and-mongodb-comparison)
 * [全网最全 | MySQL EXPLAIN 完全解读](https://www.itmuch.com/mysql/explain/)
+* [大廠基本功 | MySQL 三大日誌 ( binlog、redo log 和 undo log ) 的作用？](https://mp.weixin.qq.com/s/tl16bU4aKUTxI1HvrehoAA)
