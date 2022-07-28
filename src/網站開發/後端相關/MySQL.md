@@ -53,7 +53,7 @@
 #### 事務(Transaction) 的 ACID 屬性
 
 * 原子性（Atomicity）
-    * 作為邏輯工作單元，一個事務裡的所有操作的執行，要麼全部成功，要麼全部失敗（會撤會事務之前的狀態）。
+    * 作為邏輯工作單元，一個事務裡的所有操作的執行，要麼全部成功，要麼全部失敗（會撤回事務之前的狀態）。
 * 一致性（Consistency）
     * 事務完成前後，資料都必須永遠符合 schema 的規範，保持資料與資料庫的一致性
 * 隔離性（Isolation）
@@ -61,6 +61,66 @@
         * 這通常使用鎖來實現。一個事務處理後的結果，影響了其他事務，那麼其他事務會撤回。事務的 100% 隔離，需要犧牲速度。
 * 持久性（Durability）
     * 一旦事務提交，則其所做的修改就會永久保存到資料庫中，即使系統故障，修改的數據也不會丟失。
+
+##### 原子性（Atomicity）
+
+在一個 Transaction 裡面，可以包含多個 SQL 指令，這些指令必定按照順序執行，如果其中一個指令失敗，則整個交易宣告失敗，而交易中已經執行過的步驟如果是涉及到資料改動，會全數 Rollback 回去，回到還沒開啟 Transaction 前的狀態。
+
+注意：
+
+* 只要沒有成功 Commit，就算當機了或是其他原因，還沒 Commit 的 Transaction 一定會被 Rollback
+* 當機後，如果需要修復資料，RDBMS 必須以 Transaction 為單位進行修復
+
+例子：
+
+一個用戶 A 要匯錢給一個用戶 B，這就是一個 Transaction，所以通常這個 Transaction 裡面會有兩個 Update Statement：
+
+```sql
+START TRANSACTION;
+Update user set balance = balance - amount where username = 'UserA' and balance >= amount;
+Update user set balance = balance + amount where username = 'UserB'
+COMMIT;
+```
+
+假設沒有原子性，那麼當第一句的 Update 成功，而第二句的 Update 失敗，會導致 UserA 錢減少了，UserB 的錢卻沒有相對應的增加。
+
+因此原子性保證 Transaction 裡面的每個 SQL statement 一定會執行，如果有一個執行失敗就會當作交易失敗，其他執行成功的都得全數 Rollback，反之如果都成功並 Commit，則交易成立，因此可以保證資料庫的數據能夠從一個正確狀態直接移到下一個正確狀態。
+
+##### 一致性（Consistency）
+
+指交易裡面進行資料改動，如果交易成功，則資料改動必須滿足 unique constraint 和用戶自定義 constraint，例如一些 FK 跟資料欄位型態的限制，這些都要保證遵守。也代表此筆交易才能 Commit 成功，否則只要不遵守，就應該當作交易失敗，裡面進行的資料改動需要全數 Rollback。
+
+注意：
+
+* 在寫程式的時候，遇到任何 Statement 執行錯誤的話，只要執行一句 Transaction Rollback 即可。
+* 原子性跟一致性其實是相對應的概念，原子性保證數據可以安全移到下一個狀態，一致性保證數據移動失敗的時候，可以安全地回到本來正確狀態
+
+所以 RDBMS 可以保證用戶轉帳成功，對方有成功收到錢，自己也確實扣到錢，在搶票中，可以保證明確付了錢，也確實搶到票，而不會有付了錢卻搶不到票的問題。
+
+##### 隔離性（Isolation）
+
+指同一筆資料，保證不會被兩個 Transaction 同時更改，導致 Race Condition 的狀況。
+
+隔離級別分好幾種等級，在最低等級是會導致 Race Condition，最高等級不會有 Race Condition 但是其效能會大幅度降低，也就是說越低的資料容忍度的系統其效能一定不會太好。
+
+
+來看一個用戶提款例子：
+
+```sql
+START TRANSACTION;
+Update user set balance = balance - amount where username = 'UserA' and balance >= amount;
+COMMIT;
+```
+
+如果有 Isolation 的 LOCK 機制，當執行 Update Statement 時，RDBMS 會為 update 會影響的數據進行 Write Lock，也就是該 UserA 的帳戶被凍結一樣，其他人不能對 UserA 的帳戶進行匯款或提款等動作。
+
+直到這個 Transaction 結束後才會將 Write Lock 進行釋放，來保證同一個資料不會被同時改動。
+
+其中，可以注意的是 RDBMS 支持 atomic check-and-set 模式，可以在同一句 Update Statement 下同時檢查用戶是否有足夠錢可以提款，如果有足夠錢才會進行用戶扣款的更新。
+
+##### 持久性（Durability）
+
+當交易一旦 Commited 成功，除非存放空間的硬體受損，否則資料永不流失。即使在資料寫入得當下當機，引發寫入的資料流失，RDBMS 也有機制在之後復原資料。
 
 #### 事務的隔離級別
 
@@ -2073,3 +2133,4 @@ SQL 處理的順序：
 * [是否該用 MongoDB？選擇資料庫前你該了解的事](https://tw.alphacamp.co/blog/mysql-and-mongodb-comparison)
 * [全网最全 | MySQL EXPLAIN 完全解读](https://www.itmuch.com/mysql/explain/)
 * [大廠基本功 | MySQL 三大日誌 ( binlog、redo log 和 undo log ) 的作用？](https://mp.weixin.qq.com/s/tl16bU4aKUTxI1HvrehoAA)
+* [RDBMS (關聯式資料庫) - ACID 基礎觀念](https://blog.kennycoder.io/2020/01/21/RDBMS-%E9%97%9C%E8%81%AF%E5%BC%8F%E8%B3%87%E6%96%99%E5%BA%AB-ACID%E5%9F%BA%E7%A4%8E%E8%A7%80%E5%BF%B5/)
