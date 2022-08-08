@@ -327,6 +327,10 @@ node 的事件循環比瀏覽器復雜很多。由 6 個宏任務隊列+6 個微
 
 清空微任務隊列時，會先執行 process.nextTick，然後才是微任務隊列中的其他。
 
+## localStorage
+
+[你还在直接用 localStorage 么？该提升下了](https://mp.weixin.qq.com/s/qI3-dO4RbPCajJ7PgiWNYA)
+
 ## 模組
 
 ### JSON
