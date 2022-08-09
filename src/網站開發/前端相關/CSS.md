@@ -11,11 +11,18 @@ CSS 是瀏覽器提供給開發者的描述界面的方式，而描述界面分�
 
 ## 語法
 
-語法由一個選擇器(selector)起頭。 它選擇了我們將要用來添加樣式的 HTML 元素。
+CSS 規則集（rule-set）由選擇器(selector)和聲明塊組成。
 
-接著輸入一對大括號 { }。 在大括號內部定義一個或多個形式為 `屬性(property):值(value` 的聲明。每個聲明都指定了我們所選擇元素的一個屬性，之後跟一個我們想賦給這個屬性的值。
+由一個選擇器起頭。它選擇了我們將要用來添加樣式的 HTML 元素。接著輸入一對大括號 { }。 在大括號內部定義一個或多個形式為 `屬性(property):值(value` 的聲明。每個聲明都指定了我們所選擇元素的一個屬性，之後跟一個我們想賦給這個屬性的值。
 
 冒號之前是屬性，冒號之後是值。不同的 CSS 屬性對應不同的合法值。
+
+![css-26](./images/css-26.png)
+
+* 選擇器指向您需要設置樣式的 HTML 元素。
+* 聲明塊包含一條或多條用分號分隔的聲明。
+* 每條聲明都包含一個 CSS 屬性名稱和一個值，以冒號分隔。
+* 多條 CSS 聲明用分號分隔，聲明塊用花括號括起來。
 
 ### 屬性的寫法
 
@@ -1211,11 +1218,6 @@ p {
     * 定義間距，如grid-gap: 8px。
     * 不固定列數, 利用auto-fit / auto-fill自動適配。
 
-## 工具庫
-
-* [Utopia](https://utopia.fyi/)
-    * 字體大小計算
-
 ## 例子 - VSCode
 
 vscode 是上中下嵌套左中右的結構，窗口改變或者拖動都可以調整每塊大小，所以使用嵌套的 absolute 的方式來做整體的佈局。每一塊的內部則綜合使用流式、彈性等方式配合 position 分別做更細節的佈局。
@@ -1241,6 +1243,31 @@ css 的佈局就是 display 配合 position 來確定每一塊內容的位置。
 但是，絕對定位是要指定具體的 top、bottom、left、right 值，是靜態的，而窗口大小改變的時候需要動態的設置具體的值。這時候就需要監聽窗口的 resize 事件來重新佈局，分別計算不同塊的位置。
 
 而且 vscode 每一塊的大小是也是可以拖動改變大小的，也要在拖動的時候重新計算 left、top 的值。
+
+## 工具庫
+
+### PostCSS
+
+PostCSS，一個使用 JavaScript 來處理CSS的框架。
+
+PostCSS 主要做了三件事：
+
+* parse
+    * 把 CSS 文件的字符串解析成抽象語法樹（Abstract Syntax Tree）的框架，解析過程中會檢查 CSS 語法是否正確，不正確會給出錯誤提示。
+* runPlugin
+    * 執行插件函數。
+    * PostCSS 本身不處理任何具體任務，它提供了以特定屬性或者規則命名的事件。有特定功能的插件（如 autoprefixer、CSS Modules）會注冊事件監聽器。PostCSS 會在這個階段，重新掃描 AST，執行注冊的監聽器函數。
+* generate
+    * 插件對 AST 處理後，PostCSS 把處理過的 AST 對象轉成 CSS string。
+
+![post-css-1](./images/post-css-1.png)
+
+* [零基础理解 PostCSS 的主流程](https://mp.weixin.qq.com/s/PKiTypGuD78xe82TAbC6Ow)
+
+### 計算
+
+* [Utopia](https://utopia.fyi/)
+    * 字體大小計算
 
 ## 參考資料
 
