@@ -2,6 +2,10 @@
 
 Docker 是當前流行的 Linux 容器解決方案
 
+是一個開源的應用容器引擎，讓開發者可以打包他們的應用以及依賴包到一個可移植的容器中，然後發布到任何流行的 Linux 機器上，也可以實現虛擬化。容器是完全使用沙箱機制，相互之間不會有任何接口。
+
+* Build, Ship and Run（搭建、運輸、運行）
+* Build once, Run anywhere（一次搭建，處處運行）
 
 ## 基礎概念
 
@@ -38,6 +42,128 @@ Docker技術的三大核心概念，分別是：
         docker system prune -a --volumes
         ```
 
+## Dockerfile
+
+### FROM
+
+指定基礎鏡像，所有構建的鏡像都必須有一個基礎鏡像，且 FROM 命令必須是 Dockerfile 的第一個命令
+
+* `FROM <image> [AS <name>]`
+    * 指定從一個鏡像構建起一個新的鏡像名字
+* `FROM <image>[:<tag>] [AS <name>]`
+    * 指定鏡像的版本 Tag
+* 示例
+    * `FROM mysql:5.0 AS database`
+
+### MAINTAINER
+
+鏡像維護人的信息
+
+`MAINTAINER <name>`
+
+示例： `MAINTAINER marco79423`
+
+### RUN
+
+
+構建鏡像時要執行的命令
+
+`RUN <command>`
+
+示例： `RUN ["executable", "param1", "param2"]`
+
+### ADD
+
+將本地的文件添加復制到容器中去，壓縮包會解壓，可以訪問網絡上的文件，會自動下載
+
+`ADD <src> <dest>`
+
+示例： `ADD *.js /app` 添加 js 文件到容器中的 app 目錄下
+
+### COPY
+
+功能和 ADD 一樣，只是復制，不會解壓或者下載文件
+
+### CMD
+
+啟動容器後執行的命令，和 RUN 不一樣，RUN 是在構建鏡像是要運行的命令
+
+當使用 docker run 運行容器的時候，這個可以在命令行被覆蓋
+
+示例： `CMD ["executable", "param1", "param2"]`
+
+### ENTRYPOINT
+
+也是執行命令，和 CMD 一樣，只是這個命令不會被命令行覆蓋
+
+`ENTRYPOINT ["executable", "param1", "param2"]`
+
+示例： `ENTRYPOINT ["donnet", "myapp.dll"]`
+
+### LABEL
+
+為鏡像添加元數據，key-value 形式
+
+`LABEL <key>=<value> <key>=<value> ...`
+
+示例： `LABEL version="1.0" description="這是一個web應用"`
+
+### ENV
+
+設置環境變量，有些容器運行時會需要某些環境變量
+
+* `ENV <key> <value>` 
+    * 一次設置一個環境變量
+* `ENV <key>=<value> <key>=<value> <key>=<value>` 
+    * 設置多個環境變量
+
+示例：`ENV JAVA_HOME /usr/java1.8/`
+
+### EXPOSE
+
+暴露對外的端口（容器內部程序的端口，雖然會和宿主機的一樣，但是其實是兩個端口）
+
+`EXPOSE <port>`
+
+示例： `EXPOSE 80`
+
+容器運行時，需要用 -p 映射外部端口才能訪問到容器內的端口
+
+### VOLUME
+
+指定數據持久化的目錄，官方語言叫做掛載
+
+* `VOLUME /var/log`
+    * 指定容器中需要被掛載的目錄，會把這個目錄映射到宿主機的一個隨機目錄上，實現數據的持久化和同步。
+* `VOLUME ["/var/log","/var/test".....]`
+    * 指定容器中多個需要被掛載的目錄，會把這些目錄映射到宿主機的多個隨機目錄上，實現數據的持久化和同步
+* `VOLUME /var/data var/log`
+    * 指定容器中的 var/log 目錄掛載到宿主機上的 /var/data 目錄，這種形式可以手動指定宿主機上的目錄
+
+### WORKDIR
+
+設置工作目錄，設置之後 ，RUN、CMD、COPY、ADD 的工作目錄都會同步變更
+
+`WORKDIR <path>`
+
+示例： `WORKDIR /app/test`
+
+### USER
+
+指定運行命令時所使用的用戶，為了安全和權限起見，根據要執行的命令選擇不同用戶
+
+`USER <user>:[<group>]`
+
+示例： `USER test`
+
+### ARG
+
+設置構建鏡像是要傳遞的參數
+
+* `ARG <name>[=<value>]`
+
+示例： `ARG name=sss`
+
 ## 議題
 
 ### Docker 跑資料庫？
@@ -68,3 +194,4 @@ Docker技術的三大核心概念，分別是：
 
 * [你在 Docker 中跑 MySQL？恭喜你，可以下崗了！](https://mp.weixin.qq.com/s/LaADoyFEqfOPHtQ_XByI4Q)
 * [解惑篇｜Docker和 K8s 到底啥关系？想学K8s，必须得先学 Docker 吗？](https://mp.weixin.qq.com/s?__biz=MzUzNTY5MzU2MA==&mid=2247493651&idx=1&sn=e9793e68375e5ef2c48e7cf8a53459f8&chksm=fa833984cdf4b09281adad62b748c9567536fd56c9a659cff800ac154be168b25e8c59f39f44&token=2015934396)
+* [寫給前端的 Docker 入門終極指南，別再說不會用 Docker 了！](https://mp.weixin.qq.com/s/oEygasL-5owZ5b8mV6uMTw)
