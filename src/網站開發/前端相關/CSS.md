@@ -1051,7 +1051,50 @@ p {
 
 應用中，有很多這樣的體系。其他流行的方式包括 Jonathan Snook 創造的 Scalable and Modular Architecture for CSS (SMACSS)、Harry Roberts 的 ITCSS 以及原本由 Yahoo! 創造的 Atomic CSS (ACSS)。
 
-## CSS 開發中的防禦規則
+## 實用技巧
+
+### 使用 CSS Reset
+
+CSS Reset 可以幫你在不同的瀏覽器上維持一致的樣式風格。你可以使用像 Normalize 這類的 CSS Reset 套件，或使用更簡潔的 CSS Reset 方法：
+
+```css
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+```
+
+現在元素的 margin 和 padding 已重設，且 box-sizing 可以讓你透過 CSS Box Model 管理版面配置。
+
+### 使用 unset 而不是重置所有屬性
+
+當重置元素的屬性時，並不需要重置元素中每個屬性：
+
+```css
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  padding: 0;
+}
+```
+
+你可以用 all 來代表元素中所有的樣式屬性。 將該值設定為 unset 意味著將元素中所有樣式屬性回復到預設值：
+
+```css
+button {
+  all: unset;
+}
+```
+
+注意： IE11不支持all和unset的简写。
+
+### CSS 開發中的防禦規則
 
 * 採用扁平化的 HTML 結構，用 CSS 控制佈局
     * HTML的結構設計是基本前提，避免“表格思維”，避免多餘的行 / 列元素（過度包裝元素）。
