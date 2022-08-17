@@ -1,6 +1,24 @@
 # UI / UX 學習筆記
 
-## 畫草圖的工類
+## 配色黃金比例 60：30：10
+
+60：30：10在網站視覺設計中是一個很常被使用的技巧。其實概念很簡單，就是在作品的顏色呈現上，要符合 60：30：10 的比例。
+
+60% 主色相 + 30% 輔助色相 + 10% 強調色相。
+
+* 主色相(Primary Color)
+    * 佔了設計中絕大部分的顏色
+    * 通常是用於背景，也因為使用面積龐大，建議使用耐看、中性的色調。
+* 輔助色相(Secondary Color)
+    * 佔了設計中大約 30% 的顏色，通常是品牌主色調，用於標題、重點元素等。
+* 強調色相(Accent Color)
+    * 和主、輔色有強烈的對比，主要用以吸引目光注意。用於按鈕、圖標、小標題，或是其他行動呼籲等元素。
+
+例子：
+
+![ui-ux-1](./images/ui-ux-1.jpg)
+
+## 畫草圖的工具
 
 * [Excalidraw](https://excalidraw.com/)
 
@@ -1157,3 +1175,4 @@ window.addEventListener('scroll', throttle(handleScroll, 500));  // 500ms才允�
 
 * [網頁動畫的十二原則](https://mp.weixin.qq.com/s/gLpTNnLWiQrS9h_Qfa9stg)
 * [Debounce & Throttle — 那些前端開發應該要知道的小事(一)](https://medium.com/@alexian853/debounce-throttle-%E9%82%A3%E4%BA%9B%E5%89%8D%E7%AB%AF%E9%96%8B%E7%99%BC%E6%87%89%E8%A9%B2%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E5%B0%8F%E4%BA%8B-%E4%B8%80-76a73a8cbc39)
+* [配色黃金比例60：30：10的實際應用！](https://vocus.cc/article/5f3cc3b0fd89780001d6e4f7)
