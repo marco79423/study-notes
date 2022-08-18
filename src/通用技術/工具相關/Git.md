@@ -24,12 +24,14 @@
         * 類別：feat, fix, docs, style, refactor, test, chore。
             * feat: 新增/修改功能 (feature)。
             * fix: 修補 bug (bug fix)。
-            * docs: 文件 (documentation)。
-            * style: 格式 (不影響程式碼運行的變動 white-space, formatting, missing semi colons, etc)。
-            * refactor: 重構 (既不是新增功能，也不是修補 bug 的程式碼變動)。
-            * perf: 改善效能 (A code change that improves performance)。
-            * test: 增加測試 (when adding missing tests)。
-            * chore: 建構程序或輔助工具的變動 (maintain)。
+            * docs: 修改文檔，比如 README, CHANGELOG, CONTRIBUTE 等等。
+            * style: 不改變代碼邏輯 (僅僅修改了空格、格式縮進、逗號等等)
+            * refactor: 重構（既不修復錯誤也不添加功能）。
+            * perf: 優化相關，比如提升性能、體驗。
+            * test: 增加測試，包括單元測試、集成測試等
+            * build：構建系統或外部依賴項的更改
+            * ci：自動化流程配置或腳本修改
+            * chore: 非 src 和 test 的修改，發布版本等
             * revert: 撤銷回覆先前的 commit 例如：revert: type(scope): subject (回覆版本：xxxx)。
 
     * scope (可選)
