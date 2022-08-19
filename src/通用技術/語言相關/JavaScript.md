@@ -6,14 +6,108 @@
 
 ## 模組化機制
 
-* AMD (Asynchronous Module Definition)
-    * 在瀏覽器中使用，並用 `define` 函式定義模組；
-* CJS (CommonJS)
+由於歷史原因，JavaScript 模塊化系統一直沒有統一規范，大致發展過程是：CJS → AMD → CMD → UMD → ESM，這給設計一個跨應用使用的模塊帶來不少麻煩。
+
+* CommonJS (CJS)
     * 在 NodeJS 中使用，用 `require` 和 `module.exports` 引入和匯出模組；
-* ESM (ES Modules)
+* Asynchronous Module Definition (AMD)
+    * 在瀏覽器中使用，並用 `define` 函式定義模組；
+* Universal Module Definition (UMD)
+    * UMD 嚴格意義上不算規范，只是社區出的通用包模塊結合體的格式，兼容 CJS 和 AMD 格式。
+* ES Modules (ESM)
     * JavaScript 從 ES6(ES2015) 開始支援的原生模組機制，使用 `import` 和 `export` 引入和匯出模組；
 
-## Node 使用 ESM 的方式
+現階段選擇模塊規范的最佳實踐是：
+
+* 共享配置模塊（跨前後端）
+    * 同時打出 ESM、CJS 格式的包（目前 Node.js 運行時對 ESM 支持不是很好）
+* UI 組件庫
+    * 同時打出 ESM、CJS、UMD（umd 主要是為了讓前端項目可以做 external，減少構建時長）
+* 面向 Node.js 項目
+    * 目前只需要打出 CJS 格式
+
+### CommonJS (CJS)
+
+Node.js 的模塊標准，文件即模塊。
+
+* 對 Tree Shaking 不友好
+* 前端也可以使用 cjs 格式，依靠構建工具（webpack / rollup 等）
+
+導出語法：
+
+```js
+module.exports = foo
+exports.foo = 1;
+```
+
+使用語法：
+
+```js
+const foo = require('name');
+const { foo } = require('name');
+```
+
+### Asynchronous Module Definition (AMD)
+
+
+### Universal Module Definition (UMD)
+
+UMD 嚴格意義上不算規范，只是社區出的通用包模塊結合體的格式，兼容 CJS 和 AMD 格式。
+瀏覽器端用來掛載全局變量 （如：window.*）
+
+適用於：
+
+* Browser（external 場景）
+* Node.js（較少）
+
+導出語法：
+
+```js
+(function (root, factory) {
+if (// amd) {
+} else if (//cjs) {
+} else (//global) {
+}
+})(this, function() {})
+```
+
+使用語法：
+
+```js
+window.React
+window.ReactDOM
+$
+```
+
+### ES Modules (ESM)
+
+JavaScript 官方的標准化模塊系統（草案），在標准化道路上花了近 10 年時間。
+
+* JS 標准，優先考慮使用該模塊
+* Tree Shaking 友好
+
+適用於：
+
+* Browser
+* Node.js ≥ 12.17
+
+導出語法：
+
+```js
+export default foo
+export const foo = 1;
+export { bar as foo } from 'module'
+```
+
+使用語法：
+
+```js
+import foo from 'module'
+import { foo } from 'module'
+import { foo as bar } from 'nammodulee'
+```
+
+#### Node 使用 ESM 的方式
 
 * Node 13.2.0 起開始正式支援 ES Modules 特性。
     * 注：雖然移除了 --experimental-modules 啟動引數，但是由於 ESM loader 還是實驗性的，所以執行 ES Modules 程式碼依然會有警告
