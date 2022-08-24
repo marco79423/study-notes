@@ -116,17 +116,307 @@ import { foo as bar } from 'nammodulee'
     * 在 .mjs 檔案可以直接使用 import 和 export
     * 若不新增上述兩項中任一項，直接在 Node 中使用 ES Modules，則會丟擲警告
 
-## Promise
-
-已整理為文章： [淺談 JavaScript 的 Promise](https://marco79423.net/articles/%E6%B7%BA%E8%AB%87-javascript-%E7%9A%84-promise/)
-
-## 函式庫要包成 CommonJS 還是 ES Module？
+### 函式庫要包成 CommonJS 還是 ES Module？
 
 如果接入方以SSR的形式在服務端接入組件，可能使用CJS規范。
 
 CSR的情況通常使用ESM。
 
 所以SDK組件在打包編譯時需要輸出ESM、CJS兩種規范的文件。
+
+## 異常
+
+ECMA-262 白皮書 13 版中描述了 8 種異常：
+
+* SyntaxError：語法異常
+* ReferenceError：引用異常
+* RangeError：范圍異常
+* Error：異常基類
+* InternalError：內部異常
+* TypeError: 類型異常
+* EvalError: Eval 方法異常
+* URIError: URI 相關方法產生的異常
+
+### SyntaxError
+
+在引擎執行代碼之前，編譯器需要對 js 進行編譯，編輯階段包括：詞法分析，語法分析
+
+![error-1](./images/error-1.png)
+
+編譯階段發生的異常都是 SyntaxError，但 SyntaxError 不完全都發生於編譯階段；
+
+```js
+const a = '3;
+```
+
+比如這行代碼，缺少一個引號，就會發生: SyntaxError: Invalid or unexpected token.
+
+其他常見的 SyntaxError：
+
+* SyntaxError:Unexpected token u in JSON at position 0
+* SyntaxError:Unexpected token '<'
+* SyntaxError:Unexpected identifier
+
+絕大部分 SyntaxError 都可以通過配置編輯器的校驗工具，從而在開發階段避免。
+
+### ReferenceError
+
+引用異常。
+
+* ReferenceError:$ is not defined
+* ReferenceError:Can't find variable: $
+
+上面舉的 2 個引用異常例子其實是同一個異常，第一個是發生在 Android，第二個是在 iOS 下，異常對象的 message 有著兼容性的差別。
+
+什麼情況下會發生引用異常呢？
+
+這裡需要先提一下 LHS 查詢和 RHS 查詢。
+
+比如 const a = 2; ，對於這一行代碼，引擎會為變量 a 進行 LHS 查詢。另外一個查找的類型叫作 RHS，即在賦值語句的 Left Hand Side 和 Right Hand Side。RHS 查詢與簡單地查找某個變量的值別無二致，而 LHS 查詢則是試圖找到變量的容器本身，即作用域。
+
+LHS 和 RHS 的含義是 “賦值操作的左側或右側” 並不一定意味著就是 “=”。比如 console.log(a) 也會進行異常 RHS。我們再來看一個例子：
+
+```js
+function foo(a) {
+    var b = a;
+    return a + b;
+}
+var c = foo(2);
+```
+
+其中有 function foo；Var c；A = 2；Var b 這 4 次 LHS 和 4 次 RHS
+
+為什麼區分 LHS 和 RHS 是一件重要的事情？
+
+因為在變量還沒有聲明的情況下，這兩種查詢的行為是不一樣的。
+
+如果 RHS 查詢在所有嵌套的作用域中遍尋不到所需的變量，引擎就會拋出 ReferenceError。
+
+如果 RHS 查詢找到了一個變量，但是你嘗試對這個變量的值進行不合理的操作，會拋出另外一種類型的異常，叫作 TypeError。
+
+### TypeError
+
+TypeError 在對值進行不合理操作時會發生，比如試圖對一個非函數類型的值進行函數調用，或者引用 null 或 undefined 類型的值中的屬性，那麼引擎會拋出這種類型的異常。比如：
+
+* TypeError:Cannot read property 'length' of undefined
+
+這是個最常見的異常之一，在判斷數組長度時可能發生。
+
+可以做前置條件判空，比如：
+
+```js
+if (obj) {
+    res = obj.name;
+}
+```
+
+也可以改寫成邏輯與運算 && 的表達式寫法
+
+```js
+res = obj && obj.name;
+```
+
+但如果屬性較多，這種方法就很難看了，可以使用可選鏈的寫法，如下：
+
+```js
+res = obj && obj.a && obj.a.b && obj.a.b.name
+
+res = obj?.a?.b?.name;
+```
+
+雖然條件判斷、邏輯與判斷、可選鏈判斷都可以避免報錯，但是還是有 2 個缺點：
+
+* js 對於變量進行 Bool 強制轉換的寫法還是不夠嚴謹，可能出現判斷失誤
+* 這樣寫法在為空時本行代碼不會報錯，但是後續邏輯可能還會出問題；只是減少了異常，並沒有辦法解決這種情況。對於重要的邏輯代碼建議使用 try/catch 來處理，必要時可以加上日誌來分析。
+
+### RangeError
+
+範圍錯誤，比如:
+
+new Array(-20) 會導致 RangeError: Invalid array length
+
+遞歸等消耗內存的程序會導致 RangeError: Maximum call stack size exceeded
+
+遞歸可以使用循環 + 棧或尾遞歸的方式來優化
+
+```js
+ //普通遞歸
+ const sum = (n) => {
+   if (n <= 1) return n;
+   return n + sum(n-1)
+ }
+
+ //尾遞歸
+ const sum = (n, prevSum = 0) => {
+   if (n <= 1) return n + prevSum;
+   return sum(n-1, n + prevSum)
+ }
+ ```
+
+尾遞歸和一般的遞歸不同在對內存的佔用，普通遞歸創建 stack 累積而後計算收縮，尾遞歸只會佔用恆量的內存。當編譯器檢測到一個函數調用是尾遞歸的時候，它就覆蓋當前的活動記錄而不是在棧中去創建一個新的。
+
+### Error 與自定義異常
+
+Error 是所有錯誤的基類，其他錯誤類型繼承該類型。所有錯誤類型都共享相同的屬性。
+
+* Error.prototype.message 錯誤消息。對於用戶創建的 Error 對象，這是構造函數的第一個參數提供的字符串。
+* Error.prototype.name 錯誤名稱。這是由構造函數決定的。
+* Error.prototype.stack 錯誤堆棧
+
+通過繼承 Error 也可以創建自定義的錯誤類型。創建自定義錯誤類型時，需要提供 name 屬性和 message 屬性.
+
+```js
+class MyError extends Error {
+    constructor(message) {
+        super();
+        this.name = 'MyError'
+        this.message = message     }
+}
+```
+
+大多流行框架會封裝一些自定義異常，比如 Axios 和 React.
+
+### Error: Script Error
+
+它是 Error 類型中最常見的一種；由於沒有具體異常堆棧和代碼行列號，成為可最神秘的異常之一。
+
+由於瀏覽器基於安全考慮效避免敏感信息無意中被第三方 (不受控制的) 腳本捕獲到，瀏覽器只允許同域下的腳本捕獲具體的錯誤信息。
+
+但大部分的 JS 文件都存放在 CDN 上面，跟頁面的域名不一致。做異常監控只能捕獲 Error: Script Error. 無法捕獲堆棧和准確的信息。2 步解決：
+
+1、給 script 標簽增加 crossorigin 屬性，讓瀏覽器允許頁面請求資源。
+
+```html
+ <script src="http://def.com/demo.js" crossorigin="anonymous"></script>
+```
+
+這樣請求頭 sec-fetch-mode 值就會變成 cors, 默認是 no-cors.
+
+但有些瀏覽器還不兼容此方法，加上 crossorigin 後仍不能發出 sec-fetch-mode：cors 請求
+
+2、給靜態資源服務器增加響應頭允許跨域標記。
+
+```http
+Access-Control-Allow-Origin: *.58.com
+```
+
+大部分主流 CDN 默認添加了 Access-Control-Allow-Origin 屬性。
+
+在加上跨域請求頭、響應頭後可能還有大量的 ScriptError，就要考慮以下幾種情況
+
+* 通過 append Script 標簽異步加載 JS
+* JSONP 請求
+* 第三方 SDK
+
+### InternalError
+
+這種異常極為少見，在 JS 引擎內部發生，示例場景通常為某些成分過大，例如：
+
+* “too many switch cases”（過多 case 子句）；
+* “too many parentheses in regular expression”（正則表達式中括號過多）；
+* “array initializer too large”（數組初始化器過大）；
+
+### EvalError
+
+在 eval() 方法執行過程中拋出 EvalError 異常。
+
+根據 Ecma2018 版以後，此異常不再會被拋出，但是 EvalError 對象仍然保持兼容性。
+
+### URIError
+
+用來表示以一種錯誤的方式使用全局 URI 處理函數而產生的錯誤.
+
+decodeURI, decodeURIComponent, encodeURI, encodeURIComponent 這四個方法會產生這種異常；
+
+比如執行 decodeURI('%%') 的異常：Uncaught URIError: URI malformed
+
+### 異常處理
+
+ECMA-262 第 3 版新增了 try/catch 語句，作為在 JavaScript 中處理異常的一種方式。基本的語法如下所示，跟 Java 中的 try/catch 語句一樣。
+
+#### finally
+
+finally 在 try-catch 語句中是可選的，finally 子句一經使用，其代碼無論如何都會執行。
+
+```js
+function a () {
+    try {
+        return '約會'
+    } catch (e) {
+        return '約會失敗'
+    } finally {
+        return '睡覺';
+    }
+}
+console.log('函數結果:', a()) // '睡覺'
+```
+上
+述代碼的結果是 ' 睡覺 '，finally 會阻止 return 語句的終止.
+
+#### throw
+
+```js 
+throw new Error('Boom');
+```
+
+什麼時候應該手動拋出異常呢？
+
+一個指導原則就是可預測程序在某種情況下不能正確進行下去，需要告訴調用者異常的詳細信息，而不僅僅是異常內容本身。比如上文提到的 React 自定義異常；
+
+一個健壯的函數，會對參數進行類型有效性判斷；通常在實參不合理時，為了避免報錯阻斷程序運行，開發者會通過默認值，return 空等方式處理。
+
+這種方式雖然沒有報錯，但是程序的結果未必符合預期，默認值設計不合理會造成語義化誤解；另外，也可能無法避免後續的代碼報錯；
+
+#### 斷言
+
+上文提到可預測，很容易聯想到 Node 中的斷言 assert，如果表達式不符合預期，就拋出一個錯誤。
+
+assert 方法接受兩個參數，當第一個參數對應的布爾值為 true 時，不會有任何提示，返回 undefined。當第一個參數對應的布爾值為 false 時，會拋出一個錯誤，該錯誤的提示信息就是第二個參數設定的字符串。
+
+```js
+ var assert = require('assert');
+ function add (a, b) {
+   return a + b;
+ }
+ var expected = add(1,1);
+ assert( expected === 2, '預期1加1等於2');
+ ```
+
+通常在 TDD 開發模式中，會用於編寫測試用例；
+
+不過 ECMA 還沒有類似的設計，感興趣可以簡單封裝一個 assert 方法。瀏覽器環境中的 console 對像有類似的 assert 方法。
+
+#### 異步中的異常
+
+非同步的代碼，在事件循環中執行的，就無法通過 try catch 到。
+
+主要注意的是，Promise 的 catch 方法用於處理 rejected 狀態，而非處理異常。Rejected 狀態未處理的話會觸發 Uncaught Rejection. 後者可以通過如下方式進行統一的監聽。
+
+```js
+window.onunhandledrejection = (event) => {
+    console.warn(`REJECTION: ${event.reason}`);
+};
+```
+
+tips: await 這種 Promise 的同步寫法，通常會被開發者忽略 rejected 的處理，可以用 try catch 來捕獲。
+
+#### 異常監控
+
+服務端通常會通過服務器的日誌進行異常監控，比如觀察單台服務器的日誌輸出，或 kibana 可視化查詢。
+
+前端異常監控與之最大的不同，就是需要把客戶端發生的異常數據通過網絡再收集起來。
+
+可以使用下面幾個方式來收集數據：
+
+* window.onerror 捕獲語法異常
+* 可以重寫 setTimeout、setInterval 等異步方法，用同步的寫法包裹 try 來捕獲異步函數中發生的錯誤
+* window.addEventListener (‘unhandledrejection’,・・・); 捕獲未處理的異步 reject
+* window.addEventListener (‘error’, …) 捕獲資源異常
+* 重寫 fetch, XMLHttpRequest 來捕獲接口狀態
+
+## Promise
+
+已整理為文章： [淺談 JavaScript 的 Promise](https://marco79423.net/articles/%E6%B7%BA%E8%AB%87-javascript-%E7%9A%84-promise/)
 
 ## Javascript Workers
 
@@ -505,3 +795,4 @@ console.log(JSON.stringify(value));
 
 * [[科普] Service Worker 入門指南](http://mp.weixin.qq.com/s?__biz=Mzg3OTYwMjcxMA==&mid=2247487147&idx=1&sn=77096d7a944c83e50a23bc806dfe5565&chksm=cf00b3d2f8773ac4a1251e14bc546b351328f008890dad56534b5f6d1fc204b37d029bebf09b#rd)
 * [熟悉事件循环？那谈谈为什么会分为宏任务和微任务](https://mp.weixin.qq.com/s/L1rpAjAYLbTpg6ZBqwzCdA)
+* [【第2706期】详聊前端异常原理](https://mp.weixin.qq.com/s/NhqIOCHQrR1h4DKbnCP_yw)
