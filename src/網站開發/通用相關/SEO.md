@@ -236,20 +236,6 @@ Bing 前身是 MSN Live Search，服務的對象比互聯網世界小得多。�
 * [《Google搜尋引擎最佳化初學者指南》](http://static.googleusercontent.com/media/www.google.com/en/us/intl/zh-tw/webmasters/docs/search-engine-optimization-starter-guide-zh-tw.pdf)
 * [《Google 搜尋引擎最佳化 (SEO) 速記指南》](https://storage.googleapis.com/support-kms-prod/SNP_DE441AD549FEE9AE5B638F82579D99472297_3027140_zh-TW_v1)
 
-## 檢測網站 SEO
-
-* [關鍵字機會分析工具 Keyword Explorer](https://moz.com/explorer/lists/keywords)
-* [網站速度檢測 Google Pagespeed](https://developers.google.com/speed/pagespeed/insights/?hl=zh-TW)
-* [網站速度分析工具 WebPagetest](https://www.webpagetest.org/)
-* [網站應用工具審查 Lighthouse Web App](https://chrome.google.com/webstore/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk?hl=zh-tw)
-* [行動裝置相容性測試Google](https://search.google.com/test/mobile-friendly?utm_source=mft&utm_medium=redirect&utm_campaign=mft-redirect)
-* [網站優化工具 Google Search Console](https://www.google.com/webmasters/tools/home?hl=zh-TW)
-* [網站分析統計工具(1) Google Analytics](https://analytics.google.com/analytics/web/)
-* [網站分析統計工具(2) Clicky](https://clicky.com/)
-* [反向連結抓取工具(1) Open Site Explorer](https://moz.com/researchtools/ose/)
-* [反向連結抓取工具(2) Majestic](https://zh.majestic.com/)
-* [品牌知名度檢測工具(需註冊登入) Fresh Web Explorer](https://moz.com/researchtools/fwe/)
-
 ## 七個成功的SEO步驟
 
 1. 必須讓搜尋引擎可以簡單地抓取你的網站內容。
@@ -333,6 +319,55 @@ Disallow: /wp-admin/
 Disallow: ^test*
 ```
 
+## Urchin Tracking Module (UTM)
+
+Urchin Tracking Module (UTM) 是指一段可以自行定義編碼並加在網址後面的參數。
+
+行銷人員將設定好的參數加入特定網址後方，就可以透過 Google Analytics（GA）追蹤該埋設UTM 網址的使用者數量，同時也可以分析這批使用者在網站或網頁中的行為，常見的UTM運用狀況如下：
+
+* 同時使用 FB、IG 等社群媒體推廣網站或網頁連結，想分析從各管道來的粉絲情況
+與不同的KOL、明星或品牌線上合作，使用不一樣的URL UTM可了解哪位名人或廠商的效果最佳
+* 大量發布EDM、Email、Line@或簡訊通知客戶，可藉由不同Link UTM得知哪種管道的開封率最高
+* 有為網站或文章建立大量反向連結，可透過UTM 管理了解使用者從哪個平台連回來的
+可以查看線下實體廣告，例如捷運燈箱、廣發文宣等印在上面的QRcode成效
+
+可以得到的資訊：
+
+* 得知使用者從哪裡來
+    * 不論是資訊內容或商品，想要拓展網站與品牌知名度，必定會用各種管道進行推廣、行銷。當訪客從四面八方湧入，UTM可以幫忙分類這些造訪者從何而來，有了初步標籤，後續的使用者面貌與行為觀察才能更順利。
+* 分析使用者樣貌
+    * 不同管道的使用者年齡層、職業、生活習慣等都是研究造訪者或潛在客戶樣貌的重要指標，另外從停留時間、跳出率等行為可以看出內容有沒有符合該使用者的需求、是不是能引起興趣，甚至找出癥結點並加以優化。
+* 進行不同行銷風格測試
+    * 當你手上有不同版本的行銷文案、圖片、影音、標題及代言人時，利用埋設不同參數的UTM連結就能進行交叉測試，不用親自訪問或辛苦懇求填寫問卷，直接可以從GA後台數字快速掌握受眾喜好。
+* 拓展新行銷管道時試水溫
+    * 利用上述的原理，當品牌或廠商想要開發不同路線的管道時，就可以利用UTM探探成果，例如：吸引到多少人、能不能停留並消化內容、有沒有進一步轉化等，這些都是評估是否繼續投入資源到該管道的依據。
+* 掌握廣告費用分配比例、節省預算
+    * 避開傳統廣告灑大錢、把所有人當目標進行的大規模曝光手法，UTM可以幫助業者更精準的鎖定粉絲與潛在消費者，透過流量來源的比例分配廣告預算，集中火力投往最有價值的管道，創造CP值最高的曝光成效，不僅規劃上更有目標，也可以省下大額無效的廣告花費。
+
+可使用參數：
+
+| 參數名稱 	| 定義 	| 必要性 	| 在utm中的長相 	|
+|---	|---	|---	|---	|
+| Website URL 	| 要埋UTM的網站或網頁的完整網址 	| 高 	| https://85010.tw/blog/hsinchu-divorce-lawyer/ 	|
+| Campaign Source 	| 使用哪個社群媒介 	| 高 	| utm_source=instagram 	|
+| Campaign Medium 	| 使用什麼行銷方式 	| 高 	| utm_medium=post 	|
+| Campaign Name 	| 常態發文或特殊活動等廣告名稱 	| 高 	| utm_campaign=1111 	|
+| Campaign Term 	| 用來辨認Google付費廣告的關鍵字詞 	| 低 	| utm_term=lawyer 	|
+| Campaign Content 	| 用在「同樣網址埋設在不同內容」時分類用 	| 低 	| utm_content=button1 	|
+
+注意事項：
+
+* 盡量維持大小寫一致
+    * 即便是同樣的參數，只要大小寫有別，GA就會判定成不同的東西，例如對GA來說，IG和ig就會分開呈現，這會影響到後續的數據追蹤的方便度，建議要長期追蹤大量網址成效的大家，盡量統一參數的寫法。
+* 盡量使用英文字母
+    * 中文字通常在網址呈現上都會變成又臭又長的亂碼，如果參數過於類似，那不僅看的人很累，出錯率也會提高。
+* 盡量不要使用除了「+」、「_」之外的特殊符號
+    * 部分符號在UTM當中有特殊用法，例如接在連結中間的「?」和「&」，添加這些符號可能會讓格式出現錯亂；此外，全形或半形空格也會造成錯誤，目前已知可以使用的符號有「+」與「_」，除了這兩者之外，其他的建議避免。
+* 使用簡易好懂的參數並記錄下來
+    * 如果貼文、活動或合作的代言人很多，有越來越多的連結與UTM，為了方便管理這些參數，同時也讓同仁們更好理解參數代表的含意，建議使用簡單且有代表性的名稱，並把這些UTM參數細項通通整理成表格留存，將來不管要對照還是查找都比較方便。
+* 參數命名不要使用公司或個人重要帳號密碼
+    * 因為連結點開後，使用者可以在網址欄看見完整的UTM參數，因此建議命名時不要使用太過私人及重要的資訊，以防資料外洩。
+
 ## 技巧
 
 * 限制網頁只有 125 KB
@@ -346,6 +381,17 @@ Disallow: ^test*
 ## 實用工具
 
 * [Facebook 分享偵錯工具](https://developers.facebook.com/tools/debug/)
+* [關鍵字機會分析工具 Keyword Explorer](https://moz.com/explorer/lists/keywords)
+* [網站速度檢測 Google Pagespeed](https://developers.google.com/speed/pagespeed/insights/?hl=zh-TW)
+* [網站速度分析工具 WebPagetest](https://www.webpagetest.org/)
+* [網站應用工具審查 Lighthouse Web App](https://chrome.google.com/webstore/detail/lighthouse/blipmdconlkpinefehnmjammfjpmpbjk?hl=zh-tw)
+* [行動裝置相容性測試Google](https://search.google.com/test/mobile-friendly?utm_source=mft&utm_medium=redirect&utm_campaign=mft-redirect)
+* [網站優化工具 Google Search Console](https://www.google.com/webmasters/tools/home?hl=zh-TW)
+* [網站分析統計工具(1) Google Analytics](https://analytics.google.com/analytics/web/)
+* [網站分析統計工具(2) Clicky](https://clicky.com/)
+* [反向連結抓取工具(1) Open Site Explorer](https://moz.com/researchtools/ose/)
+* [反向連結抓取工具(2) Majestic](https://zh.majestic.com/)
+* [品牌知名度檢測工具(需註冊登入) Fresh Web Explorer](https://moz.com/researchtools/fwe/)
 
 ## 其他議題
 
@@ -379,3 +425,4 @@ SERP 為 Search Engine Results Page 縮寫，中文直譯為「搜尋引擎結�
 * [SEO教學 - SEO初學者指南](https://www.newscan.com.tw/all-seo/seo-guide.htm)
 * [Bing SEO, Yahoo SEO, Google SEO 優化分別和比較](https://blog.welldevelop.com/bing-seo%E5%92%8Cgoogle-seo%E5%84%AA%E5%8C%96%E7%9A%84%E5%88%86%E5%88%A5%E6%AF%94%E8%BC%83/)
 * [Google網站核心指標Core web vitals(LCP、FID、CLS)是什麼？5大SEO UX重點優化項目](https://awoo.ai/zh-hant/blog/core-web-vitals-guide/)
+* [UTM是什麼？UTM怎追蹤？3分鐘快速看懂GA流量](https://welly.tw/digital-marketing/how-to-use-utm)
