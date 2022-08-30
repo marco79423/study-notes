@@ -692,6 +692,60 @@ k8s 的方法是先方法 1 再方法 2，新特性先放 annotations，然後�
 
 这个例子我们可以看到：这些组件之间是如何相互沟通相互通信，协调来完成一次 Pod 的调度执行操作的。
 
+### DNS
+
+在k8s中，有4種DNS策略，分別是 ClusterFirstWithHostNet 、ClusterFirst 、Default 、和 None，這些策略可以通過 dnsPolicy 這個欄位來定義
+
+如果在初始化 Pod、Deployment 或者 RC 等資源時沒有定義，則會默認使用 ClusterFirst 策略
+
+* ClusterFirstWithHostNet
+    * 當一個 Pod 以 HOST 模式（和宿主機共享網路，hostNetwork: true）啟動時，這個 POD 中的所有容器都會使用宿主機的 /etc/resolv.conf 組態進行 DNS 查詢，但是如果在 Pod 中仍然還想繼續使用 k8s 叢集 的 DNS 服務時，就需要將 dnsPolicy 設定為 ClusterFirstWithHostNet。
+* ClusterFirst
+    * 使用這種方式表示 Pod 內的 DNS 優先會使用 k8s 叢集內的 DNS 服務，也就是會使用 kubedns 或者 coredns 進行域名解析。如果解析不成功，才會使用宿主機的 DNS 組態進行解析。
+* Default
+    * 這種方式，會讓 kubelet 來決定 Pod 內的 DNS 使用哪種 DNS 策略。kubelet 的默認方式，其實就是使用宿主機的 /etc/resolv.conf 來進行解析。
+        * 你可以通過設定 kubelet 的啟動參數， --resolv-conf=/etc/resolv.conf 來決定該 DNS 服務使用的解析檔案的地址
+    * 當我們部署叢集 DNS 服務的時候，一般就需要將 dnsPolicy 設定成 Default，而並非使用預設值 ClusterFirst，否則該 DNS 服務的上游解析地址會變成它自身的 Service 的 ClusterIP（我解析我自己），導致域名無法解析
+* None
+    * 這種方式顧名思義，不會使用叢集和宿主機的 DNS 策略。而是和 dnsConfig 配合一起使用，來自訂 DNS 組態，否則在提交修改時報錯。
+
+DNS 服務：
+
+* kubeDNS
+    * kubeDNS由3個部分組成。
+        * kubedns
+            * 依賴 client-go 中的 informer 機制監視 k8s 中的 Service 和 Endpoint 的變化，並將這些結構維護進記憶體來服務內部 DNS 解析請求。
+        * dnsmasq
+            * 區分 Domain 是叢集內部還是外部，給外部域名提供上游解析，內部域名發往 10053 連接埠，並將解析結果快取，提高解析效率。
+        * sidecar
+            * 對 kubedns 和 dnsmasq 進行健康檢查和收集監控指標。
+    * 特性
+        * 優點
+            * 依賴 dnsmasq ，性能有保障
+        * 缺點
+            * 因為 dnsmasq-nanny 重啟 dnsmasq 的方式，先殺後起，方式比較粗暴，有可能導致這段時間內大量的 DNS 請求失敗。
+            * dnsmasq-nanny 檢測檔案的方式，可能會導致以下問題：
+                * dnsmasq-nanny 每次遍歷目錄下的所有檔案，然後用 ioutil.ReadFile 讀取檔案內容。如果目錄下檔案數量過多，可能出現在遍歷的同時檔案也在被修改，遍歷的速度跟不上修改的速度。 這樣可能導致遍歷完了，某個組態檔案才更新完。那麼此時，你讀取的一部分檔案資料並不是和當前目錄下檔案資料完全一致，本次會重啟 dnsmasq。進而，下次檢測，還認為有檔案變化，到時候，又重啟一次 dnsmasq。這種方式不優雅，但問題不大。
+                * 檔案的檢測，直接使用 ioutil.ReadFile 讀取檔案內容，也存在問題。如果檔案變化，和檔案讀取同時發生，很可能你讀取完，檔案的更新都沒完成，那麼你讀取的並非一個完整的檔案，而是壞的檔案，這種檔案，dnsmasq-nanny 無法做解析，不過官方程式碼中有資料校驗，解析失敗也問題不大，大不了下個週期的時候，再取到完整資料，再解析一次。
+* CoreDNS
+    * CoreDNS 是一個高速並且十分靈活的DNS服務。CoreDNS 允許你通過編寫外掛的形式去自行處理DNS資料。
+    * CoreDNS 使用Caddy作為底層的 Web Server，Caddy 是一個輕量、易用的Web Server，它支援 HTTP、HTTPS、HTTP/2、GRPC 等多種連接方式。所有 coreDNS 可以通過四種方式對外直接提供 DNS 服務，分別是 UDP、gRPC、HTTPS 和 TLS
+    * CoreDNS 的大多數功能都是由外掛來實現的，外掛和服務本身都使用了 Caddy 提供的一些功能，所以項目本身也不是特別的複雜。
+    * 特性
+        * 優點
+            * 非常靈活的組態，可以根據不同的需求給不同的域名組態不同的外掛
+            * k8s 1.9 版本後的默認的 dns 解析
+        * 缺點
+            * 快取的效率不如 dnsmasq，對叢集內部域名解析的速度不如 kube-dns （10% 左右）
+
+性能對比
+
+在 CoreDNS 的官網中已有詳細的性能測試報告，地址
+
+* 對於內部域名解析 KubeDNS 要優於 CoreDNS 大約 10%，可能是因為 dnsmasq 對於快取的最佳化會比 CoreDNS 要好
+* 對於外部域名 CoreDNS 要比 KubeDNS 好 3 倍。但這個值大家看看就好，因為 kube-dns 不會快取 Negative cache。但即使 kubeDNS 使用了 Negative cache，表現仍然也差不多
+* CoreDNS 的記憶體佔用情況會優於 KubeDNS
+
 ## 管理
 
 ### kubectl
@@ -973,3 +1027,4 @@ QoS 的種類：
 * [通俗理解 Kubernetes 中的服務，搞懂後真香](https://blog.csdn.net/qq_43280818/article/details/107164860)
 * [K8s中大量Pod是Evicted狀態，這是咋回事？](https://mp.weixin.qq.com/s/hUNZkt4XDgJaubsYQyKG3w)
 * [K8s 长什么样？一文道清它的整体架构](https://mp.weixin.qq.com/s/9oEw81fBZxiMacxdR5Sobw)
+* [KubeDNS 和 CoreDNS](https://zhuanlan.zhihu.com/p/80141656)
