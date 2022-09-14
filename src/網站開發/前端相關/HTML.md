@@ -29,14 +29,35 @@
     * 媒體檔
     * SVG
 
-### Preload VS Prefetch
+### Preload
+
+在當前頁面中，你可以指定可能或很快就需要的資源在其頁面生命週期的早期——瀏覽器的主渲染機制介入前就進行預載入，這可以讓對應的資源更早的得到載入並使用，也更不易阻塞頁面的初步渲染，進而提升性能
+
+這樣做的好處就是讓在當前頁面中可能被訪問到的資源提前載入但並不阻塞頁面的初步渲染，進而提升性能
+
+可以預載入的資源有很多，現在瀏覽器支援的主要有：
+
+* audio：音訊檔案，通常用於 audio 標籤
+* document: 旨在由 frame 或嵌入的 HTML 文件
+* embed：要嵌入到 embed 元素中的資源
+* fetch：要通過 fetch 或 XHR 請求訪問的資源，例如 ArrayBuffer 或 JSON 檔案
+* font: 字型檔案
+* image： 圖像檔案
+* object：要嵌入到 object 元素中的資源
+* script: JavaScript 檔案
+* style: CSS 樣式表
+* track: WebVTT 檔案
+* worker：一個 JavaScript 網路工作者或共享工作者
+* video：視訊檔案，通常用於 video 標籤
+
+### Prefetch
+
+與 preload 不同的是 prefetch 抓取的資源不限於當前頁面使用，也就是可以跨越 navigation，例如你很確定使用者會點擊下一頁，就可以使用 prefetch 預先抓取下一頁的資源。
 
 preload 與 prefetch 都是在提早取得將來會用到的資源，然而兩者的差別在於：
 
 * Preload：取得當前頁面的資源（例如字體 font）。
 * Prefetch：告訴瀏覽器「這些資源我待會會用到，先幫我下載吧！」
-
-preload 不同的是 prefetch 抓取的資源不限於當前頁面使用，也就是可以跨越 navigation，例如你很確定使用者會點擊下一頁，就可以使用 prefetch 預先抓取下一頁的資源。
 
 ### Preconnect
 
@@ -319,3 +340,4 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 * [e.target 和 e.currentTarget 的区别？你到底知不知道？](https://mp.weixin.qq.com/s/B3AHkbdr7wlQB8-Fk5CgTg)
 * [過度使用懶加載對 Web 性能的影響](https://mp.weixin.qq.com/s/4Oo4FtNO-mviTiS_dPT1Uw)
 * [今晚，我想來點 Web 前端效能優化大補帖！](https://medium.com/starbugs/%E4%BB%8A%E6%99%9A-%E6%88%91%E6%83%B3%E4%BE%86%E9%BB%9E-web-%E5%89%8D%E7%AB%AF%E6%95%88%E8%83%BD%E5%84%AA%E5%8C%96%E5%A4%A7%E8%A3%9C%E5%B8%96-e1a5805c1ca2)
+* [React 官網為什麼那麼快？](https://juejin.cn/post/7128369638794231839)
