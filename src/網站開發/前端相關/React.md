@@ -44,6 +44,8 @@ CSR 如同其名，是將渲染資料的所有過程都交由瀏覽器端處理�
 
 但是 CSR 也不是沒有優點，因為 bundle 在一開始就載入進來，後續渲染畫面就不用不斷地跟伺服器端交互，體感上會比 SSR 快，而且在切換頁面的使用者體驗也會更好。使用 CSR 對於伺服器來說，也會有較小的負擔。
 
+因為畫面是動態渲染的，對 SEO 是較不友善。雖然 Google 說有對其支援 JavaScript 生成的畫面 (坦白說，沒有很好，別信它)。
+
 #### SSR (Server Side Rendering)
 
 在過去的時代，傳統的 SSR 像是 PHP 透過伺服器端處理任何的資料，然後再直接編譯成 HTML 檔案，最後使用者看到的就是完整包含資料的 HTML。
@@ -61,6 +63,20 @@ CSR 如同其名，是將渲染資料的所有過程都交由瀏覽器端處理�
 SSG 意味著所有的內容都在 bulid 的時候都打包進入檔案中，所以使用者在瀏覽網站時，就可以拿到完整的 HTML 檔案。優點除了可以有利於 SEO 之外，還有因為每次使用者拿到的 HTML 內容都不會變，所以還可以讓 HTML 被 cache 在 CDN 上，很適合用在資料變動較小的網站中，像是部落格、產品介紹頁這種應用中。
 
 但使用 SSG 這項技術時，除了必須考量到頁面資料更新頻率的問題，再者要衡量隨著應用越來越大時，打包的時間也會隨之增長。
+
+#### ISR (Incremental Site Rendering)
+
+關鍵性頁面：使用 SSG 的方式，儲存到 CDN 非關鍵頁面：先渲染 Fallback 畫面，然後 CSR 實際資料，同時對頁面進行非同步預渲染，之後更新到 CDN。更新策略依照 stale-while-revalidate。
+
+此概念是 Next.js 在 9.5 版所提出。
+
+缺點是沒有預渲染的頁面，使用者首次訪問會看到一個 Fallback 畫面，此時 Server Side 開始渲染後才會看到畫面。對於預渲染的頁面，使用者直接從 CDN 載入。但頁面可能是已經過期的，只有在使用者重新刷新，第二次訪問才會看到新的資料。
+
+#### DPR (Distributed Persistent Rendering)
+
+去除 ISR 的 Fallback，而是使用 On-demand Builder 來處理未經預渲染的頁面。
+
+缺點新頁面的訪問會時間較久，難以防禦 DDoS 攻擊。
 
 ### Retained-mode GUI v.s. Immediate-mode GUI
 
@@ -1472,3 +1488,4 @@ export default MyDocument;
 * [從零開始學習 Next.js 系列](https://ithelp.ithome.com.tw/users/20110504/ironman/4269)
 * [Day03 - 深入淺出 CSR、SSR 與 SSG](https://ithelp.ithome.com.tw/articles/10266781)
 * [React新文檔：不要濫用effect哦](https://mp.weixin.qq.com/s/h7GiH_s8e8wM0CDS_tF_3w)
+* [網頁渲染技術整理](https://blog.taiwolskit.com/website-render-tech)
