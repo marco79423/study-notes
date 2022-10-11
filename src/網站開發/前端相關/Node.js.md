@@ -249,7 +249,33 @@ peerDependencies 字段就是用來供插件指定其所需要的主工具的版
 
 上面代碼指定在安裝chai-as-promised模塊時，主程序chai必須一起安裝，而且chai的版本必須是1.x。如果項目指定的依賴是chai的2.0版本，就會報錯。
 
-注意，從npm 3.0版開始，peerDependencies 不再會默認安裝了。
+注意事項
+
+* 從 npm 3.0版開始，peerDependencies 不再會默認安裝了。但在 7 之後其peerDependicies中的包，會被安裝下來
+* 要正確的指定 PeerDependicies中npm包的版本
+
+##### peerDependenciesMeta
+
+看到“Meta”就有中繼資料的意思，這裡的peerDependenciesMeta就是詳細修飾了peerDependicies，比如在react-redux這個npm包中的package.json中有這麼一段：
+
+```jsonc
+{
+    // ...
+    "peerDependencies": {
+        "react": "^16.8.3 || ^17 || ^18"
+    },
+    "peerDependenciesMeta": {
+        "react-dom": {
+            "optional": true
+        },
+        "react-native": {
+            "optional": true
+        }
+    }
+}
+```
+
+這裡指定了"react-dom","react-native"在peerDependenciesMeta中，且為可選項，因此如果項目中檢測沒有安裝"react-dom"和"react-native"都不會報錯。
 
 #### optionalDependencies
 
@@ -320,6 +346,17 @@ console.log(process.env.npm_package_config_port) // 3000
 用戶可以通過 npm config set foo:port 3001 命令來重寫port的值。
 
 ### 文件&目錄
+
+#### type
+
+js 的模組化規範包含了commonjs、CMD、UMD、AMD 和 ES module等，最早先在node中支援的僅僅是 commonjs 欄位，但從 node13.2.0開始後，node正式支援了ES module規範，在 package.json 中可以通過 type 欄位來聲明npm包遵循的模組化規範。
+
+需要注意的是：
+
+* 預設值是 commonjs，不過建議都指定一下 type
+* 當 type 欄位指定值為 module 則採用ESModule規範
+* 當 type 欄位指定時，目錄下的所有.js後綴結尾的檔案，都遵循 type 所指定的模組化規範
+* 除了type可以指定模組化規範外，通過檔案的後綴來指定檔案所遵循的模組化規範，以 .mjs結尾的檔案就是使用的ESModule規範，以 .cjs結尾的遵循的是commonjs規範
 
 #### main
 
@@ -484,6 +521,13 @@ directories 字段用來規范項目的目錄。node.js 模塊是基於 CommonJS
 
 #### 使用方式
 
+常見的環境可分為瀏覽器 browser 和node 環境兩大類，可以簡單理解如下：
+
+* browser環境
+    * 比如存在一些只有在瀏覽器中才會存在的全域變數等，如 window，Document等
+* node 環境
+    * npm 包的原始檔中存在只有在node環境中才會有的一些變數和內建包，內建函數等。
+
 ##### 單入口（main, module, browser）
 
 ```json
@@ -504,7 +548,17 @@ directories 字段用來規范項目的目錄。node.js 模塊是基於 CommonJS
 
 ##### 多入口（exports, browser）
 
-例如 import from 'your-lib/react'、import from 'your-lib/vue'，推薦配置：
+如果在package.json中定義了exports欄位，那麼這個欄位所定義的內容就是該npm包的真實和全部的匯出，優先順序會高於main和file等欄位。
+
+順帶一提，如果存在exports屬性，exports屬性不僅優先順序高於main，同時也高於module和browser欄位。
+
+如果存在exports後，以前正常生效的file目錄會失效，比如require('pkg/package.json')，因為在exports中沒有指定，就會報錯。
+
+例如 import from 'your-lib/react'、import from 'your-lib/vue'。
+
+exports還有一個最大的特點，就是條件引用，比如我們可以根據不同的引用方式或者模組化類型，來指定npm包引用不同的入口檔案。
+
+推薦配置：
 
 ```json
 {
@@ -846,3 +900,4 @@ package.json
 
 * [关于前端大管家 package.json，你知道多少？](https://mp.weixin.qq.com/s/csGiBBvsZLI76yrXjD6NGg)
 * [Monorepo 下的模块包设计实践](https://zhuanlan.zhihu.com/p/456483953)
+* [深入浅出 package.json，目测大多数人不了解它](https://mp.weixin.qq.com/s/91uQb5NKpINgdTEF9L0eMQ)
