@@ -614,6 +614,212 @@ cursor: url(hand.cur), pointer;
 
 * 特殊玩法： [有意思的鼠標指針交互探究](https://mp.weixin.qq.com/s/sb6Ze7ew-fDYt3m1mHkpig)
 
+## 顏色
+
+### 命名顏色
+
+CSS中提供了148個命名顏色，所有瀏覽器都支援這些名稱，這些名稱都是被預定義過色值的。下面是部分顏色名稱以及對應的十六進制顏色值。
+
+所有命名顏色的名稱： [HTML Color Names](https://www.w3schools.com/colors/colors_names.asp)
+
+注意： 所有命名顏色都不區分大小寫。
+
+特殊顏色：
+
+* transparent
+    * transparent 關鍵字用作 rgba(0, 0, 0, 0) 的快捷方式，它表示完全透明。該關鍵字目前在所有瀏覽器都是支援的。它是 background-color 屬性的預設值。
+* currentColor
+    * currentColor 表示當前的顏色。如果沒有指定，就會從父容器繼承的文字顏色。
+        ```css
+        div {
+            color: red;
+            background-color: red;
+        }
+
+        /* 等同上例 */
+        div {
+            color: red;
+            background-color: currentColor;
+        }
+        ```
+    * SVG 中使用時很方便，可以將指定的填充或描邊顏色設定為currentColor，以確保SVG顏色與其父級的文字顏色匹配。
+* inherit
+    * inherit 是一個保留字，它不侷限於顏色，表示該屬性採用與元素父級的屬性相同的值。對於繼承的屬性，主要用途就是覆蓋另一個規則。
+* 系統顏色
+    * 特殊的顏色關鍵字，用來匹配一些系統元素，旨在保持瀏覽器上應用程式的一致性。
+    * 系統顏色會成對出現：
+        * 前景顏色 / 背景顏色
+            * buttonText / buttonFace
+            * activeText、canvasText、linkText、visitedText / canvas
+            * fieldText / field
+            * highlightText / highlight
+
+### RGB 顏色
+
+RGB 值也是我們常用的顏色表示方式。RGB 指的就是紅-綠-藍，這個順序非常重要。每種顏色使用 0 到 255 之間的數字指定。最常見的 RGB 值黑色：rgb(0,0,0) 和白色：rgb(255,255,255)。
+
+```css
+div {
+  color: rgb(0,0,0);
+  border: 1px solid rgb(155,55,89);
+  background: rgb(255,255,255);
+}
+```
+
+除此之外，我們還可以使用名為rgba() 的屬性為 rgb 值定義 alpha 值，alpha 值是透明度的百分比。它類似於 rgb，但允許新增第四個值。不透明度範圍可以是 0 到 1 之間的任何值，0 是最小值（無不透明度），1 是最大值（完全不透明度）：
+
+```css
+div {
+  color: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,0,0,0.8);
+  background: rgba(0,125,0,0.2);
+}
+```
+
+注意： 十六進制顏色值不區分大小寫。所以 #ff0000、#FF0000、#Ff0000 的顯示效果是一致的。
+
+### Hex 顏色
+
+我們還可以使用十六進制值來表示 CSS 中的顏色，這也是我們用的最多的顏色表示方式。
+
+在 CSS 中，使用 6 個十六進制數字來表示顏色。這意味著分別使用兩個數字來表示紅色 (R)、綠色 (G) 和藍色 (B) 份量。例如，#000000表示黑色，它是最小的十六進制值；#FFFFFF表示白色，它是最大的十六進制值。
+
+```css
+div { 
+  color: #000000;
+  border: 1px solid #00FF00;
+  background: #FF0000;
+}
+```
+
+也可以使用 3 個值（每種顏色一個）來縮短十六進制值，如果每兩位的值相同，就可以縮寫一半
+
+```css
+div {
+  color: #000;
+  border: 1px solid #0F0;
+  background: #F00;
+}
+```
+
+也可以給十六進制顏色定義 alpha 值，alpha 值是透明度的百分比。在十六進制程式碼中，將另外兩位數字新增到六位數字序列中，形成一個八位數字序列。例如，要在十六進制程式碼中設定黑色#000000，要新增 50% 的透明度，可以將其更改為#00000080。
+
+### HSL 顏色
+
+HSL 全稱是 Hue-Saturation-Lightness，分別表示色調、飽和度和亮度。它基於 RGB 色輪的。每種顏色都有一個角度以及飽和度和亮度值的百分比值。
+
+* 色調：色調描述了色輪上的值，從 0 到 360 度，從紅色開始（0 和 360）
+    ![css-27](./images/css-27.png)
+* 飽和度： 飽和度是所選色調的鮮豔程度，100% 表示完全飽和的亮色，0% 表示完全不飽和的灰色
+    ![css-28](./images/css-28.png)
+* 亮度： 顏色的亮度等級，較低的值會更暗，更接近黑色，較高的值會更亮，更接近白色。
+    ![css-29](./images/css-29.png)
+
+HSL顏色函數的表示形式： hsl(Hue, Saturation, Lightness)
+
+其中Hue是色調值，即在色輪上的位置，可以是 0到360deg之間的任何值，該參數還可以接 角度單位 turn（圈）和無單位。下面三種規則的顯式效果是一樣的：
+
+```css
+div {
+  background-color: hsl(180deg, 50%, 50%);
+}
+
+div {
+  background-color: hsl(0.5turn, 50%, 50%);
+}
+
+div {
+  background-color: hsl(180, 50%, 50%);
+}
+```
+
+除此之外，HSL顏色值也可以新增alpha值，表示透明度，其使用形式： hsla(Hue, Saturation, Lightness / alpha)
+
+```css
+div {
+  background-color: hsl(0 100% 50% / 0.5);
+}
+```
+
+### HWB 顏色
+
+HWB 全稱為 Hue-Whiteness-Blackness，表示色調、白度和黑度。
+
+* 色調：色輪中的一個角度；
+* 白度：表示要混合的白色量的百分比。值越高，顏色越白。
+* 黑度：表示要混合的黑色量的百分比。值越高，顏色越黑。
+
+與 HSL 一樣，色調可以是 0 到 360 內的任何值。黑度和白度用來控制有多少黑色和白色混合在已選色調中，它們也是0-100%之間的值，當為 100% 時，就會出現全黑或者全白。如果等量的白色或者黑色混合在一起，顏色就會變得越來越灰。這個函數對於建立單色調色盤非常有用：
+
+hwb()也可以新增alpha值來表示透明度，也使用斜槓來分隔：
+
+* hwb(194 0% 0%) 
+* hwb(194 0% 0% / .5) 
+
+注意：這種顏色格式目前只在Safari 15上得到了支援
+
+### LAB 顏色
+
+LAB 是一個可以在 Photoshop 等軟體中訪問的顏色空間，它代表了人類可以看到的整個顏色範圍。它使用三個軸表示：亮度、a 軸和b 軸。
+
+* 亮度： 從黑色到白色。值越低，顏色越接近黑色。
+* a軸： 從綠色到紅色。較低的值接近綠色，較高的值更接近紅色。
+* b軸： 從藍色到黃色。較低的值接近藍色，越高的值更接近黃色。
+
+亮度的值可以是任意百分比，不限於0%和100%，可以超過 100%。超亮白色可以使用高達 400% 的百分比。a和b軸的值可以是正值或者負值。兩個負值將導致顏色朝向光譜的綠色/藍色端，而兩個正值可以產生更橙色/紅色的色調。所有參數由空格分隔：
+
+```css
+div {
+  background-color: lab(80% 100 50);
+}
+
+div {
+  background-color: lab(80% -80 -100);
+}
+```
+
+lab()也可以新增alpha值來表示透明度，也使用斜槓來分隔：
+
+```css
+div {
+  background-color: lab(80% -80 -100 / .5);
+}
+```
+
+注意：這種顏色格式目前只在Safari 15上得到了支援
+
+### LCH 顏色
+
+LCH 代表亮度、色度和色調。它與 Lab 具有相同的 L 值，但不是使用坐標 a* 和 b*，而是使用 C（色度）和 H（色調）。色調可以是 0 到 360 之間的值。色度代表顏色的量，它類似於 HSL 中的飽和度。但是色度值可以超過 100，理論上它是無上限的。
+
+```css
+div {
+  background-color: lch(80% 100 50);
+}
+```
+
+這個方法也可以新增第四個可選參數 alpha。該函數遵循空格分隔（alpha 帶有斜槓）：
+
+```css
+div {
+  background-color: lch(80% 100 50 / .5);
+}
+```
+
+注意：這種顏色格式目前只在Safari 15上得到了支援
+
+### CMYK 顏色
+
+CMYK 代表 Cyan、Magenta、Yellow 和 Key，它們與印表機中的墨水顏色相匹配。雖然螢幕通常以 RGB 來顯示顏色，而印表機通常使用青色、品紅色、黃色和黑色的組合來表示顏色，這些是最常見的墨水顏色。
+
+可以使用device-cmyk()來指定CMYK顏色，使用空格來分隔參數，也可以新增alpha值來設定透明度。
+
+```css
+div {
+  background-color: device-cmyk(1 0 0 0);
+}
+```
+
 ## 函數
 
 在 CSS 中，其實存在各種各樣的函數。具體分為：
@@ -1323,3 +1529,4 @@ PostCSS 主要做了三件事：
 * [圖解 Flexbox 基本屬性](https://cythilya.github.io/2017/04/04/flexbox-basics/)
 * [圖解 Flexbox 進階屬性](https://cythilya.github.io/2017/04/06/flexbox-advance/)
 * [詳解 flex-grow 與 flex-shrink](https://github.com/xieranmaya/blog/issues/9)
+* [現代 CSS 顏色指南](https://mp.weixin.qq.com/s/ZnfbAvjRGUz0f-oUomKd1g)
