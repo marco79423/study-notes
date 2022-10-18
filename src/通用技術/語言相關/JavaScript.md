@@ -764,6 +764,144 @@ console.log(JSON.stringify(value));
 
 * 參考文章： [取而代之！以后不用再 new Date() 了](https://mp.weixin.qq.com/s/49CDsOtS_GK3R6ljT3holw)
 
+## 套件
+
+### 原型鏈寫法
+
+早期的模組化是利用了函數自執行來實現的，在單獨的函數範疇中執行程式碼可以避免外掛中定義的變數污染到全域變數，以下程式碼實現了一個簡單隨機數生成的外掛：
+
+```js
+;(function (global) {
+    "use strict";
+
+    var MyPlugin = function (name) {
+        this.name = name
+    };
+
+    MyPlugin.prototype = {
+        say: function () {
+            console.log('歡迎你：', this.name)
+        },
+        random: function (min = 0, max = 1) {
+            if (min <= Number.MAX_SAFE_INTEGER && max <= Number.MAX_SAFE_INTEGER) {
+                return Math.floor(Math.random() * (max - min + 1)) + min
+            }
+        }
+    };
+    
+    // 函數自執行將 this（全域下為window）傳入，並在其下面掛載方法
+    global.MyPlugin = MyPlugin;
+    // 相容CommonJs規範匯出
+    if (typeof module !== 'undefined' && module.exports) module.exports = MyPlugin; 
+})(this);
+```
+
+用法：
+
+```js
+var aFn = new MyPlugin()
+
+var num = aFn.random(10, 20)
+console.log(num) // 列印一個 10~20 之間的隨機數
+
+var aFn = new MyPlugin('呀哈哈')
+aFn.say() // 歡迎你: 呀哈哈
+
+// 這種方法屬性能被直接修改
+var aFn = new MyPlugin('呀哈哈')
+aFn.name = null
+aFn.say() // 歡迎你: null
+```
+
+### 閉包式寫法
+
+那麼如果要建立私有變數，可以利用JS閉包原理來編寫外掛，可以使用工廠模式來建立函數，如下程式碼實現了一個簡單正則校驗的外掛：
+
+```js
+; (function (global) {
+    "use strict";
+
+    var MyPlugin = function (value) {
+        var val = value
+        var reg = {
+            phone: /^1[3456789]\d{9}$/,
+            number: /^-?\d*\.?\d+$/
+        };
+        return {
+            getRegs() {
+                return reg
+            },
+            setRegs(params) {
+                reg = { ...reg, ...params }
+            },
+            isPhone() {
+                reg.phone.test(val) && console.log('這是手機號')
+                return this
+            },
+            isNumber() {
+                reg.number.test(val) && console.log('這是數字')
+                return this
+            }
+        };
+    };
+
+    // 函數自執行將 this（全域下為window）傳入，並在其下面掛載方法
+    global.MyPlugin = MyPlugin;
+    // 相容CommonJs規範匯出
+    if (typeof module !== 'undefined' && module.exports) module.exports = MyPlugin;
+})(this);
+```
+
+上面程式碼中我們在 isPhone isNumber 方法的最後都返回了 this，這是為了實現如下的鏈式呼叫：
+
+```js
+var aFn = new MyPlugin(13800138000)
+
+aFn.isPhone().isNumber() // log: > 這是手機號 > 這是數字
+```
+
+### 仿 JQuery 寫法
+
+這種寫法是仿造JQ實現的一種編寫模式，可以省去呼叫時new實例化的步驟，並實現類似 $(xxx).someFn(....) 這樣的呼叫方法。
+
+```js
+;(function (global) {
+  "use strict";
+
+  var MyPlugin = function (el) {
+    return new MyPlugin.prototype.init(el)
+  };
+
+  MyPlugin.prototype = {
+    init: function (el) {
+      this.el = typeof el === "string" ? document.querySelector(el) : el;
+    },
+    setBg: function (bg) {
+      this.el.style.background = bg;
+      return this
+    },
+    setWidth: function (w) {
+      this.el.style.width = w;
+      return this
+    },
+    setHeight: function (h) {
+      this.el.style.height = h;
+      return this
+    }
+  };
+
+  MyPlugin.prototype.init.prototype = MyPlugin.prototype
+  // script標籤引入外掛後全域下掛載一個_$的方法
+  global._$ = MyPlugin;
+})(this || window);
+```
+
+使用：
+
+```js
+_$('#app').setBg('#ff0')
+```
+
 ## 工具庫
 
 * qs
@@ -796,3 +934,4 @@ console.log(JSON.stringify(value));
 * [[科普] Service Worker 入門指南](http://mp.weixin.qq.com/s?__biz=Mzg3OTYwMjcxMA==&mid=2247487147&idx=1&sn=77096d7a944c83e50a23bc806dfe5565&chksm=cf00b3d2f8773ac4a1251e14bc546b351328f008890dad56534b5f6d1fc204b37d029bebf09b#rd)
 * [熟悉事件循环？那谈谈为什么会分为宏任务和微任务](https://mp.weixin.qq.com/s/L1rpAjAYLbTpg6ZBqwzCdA)
 * [【第2706期】详聊前端异常原理](https://mp.weixin.qq.com/s/NhqIOCHQrR1h4DKbnCP_yw)
+* [如何優雅地編寫一個高逼格的JS外掛？](https://mp.weixin.qq.com/s?__biz=MzIzNjQ0MjcwNw%3D%3D&chksm=e8d686badfa10facf82e4d62f513a3bca853d82eda2abe506ba580dc57db676c1a3ac435ec9b&idx=1&lang=zh_CN&mid=2247484294&sn=f6595bc93cc374c0703e9b13fb31ad7b&token=795841537)
