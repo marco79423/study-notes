@@ -1247,6 +1247,294 @@ p {
 
 ![css-24](./images/css-24.gif)
 
+## at-rule @規則
+
+以 at 符號開頭， '@' (U+0040 COMMERCIAL AT), 後跟一個識別碼，并包括直到下一個分號的所有內容， ';' (U+003B SEMICOLON), 或下一個 CSS 塊，以先到者為準。
+
+常見 @ 規則：
+
+* @charset
+    * 指定樣式表中使用的字元編碼。
+* @import
+    * 用於從其他樣式表匯入樣式規則。
+* @namespace
+    * 用來定義使用在 CSS 樣式表中的 XML 命名空間的 @規則
+* @media
+    * 如果滿足媒介查詢的條件則條件規則組裡的規則生效。
+* @supports
+    * 如果滿足給定條件則條件規則組裡的規則生效。
+* @keyframes
+    * 描述 CSS 動畫的中間步驟。
+* @font-face
+    * 描述將下載的外部的字型。
+* @page
+    * 描述列印文件時佈局的變化。
+* @document
+    * 如果文件樣式表滿足給定條件則條件規則組裡的規則生效。 (推延至 CSS Level 4 規範)
+* @viewport（已廢棄）
+    * 規則讓我們可以對文件的大小進行設定。這個特性主要被用於移動裝置，但是也可以用在支援類似“固定到邊緣”等特性的桌面瀏覽器，如微軟的 Edge。
+* @counter-style
+    * 一個 @counter-style 規則定義了如何把一個計數器的值轉化為字串表示。
+* @font-feature-values (plus @swash, @ornaments, @annotation, @stylistic, @styleset and @character-variant)
+    * 允許作者在font-variant-alternates[14] 中使用通用名稱，用於在 OpenType 中以不同方式啟動功能。它允許在使用幾種字型時簡化 CSS。
+* @property（實驗性）
+    * 是CSS Houdini[16] API 的一部分，它允許開發者顯式地定義他們的css 自訂屬性, 允許進行屬性類型檢查、設定預設值以及定義該自訂屬性是否可以被繼承。
+* @layer
+    * 聲明了一個 級聯層，同一層內的規則將級聯在一起，這給予了開發者對層疊機制的更多控制。
+
+### @charset
+
+指定樣式表中使用的字元編碼。它必須是樣式表中的第一個元素，而前面不得有任何字元。
+像是這樣：
+
+```css
+
+@charset "UTF-8";
+```
+
+注意，如果有多個 @charset @規則被聲明，只有第一個會被使用。
+
+很多人會有疑惑，這個聲明到底有什麼用呢？
+
+事實上，如果 CSS 檔案中有任何非 ASCII 文字，例如字型名稱，偽元素的 content 屬性值、選擇器等中的非 ASCII 字元，都需要確保 CSS 解析器知道如何轉換位元組正確轉換為字元，以便它理解 CSS 程式碼。
+
+所以如果當你發現你的偽元素 content 中插入了一些內容，但是經過打包編譯後它亂碼了，很有可能是因為你忘了聲明這個字元集。
+
+### @import
+
+用於從其他樣式表匯入樣式規則。這些規則必須先於所有其他類型的規則，@charset 規則除外
+
+@import 有兩種語法：
+
+* url() 內包含 style sheet 的 URI
+* 直接寫 style sheet 的 URI 的字串
+
+還可以直接在後面定義媒體查詢規則，像是這樣：
+
+```css
+@import 'custom.css';
+@import url('landscape.css');
+@import url('landscape.css') screen and (orientation:landscape);
+```
+
+合理的使用 @import 其實也是有好處的：
+
+* 可以合理的控制 CSS 檔案的大小
+* 更好的分治與復用
+
+網路上有各種抵制 @import的文章，因為會影響性能，主要體現在兩個方面：
+
+* 影響瀏覽器的平行下載
+* 優先順序問題，樣式互相覆蓋
+* 導致頁面閃爍
+
+這裡可以簡單解釋一下。首先我們得知道，載入頁面時，link 標籤引入的 CSS 被同時載入，而 @import 引入的 CSS 將在頁面載入完畢後被載入。
+
+CSS 解析引擎在對一個 CSS 檔案進行解析時，如在檔案頂部遇到 @import 規則，將被取代為該 @import 匯入的 CSS 檔案中的全部樣式。而 @import 內的規則其後被載入，卻會在載入完畢後置於樣式表頂部，最終渲染時，如果存在同名同優先順序樣式，會被下面的同名樣式層疊，導致所謂的優先順序衝突。
+
+實際上，瀏覽器渲染的動作一般會執行多次的。最後一次渲染，一定是基於之前載入過的所有樣式整合後渲染樹進行繪製頁面的， 而由於 @import 內的規則的載入時機問題，會在頁面內容載入完後再載入。相當於把 CSS 放在了 body 底部，從而造成了頁面的閃爍。當網路較差時，閃爍體驗更為明顯。
+
+### @namespace
+
+用來定義使用在 CSS 樣式表中的 XML 命名空間的 @規則。定義的命名空間可以把通配、元素和屬性選擇器限制在指定命名空間裡的元素。
+
+並且，任何 @namespace 規則都必須在所有的 @charset 和 @import規則之後，並且在樣式表中，位於其他任何樣式聲明之前。
+
+總的來說，@namespace 在現如今的 CSS 生態中，屬於非常冷門的一個規則。
+
+### @media
+
+如果滿足媒介查詢的條件則條件規則組裡的規則生效
+
+#### prefers-color-scheme 適配明暗主題
+
+prefers-color-scheme 非常好理解的，它用於匹配使用者通過作業系統設定的明亮或夜間（暗）模式。
+
+它有兩個不同的取值：
+
+* prefers-color-scheme: light： 明亮模式
+* prefers-color-scheme: dark： 夜間（暗）模式
+
+語法如下，如果我們默認的是明亮模式，只需要適配夜間模式即可：
+
+```css
+body {
+    background: white;
+    color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: black;
+        color: white;
+    }
+}
+```
+
+#### prefers-reduced-data 減少資料傳輸
+
+對於部分網速較差的地區，或者流量很貴的情況，使用者會希望減少頁面中的流量請求，基於此有了 prefers-reduced-data。
+
+prefers-reduced-data 該 CSS 媒體查詢功能是用於告知使用者代理，希望減少頁面的流量請求。
+
+* prefers-reduced-data: no-preference：預設值，不作任何變化
+* prefers-reduced-data: reduce：希望介面元素消耗更少的網際網路流量
+
+以 prefers-reduced-data: reduce 為例子，語法如下：
+
+```css
+.ele {
+    background-image: url(image-1800w.jpg);
+}
+
+// 降低圖片質量
+@media (prefers-reduced-data: reduce) {
+    .ele {
+        background-image: url(image-600w.jpg);
+    }
+}
+```
+
+當檢測到使用者開啟了 prefers-reduced-data: reduce，我們將提供壓縮度更高，尺寸更小，消耗流量更少的圖片。
+
+不過，這是仍處於實驗室的功能，暫時沒有任何瀏覽器支援該媒體查詢~ 😢
+
+當然，從 Chrome 85+ 開始，可以通過開啟 #enable-experimental-web-platform-features 實驗室選項開啟該功能！
+
+### @supports 特性檢測
+
+傳統的 CSS 特性檢測都是通過 javascript 實現的，但是如今，原生 CSS 即可實現特性檢測的功能。
+
+CSS @supports 通過 CSS 語法來實現特性檢測，並在內部 CSS 區塊中寫入如果特性檢測通過希望實現的 CSS 語句。
+
+語法：
+
+```css
+@supports <supports_condition> {
+    /* specific rules */
+}
+```
+
+舉個例子：
+
+```css
+div {
+    position: fixed;
+}
+
+@supports (position:sticky) {
+    div {
+        position:sticky;
+    }
+}
+```
+
+上面的例子中，position: sticky 是 position 的一個比較新的屬性，用於實現黏性佈局，可以輕鬆實現一些以往需要 Javascript 才能實現的佈局，但是不一定在一些低端機型上相容。
+
+上面的寫法，首先定義了 div 的 position: fixed ，緊接著下面一句 @supports (position:sticky) 則是特性檢測括號內的內容，如果當前瀏覽器支援 @supports 語法，並且支援 position:sticky 語法，那麼 div 的 則會被設定為 position:sticky 。
+
+我們可以看到，@supports 語法的核心就在於這一句：@supports (...) { } ，括號內是一個 CSS 表示式，如果瀏覽器判斷括號內的表示式合法，那麼接下來就會去渲染括號內的 CSS 表示式。
+
+### @keyframes
+
+定義 CSS 動畫的中間步驟
+
+### @layer
+
+@layer 可謂是 CSS 圈 2022 年最受矚目的新特性。
+
+它的出現，目的在於讓大型項目中的 CSS 檔案及內容，可以得到更好的控制和管理。
+
+CSS @layer 從 CSS Cascading and Inheritance Level 5 被規範定義。
+
+@layer 聲明了一個級聯層， 同一層內的規則將級聯在一起， 這給予了開發者對層疊機制的更多控制。
+
+語法也非常簡單，看這樣一個例子：
+
+```css
+@layer utilities {
+  /* 建立一個名為 utilities 的級聯層 */
+}
+```
+
+這樣，我們就建立一個名為 utilities 的 @layer 級聯層。
+
+通過 @layer 級聯層管理樣式優先順序
+
+@layer 級聯層最大的功能，就是用於控制不同樣式之間的優先順序。
+
+看下面這樣一個例子，我們定義了兩個 @layer 級聯層 A 和 B：
+
+```html
+<div></div>
+```
+
+```css
+div {
+    width: 200px;
+    height: 200px;
+}
+@layer A {
+    div {
+        background: blue;
+    }
+}
+@layer B {
+    div {
+        background: green;
+    }
+}
+```
+
+由於 @layer B 的順序排在 @layer A 之後，所以 @layer B 內的所有樣式優先順序都會比 @layer A 高，最終 div 的顏色為 green：
+
+當然，如果頁面內的 @layer 太多，可能不太好記住所有 @layer 的順序，因此，還有這樣一種寫法。
+
+我們可以同時命名多個 @layer 層，其後再補充其中的樣式規則。
+
+```html
+<div></div>
+```
+
+```css
+@layer B, C, A;
+
+div {
+    width: 200px;
+    height: 200px;
+}
+
+@layer A {
+    div {
+        background: blue;
+    }
+}
+
+@layer B {
+    div {
+        background: green;
+    }
+}
+
+@layer C {
+    div {
+        background: orange;
+    }
+}
+```
+
+上述程式碼，我們首先定義了 @layer B, C, A 三個 @layer 級聯層。而後再後面的 CSS 程式碼中補充了每個級聯層的 CSS 程式碼，但是樣式的優先順序為：
+
+A > C > B
+
+因此，最終的 div 的顏色值為 @layer A 中定義的顏色，為 blue
+
+到這裡，CSS @layer 的作用可以清晰的被窺見。
+
+利用 CSS @layer，我們可以將 CSS 不同模組劃入不同的 @layer 中，利用先後順序，非常好的去控制全域的樣式優先順序。
+
+CSS @layer 的誕生，讓我們有能力更好的劃分頁面的樣式層級，更好的處理內部樣式與外部引用樣式的優先順序順序，屬於比較重大的一次革新。
+
 ## 方法論
 
 ### OOCSS
