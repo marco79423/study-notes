@@ -131,6 +131,11 @@ Cache-control: no-store
 Cache-control: no-cache
 ```
 
+#### 常見用法
+
+網站的快取設定一般是這樣的：入口設定 no-cache 其他資源設定 max-age，這樣入口檔案會快取但是每次都協商，保證能及時更新，而其他資源不發請求，減輕伺服器端壓力。隨便找個網站看看都是這樣的，比如 https://www.bilibili.com/。
+
 ## 參考文章
 
 * [HTTP 的快取為什麼這麼設計？](https://mp.weixin.qq.com/s?__biz=Mzg3OTYzMDkzMg==&mid=2247490336&idx=1&sn=fc9a3fcd2e0263308577127cb1820590&scene=21)
+* [面試官：瀏覽器強制刷新是如何實現的？](https://mp.weixin.qq.com/s/xAkJk3s0A0j48piQ2Tx_Rw)
