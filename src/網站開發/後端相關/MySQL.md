@@ -737,74 +737,87 @@ SELECT 很可能是最常用到的 SQL 語句，它是用來從資料庫取得�
 
 #### 資料控制語言 (DCL)
 
-* 新增使用者
-    * MySQL
-        ```sql
-        CREATE USER 'username'@'hostname' IDENTIFIED BY '密碼';
-        ```
-        * `hostname` 表示允許這個帳號由什麼地方連線登入 (localhost 表示只允許從本地端登入；% 是萬用字元，表示允許從任何地方登入。)
-        * 建立新帳號後，這帳號預設沒有權限可以對資料庫做任何事，接著你必須授與資料庫使用權限給這帳號
-* 刪除使用者
-    * MySQL
-        ```sql
-        DROP USER 'username'@'hostname';
-        ```
+##### 新增使用者
 
-* 授與資料庫使用權限
-    * 建立一個新帳號後，你要授與資料庫使用權限給這位使用者，這帳號才能開始連線進去資料庫操作。
-    * MySQL
-        ```sql
-        GRANT type_of_permission ON database_name.table_name TO 'username'@'hostname';
-        ```
+```sql
+CREATE USER 'username'@'hostname' IDENTIFIED BY '密碼';
+```
 
-        * 例子：
-            * 授與 mike 所有資料庫和所有資料表的所有操作權限：
+* `hostname` 表示允許這個帳號由什麼地方連線登入 (localhost 表示只允許從本地端登入；% 是萬用字元，表示允許從任何地方登入。)
+* 建立新帳號後，這帳號預設沒有權限可以對資料庫做任何事，接著你必須授與資料庫使用權限給這帳號
 
-                ```sql
-                GRANT ALL PRIVILEGES ON *.* TO 'mike'@'%';
+例子：
 
-                -- 要記得下這個指令讓權限開始生效
-                FLUSH PRIVILEGES;
-                ```
+```sql
+-- 授權test_user使用localhost登入
+CREATE USER 'test_user'@'localhost' IDENTIFIED BY 'testpassword';
 
-            * 同時授與多個權限
+-- 授權test_user使用任何IP登入
+CREATE USER 'test_user'@'%' IDENTIFIED BY 'testpassword'
+```
 
-                ```sql
-                GRANT SELECT,INSERT ON customers.* TO 'mike'@'%';
-                ```
+##### 刪除使用者
 
-        * 常見的權限類型
-            * ALL PRIVILEGES - 所有的權限
-            * CREATE - 可以建立資料表或資料庫的權限
-            * DROP - 可以刪除資料表或資料庫的權限
-            * DELETE - 可以在資料表中刪除資料的權限
-            * INSERT - 可以新增資料到資料表的權限
-            * SELECT - 可以查詢資料表的權限
-            * UPDATE - 可以更新資料表中的資料的權限
-            * GRANT OPTION - 可以授權使用權限給其他使用者的權限
-* 撤銷資料庫使用權限
-    * MySQL
-        ```sql
-        REVOKE type_of_permission ON database_name.table_name FROM 'username'@'hostname';
-        ```
+```sql
+DROP USER 'username'@'hostname';
+```
 
-        * 例子
-            ```sql
-            REVOKE ALL PRIVILEGES FROM 'mike'@'%';
+#### 授與資料庫使用權限
 
-            -- 要記得下這個指令讓權限開始生效
-            FLUSH PRIVILEGES;
-            ```
+建立一個新帳號後，你要授與資料庫使用權限給這位使用者，這帳號才能開始連線進去資料庫操作。
 
-#### SQL 學習資源
+```sql
+GRANT type_of_permission ON database_name.table_name TO 'username'@'hostname';
+```
 
-* Select Star SQL
-    * <https://selectstarsql.com> (待看)
+例子：
+
+```sql
+-- 授與所有資料庫和所有資料表的所有操作權限：
+GRANT ALL PRIVILEGES ON *.* TO 'test_user'@'%';
+
+-- 授權DB_Name資料庫
+GRANT ALL PRIVILEGES ON DB_Name.* TO 'test_user'@'localhost';
+
+-- 任何授權與移除授權操作後，需要輸入這個指令才能生效
+FLUSH PRIVILEGES;
+```
+
+同時授與多個權限：
+
+```sql
+GRANT SELECT,INSERT ON customers.* TO 'mike'@'%';
+```
+
+常見的權限類型：
+
+* ALL PRIVILEGES - 所有的權限
+* CREATE - 可以建立資料表或資料庫的權限
+* DROP - 可以刪除資料表或資料庫的權限
+* DELETE - 可以在資料表中刪除資料的權限
+* INSERT - 可以新增資料到資料表的權限
+* SELECT - 可以查詢資料表的權限
+* UPDATE - 可以更新資料表中的資料的權限
+* GRANT OPTION - 可以授權使用權限給其他使用者的權限
+
+##### 撤銷資料庫使用權限
+  
+```sql
+REVOKE type_of_permission ON database_name.table_name FROM 'username'@'hostname';
+```
+
+例子：
+
+```sql
+REVOKE ALL PRIVILEGES FROM 'mike'@'%';
+
+-- 任何授權與移除授權操作後，需要輸入這個指令才能生效
+FLUSH PRIVILEGES;
+```
 
 #### 事務控制語言 (TCL, Transaction Control Language)
 
 事務控制語言(如：commit、rollback)
-
 
 * 查詢 MySQL 當前的隔離級別
     ```sql
