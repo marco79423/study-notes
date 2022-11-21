@@ -904,30 +904,296 @@ _$('#app').setBg('#ff0')
 
 ## 工具庫
 
-* qs
-    * 一個輕量的 url 參數轉換的 JavaScript 庫
-        ```js
-        import qs from 'qs'
+### qs
 
-        qs.parse('user=tom&age=22') // => { user: "tom", age: "22" }
-        qs.stringify({ user: "tom", age: "22" }) // => user=tom&age=22
-        ```
-* js-cookie
-    * 一個簡單的、輕量的處理 cookies 的 js API
-        ```js
-        import Cookies from 'js-cookie'
+一個輕量的 url 參數轉換的 JavaScript 庫
 
-        Cookies.set('name', 'value', { expires: 7 }) // 有效期7天
-        Cookies.get('name') // => 'value'
-        ```
-* vConsole
-    * 一個輕量、可拓展、針對手機網頁的前端開發者調試面板。 (可給手機用)
-        ```js
-        import VConsole from 'vconsole'
+```js
+import qs from 'qs'
 
-        const vConsole = new VConsole()
-        console.log('Hello world')
-        ```
+qs.parse('user=tom&age=22') // => { user: "tom", age: "22" }
+qs.stringify({ user: "tom", age: "22" }) // => user=tom&age=22
+```
+
+### js-cookie
+
+一個簡單的、輕量的處理 cookies 的 js API
+```js
+import Cookies from 'js-cookie'
+
+Cookies.set('name', 'value', { expires: 7 }) // 有效期7天
+Cookies.get('name') // => 'value'
+```
+
+### vConsole
+
+一個輕量、可拓展、針對手機網頁的前端開發者調試面板。 (可給手機用)
+
+```js
+import VConsole from 'vconsole'
+
+const vConsole = new VConsole()
+console.log('Hello world')
+```
+
+### lodash
+
+使用時可以使用下列兩種外掛在在打包時去掉不必要的 lodash 程式碼，減小產物體積。
+
+* babel-plugin-lodash
+* lodash-webpack-plugin
+
+字串操作：
+
+```js
+_.lowerFirst(str)
+_.upperFirst(str)
+_.capitalize(str) // 第一個字元大寫，其它字元小寫
+```
+
+命名風格轉換：
+
+```js
+_.snakeCase(str) // 蛇形寫法（snake case），如 foo_bar。
+_.kebabCase(str) // 烤肉串寫法（kebab case），如 foo-bar。
+_.camelCase(str) // 駝峰寫法（camel case），如 fooBar 。
+_.upperFirst(_.camelCase(str)) // 大駝峰寫法（pascal case），如 FooBar。
+
+// example
+_.kebabCase("__FOO_BAR__") // 'foo-bar'
+_.lowerCase("--Foo-Bar--") // 'foo bar'
+_.upperCase("fooBar") // 'FOO BAR'
+```
+
+算術運算：
+
+```js
+_.sum(array) // 求總和
+_.mean(array) // 求平均值
+
+
+// 返回一個[lower,upper]之間的隨機數
+// 如果lower和upper中有浮點數，或者floating為true，返回浮點數，否則，返回整數
+_.random(lower=0,upper=1 [,floating])
+
+// 生成一個範圍陣列
+_.range([start=0,]end,step=1)
+
+// 把一個數字就近限制在某個區間內
+_.clamp(number,[lower=0,] upper)
+_.clamp(-10, -5, 5);    // -5
+_.clamp(10, -5, 5);    // 5
+```
+
+陣列操作：
+
+```js
+// 交集 intersection
+_.intersection(...arrays);
+_.intersectionWith(...arrays [, comparator]);
+_.intersectionBy(...arrays [, iteratee]);
+
+// 聯集
+_.union(...arrays);
+_.unionWith(...arrays [, comparator]);
+_.unionBy(...arrays [, iteratee]);
+
+// 集合差，A - B 表示屬於集合A但不屬於集合B的元素集合
+_.difference(array, ...operands);
+_.differenceWith(array, ...operands [, comparator]);
+_.differenceBy(array, ...operands [, iteratee]);
+```
+
+分片/分區/分組：
+
+分片（chunk）是指把陣列中的每 n 個元素分為一組（一片），如果不能整除，最後剩下的元素單獨一片。
+
+```js
+_.chunk(array [, size=1])
+_.chunk(['a', 'b', 'c', 'd','e'], 2); // => [["a", "b"], ["c", "d"], ["e"]]
+
+```
+
+分區（partition）是利用一個斷言函數迭代每個元素，根據斷言的 true 和 false，把元素分成兩組。
+
+```js
+_.partition(collection [, predicate])
+_.partition([4,5,6,7],num=>num>5) // =>[[6, 7], [4, 5]]
+```
+
+分組(group) 則是用一個函數遍歷每個元素，得到的結果作為該元素所在組的 key，相同 key 元素歸為同一組。
+
+```js
+_.groupBy(collection [, iteratee])
+_.groupBy([6.1, 4.2, 6.3], Math.floor); // => { '4': [4.2], '6': [6.1, 6.3] }
+```
+元素操作：取樣/打亂/計數
+
+```js
+_.sample(collection) // 隨機返回一個元素
+_.sampleSize(collection, [n=1]) // 隨機返回n個元素
+_.shuffle(collection) // 打亂陣列
+
+// 計數
+_.countBy(collection [, iteratee])
+_.countBy([6.1, 4.2, 6.3], Math.floor) // => { '4': 1, '6': 2 }
+
+對象轉換：
+
+``js
+// 克隆
+_.clone(value);
+_.cloneWith(value, customizer);
+_.cloneDeep(value);
+_.cloneDeepWith(value, customizer);
+
+// 同 Object.assign,把 sources 對象中的自有屬性賦值到 object 中
+_.assign(object, ...sources);
+// 轉化後賦值
+_.assignWith(_.assignWith(object, sources, customizer));
+
+// 類似_.assign, 但會賦值繼承屬性
+_.assignIn(object, ...sources);
+_.assignInWith(object, ...sources, customizer);
+
+// 當object中不存在值時，才會賦值，經常用於合併預設值
+_.defaults(object, ...sources);
+// _.default 不適用多層對象，需要使用_.defaultsDeep
+_.defaultsDeep(object, ...sources);
+
+// 合併對象，類似 _.assign,但對象會遞迴深入，陣列會被拼接
+_.merge(object, ...sources);
+_.mergeWith(object, ...sources);
+```
+
+注意，上面這些函數都會直接修改 object 參數。
+
+與此不同，pick 和 omit 操作則返回新對象，不修改參數：
+
+```js
+// 從對象中取出對應路徑的值，合成一個新對象
+_.pick(object, [paths]);
+_.pick({ a: 1, b: "2", c: 3 }, ["a", "c"]); // => { 'a': 1, 'c': 3 }
+// 用一個斷言函數決定要不要取這個屬性，predicate(value,key)
+_.pickBy(object, predicate);
+_.pickBy({ a: 1, b: "2", c: 3 }, _.isNumber); // => { 'a': 1, 'c': 3 }
+
+// 去掉指定屬性，把餘下部分合成一個新對象，性能差於 pick
+_.omit(object, [paths]);
+_.omit({ a: 1, b: "2", c: 3 }, ["a", "c"]); // => { 'b': '2' }
+_.omitBy(object, predicate);
+```
+
+另外，對象還能像陣列一樣進行 map ：
+
+```js
+// iteratee(value,key,obj) 返回的結果作為新對象的key
+_.mapKeys(object, iteratee);
+_.mapKeys({ a: 1, b: 2 }, function (value, key) {
+  return key + value;
+}) // => { 'a1': 1, 'b2': 2 }
+
+// iteratee(value,key,obj) 返回的結果作為新對象的value
+_.mapValues(object, iteratee);
+```
+
+遍歷對象：
+
+```js
+// 遍歷自有屬性，類似 for...in 加 hasOwnProperty判斷。
+_.forOwn(object, iteratee);
+
+// 尋找符合條件的key，類似陣列的findIndex
+_.findKey(object, iteratee);
+_.findLastKey(object, iteratee);
+
+// 尋找對象中的函數屬性
+_.functions(object);
+_.functionsIn(object);
+```
+
+安全的 get/set：
+
+在 JavaScript 中，讀取和設定某一個路徑下的值，是不安全的：
+
+```js
+const object={a:1};
+const=object.b.someKey;   // TypeError: Cannot read properties of undefined
+object.c.someKey=v;       // TypeError: Cannot set properties of undefined
+```
+
+Lodash 為我們提供了更安全的 get 和 set 操作：
+
+```js
+_.get(object,path [, defaultValue]); // 當對應的值不存在時，返回undefined，而不是報錯。
+_.set(object,path,value); // 一層層set,而不是報錯
+
+// 根據該路徑現在的value，更新為updater返回後的值,updater(value)=>newValue
+_.update(object,path,updater)
+```
+
+儘管最近的可選鏈 "?." 語法能取代 get 函數，但 set 操作依然沒有較好的原生支援。
+
+函數操作：
+
+防抖(debounce)：當函數呼叫時，等待一段時間再執行實際操作（內部函數），如果這段時間內涵數再次被呼叫，則本次呼叫不執行實際操作，新呼叫重新開始等待。
+
+```js
+_.debounce(func [, wait=0] [, options={}])
+
+// 只會在停住之後重新佈局
+window.addEventListener('resize', _.debounce(calculateLayout, 150));
+```
+
+```js
+節流(throttle)：一段時間內多次呼叫函數，只執行一次實際操作。
+_.throttle(func [, wait=0] [, options={}])
+
+// 會持續更新位置，但150ms更新一次，避免卡頓
+window.addEventListener('resize', _.throttle(updatePosition, 150));
+```
+
+也可以根據呼叫次數控制是否執行操作。
+
+```js
+// 函數隻呼叫一次
+_.once(func);
+// 只在前n次呼叫
+_.before(func, n);
+// 只在n次之後才呼叫
+_.after(func, n);
+```
+
+延遲執行：
+
+```js
+_.defer(func, ...args); // 在本次呼叫堆疊被清空後執行
+_.delay(func, wait, ...args); // 等待 wait ms 後執行，同setTimeout
+
+// memorize 能快取函數結果，避免重複計算，是一種常見的性能最佳化手段。
+_.memorize(func [, resolver]) // resolver用於計算快取key，當key相同時，使用快取。默認使用func的第一個參數為key
+```
+
+函數參數轉換：
+
+```js
+_.curry(func, (arity = func.length)); // 柯裡化
+_.partial(func, ...args); // 繫結部分參數，但不繫結this
+
+_.ary(func, n); // 只接收前n個參數，忽略額外參數
+_.unary(func); // 只接收第一個參數,同 _.ary(func,1)
+```
+
+通用工具：
+
+```js
+// 流水線
+_.flow([funcs]);
+const pascalCase = _.flow(_.upperFirst, _.camelCase);
+
+// 生成一個唯一 ID：
+_.uniqueId((prefix = ""));
+```
 
 ## 參考文章
 
@@ -935,3 +1201,4 @@ _$('#app').setBg('#ff0')
 * [熟悉事件循环？那谈谈为什么会分为宏任务和微任务](https://mp.weixin.qq.com/s/L1rpAjAYLbTpg6ZBqwzCdA)
 * [【第2706期】详聊前端异常原理](https://mp.weixin.qq.com/s/NhqIOCHQrR1h4DKbnCP_yw)
 * [如何優雅地編寫一個高逼格的JS外掛？](https://mp.weixin.qq.com/s?__biz=MzIzNjQ0MjcwNw%3D%3D&chksm=e8d686badfa10facf82e4d62f513a3bca853d82eda2abe506ba580dc57db676c1a3ac435ec9b&idx=1&lang=zh_CN&mid=2247484294&sn=f6595bc93cc374c0703e9b13fb31ad7b&token=795841537)
+* [都聽說過 lodash，但你會用嗎？](https://mp.weixin.qq.com/s/I4yfSto6BOaQqccudNN-HQ)
