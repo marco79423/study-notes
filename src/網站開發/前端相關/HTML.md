@@ -1,5 +1,18 @@
 # HTML 學習筆記
 
+## HTML 5 的語義標籤
+
+HTML 5 中，採用了 `<figure>` 與 `<figcaption>` 元素來做到更完整的語意標記。
+
+更有效的分離「圖片的說明」與圖說「想要傳達的概念」，讓內容更具結構。
+
+```html
+<figure>
+  <img src="picture.jpg" class="picture" alt="這是人在使用手機的圖片" />
+  <figcaption>手機改變了這世界</figcaption>
+</figure>
+```
+
 ## link
 
 ```html
@@ -328,11 +341,198 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 
 [參考](https://www.linkedin.com/help/linkedin/answer/46687/making-your-website-shareable-on-linkedin)
 
-### 測試工具
+#### 測試工具
 
 * [Twitter](https://cards-dev.twitter.com/validator)
 * [Facebook](https://developers.facebook.com/tools/debug/)
 * [Pinterest](https://developers.pinterest.com/tools/url-debugger)
+
+## 無障礙網站
+
+  無障礙網站之於某些使用者是必需的，卻能使全部的使用者受益。
+
+
+無障礙網站又稱為 Web Accessibility，常以關鍵字 a11y 來代表無障礙技術，它是 Accessibility 的縮寫，代表網頁可訪問性。
+
+以人類的機能來區分障礙類型：
+
+* 物理，肢體上的障礙
+    * 開發基本原則
+        * 大多數的肢體障礙者都可以透過鍵盤瀏覽網站，所以開發時專注鍵盤的可訪問性。
+* 聽覺
+    * 開發基本原則
+        * 影片提供字幕或是手語翻譯、專注於螢幕閱讀器的可訪問性。
+* 視覺
+    * 開發基本原則
+        * 提升顏色對比度、填寫替代文字、減少顏文字的使用、確保超連結文字的提示性、超連結的路徑不要寫無意義的 JavaScript（ href="javascript: void;" ）、勿僅靠顏色作為傳達重要訊息的唯一方式、資訊結構順序設計、文字不要壓在圖上...。
+
+開發無障礙網頁的好處：
+
+* 提高 SEO 搜尋引擎排名
+* 吸引更廣泛的受眾、拓展市場機會
+* 展示社會責任
+* 提高易用性（Usability）
+* 編寫更清晰的程式碼
+* 降低產品成本：避免日後產品迭代時才需要從零導入無障礙的窘境
+* 協助網路速度慢的使用者訪問
+
+### 可訪問性計畫 Web Accessibility Initiative (WAI)
+
+WAI 是由 W3C 推動的網路無障礙計畫組織，制定了 WCAG、ATAG、UAAG 三個不同面向的可訪問指南及多個技術規範（如 WAI-ARIA、音訊、影片、發音、如何評估...等等），讓工程師對無障礙網站實務有個依歸得以遵循。
+
+* Web Content Accessibility Guidelines (WCAG)
+    * Web 內容無障礙指南
+* Authoring Tool Accessibility Guidelines (ATAG)
+    * 創作工具無障礙指南，為網頁內容編輯工具提供了指南，促進所有開發者、設計師能更易於創造出無障礙的網站內容。
+* User Agent Accessibility Guidelines (UAAG)
+    * 使用者代理無障礙指南，針對 Web 瀏覽器、瀏覽器擴充套件、媒體播放器、閱讀器等，在輔助技術方面製定標準，使未來的瀏覽器更易於使用。
+
+### 國家通訊傳播委員會的無障礙規範 
+
+國家通播傳播委員會又稱 NCC， NCC 也是遵從國際的規範來訂定臺灣的無障礙規範，目前是以 2.0 版作為基準。
+
+我們想提高自己網站的可訪問性，要先來了解「三級別、四原則、十二指引」：
+
+* 三個一致性級別：（查看 WAI 一致性級別的說明）
+    * A：最低級別，要符合 A 級需要符合 A 級的成功準則。
+    * AA：要符合 AA 級需要符合 A、AA 級的成功準則。通常符合這個級別的話，已經可以讓大多數的使用者順利瀏覽。
+    * AAA：是最高的級別，要符合 AＡA 級需要符合 A、AA、AAA 級的成功準則。
+
+* 四原則與十二指引：（查看 WAI 快速導覽、2.1 新增的內容）
+    * 第一原則：可感知 Perceivable
+        * 訊息和使用者介面組件必須以「可感知」的方式呈現給使用者。
+        * 指引
+            * 替代文字
+                * 為文字以外的內容提供「相等意義的替代文字」，使其可以轉化為人們需要的其他形式（如字版、點字、語音、符號...等）。
+            * 時間媒體
+                * 為所有基於「時間」的媒體（如影片、音訊）提供一個替代的方案。
+            * 適應性
+                * 能以不同方式呈現，不喪失資訊或結構的內容。
+            * 可辨識
+                * 讓使用者能容易地看見及聽到內容、並區分前景與背景。
+    * 第二原則：可操作 Operable
+        * 是否能夠使用鍵盤全程瀏覽網站，使用者遇到錯誤（如表單欄位格式不符），都需要足夠的訊息提示。
+        * 指引
+            * 可以鍵盤操作
+                * 讓所有的功能都能透過鍵盤使用。
+            * 時間充分
+                * 給使用者足夠時間閱讀並使用內容。
+            * 癲癇
+                * 不以會誘發癲癇的方式設計內容。
+            * 可導覽
+                * 提供協助使用者導覽、尋找內容及判斷所在的方法。            * 
+    * 第三原則：可理解 Understandable
+        * 讓使用者可以理解每個元素的目的，將所有的文字打得明確、有指示性。
+        * 指引
+            * 可讀
+                * 文字訊息需可讀並易理解。
+            * 可預測
+                * 網頁的呈現與操作需可預測。
+            * 輸入協助
+                * 協助使用者避免並更正錯誤。
+    * 第四原則：健壯性 Robust
+        * 讓每個人使用不同裝置或設備都能瀏覽網站，並且要能與時俱進。
+        * 指引
+            * 相容性
+                * 針對目前及未來的使用者代理與輔助科技，最大化其相容性。
+
+### 替代文字 Alternative text
+
+替代文字的作用：
+
+* 當圖片失效時，瀏覽器將顯示替代文字。
+* 為圖片提供語義的描述，提供給搜尋引擎抓取。
+* 使用螢幕閱讀器瀏覽網站，將讀取替代文字，使視覺障礙及某些認知障礙的使用者可以取得圖片的資訊。
+
+原則：
+
+* 幫圖片加上替代文字是最基本的原則。
+    * 可以選擇在圖片 alt 屬性中，或圖片周遭環境中提供「替代文字」說明。
+    * 每一張圖片都一定要有 alt 屬性，這是 HTML 的規範。
+* 替代文字應該遵守：
+    * 能如實呈現照片的內容或是功能性
+    * 簡潔
+* 替代文字應該避免：
+    * 冗贅（比如說重複已經在照片相鄰敘述過的內容）
+    * 使用「這是一張...的照片」
+    * 使用檔案名稱
+* 圖片的上下文內容對於替代文字要如何撰寫影響甚大
+* 一張有功能性的圖片（比如超連結中的圖片），應以「功能描述」作為替代文字內容
+* 裝飾性的圖片還需要有 alt 屬性，值為空即可（比如 alt="" ）
+* 使用正確的標點符號（如逗號或句點字符），這有助於螢幕閱讀器以更“人性化”的聲音方式描述圖像
+
+### tabindex
+
+在 WCAG 2.0 及 2.1 中，提及「頁面上的所有功能都應該可透過鍵盤操作。」，除非像是無法使用鍵盤操作的功能，如：手寫功能。
+
+開發網頁時，有時我們會需要去調整 tab 的順序，在 HTML 中，有一個叫做 tabindex 的屬性可以幫我們辦到這件事情。
+
+tabindex 特性：
+
+* 可以使用在任何一個 HTML 元素上。
+* 通常不建議針對 `<h1>`、 `<p>`、 `<img>` 加上 tabindex 屬性，針對「需要和使用者互動的元件」加上「對焦的行為」才是最合適的，比如：按鈕、頁籤、搜尋框或任何要使用者輸入資料的元素。
+
+### WAI-ARIA
+
+是由一個無障礙組織與一個重要標準規範組成，分別以它們的縮寫名稱的串接，可以簡稱 ARIA：
+
+* Web Accessibility Initiative (WAI)
+    * Web 可訪問性計畫組織
+* Accessible Rich Internet Applications Suite (ARIA)
+    * 可訪問的豐富網路應用程式規範
+
+WAI-ARIA 可以做到的事：
+
+* 在沒有隱含語義的元素加上語義，如 `<div>`。
+* 修改隱含語義元素的「現有語義」，如 `<button>` 實現 switch，需要加上 role 設定。
+* 表達不存在語義的 UI patterns，如巢狀的 ul ，透過 role 表達群組的概念。
+* 額外的標籤（label）與描述（descriptions）
+* 表達元素與元素之間的關係。
+* 因應基於時間或事件的變化而根據重新渲染的畫面提供資訊給使用者知曉。
+
+完整的語義內容將包含： role 、 name 、 state、 value 。
+
+#### 角色 Role
+
+WAI-ARIA 中定義一系列的角色模型，每個角色有其定位與可以使用的 aria-* 屬性，以讓使用者能夠預期該功能的操作行為。
+
+注意事項：
+
+* 使用原生語法時，不需用 ARIA 覆蓋原生語義
+    ```html
+    <input type="checkbox"> <!-- 不用加上 role="checkbox" -->
+    
+    <!-- 需要的情況 -->
+    <div id="percent-loaded" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" /></div>
+    ```
+
+角色一共分為六類：
+
+* Abstract Roles 抽象
+    * 用於定義通用角色概念，開發者不可使用。
+        * command、composite、input、landmark、range 、roletype、section、sectionhead 、select、structure、widget、window。
+* Document Structure Roles 文件結構
+    * 描述文件頁面內容的結構，通常不是可互動式的。
+        * application、article、cell、columnheader、definition、directory、document、feed 、figure、group、heading、img、list、listitem、math、none、note、presentation、row、rowgroup、rowheader、separator(當無法取得焦點時)、table、term、toolbar 、tooltip
+* Widget Roles 組件功能
+    * 作為小組件或較大組件中的小項目之一
+        * button、checkbox、gridcell、link、menuitem、menuitemcheckbox、menuitemradio、option、progressbar、radio、scrollbar、searchbox、separator（當可取得焦點時）、slider、spinbutton、switch、tab、tabpanel、textbox、treeitem。
+    * 通常做為組件的容器的角色：
+        * combobox、grid、listbox、menu、menubar、radiogroup、tablist、tree、treegrid。
+* Landmark Roles 標誌
+    * 最容易實現的 Role 角色之一，也是為螢幕閱讀器使用者提供顯著直接好處的屬性之一
+        * banner、complementary、contentinfo、form、main、navigation、region、search。
+            ```html
+            <!-- 一個頁面中若有重複的導航列 -->
+            <div role="navigation" aria-label="Main menu"> ... </div>
+            <div role="navigation" aria-label="User menu"> ... </div>
+            ```
+* Live Region Roles 實時區域
+    * 隨時依據狀況更新的角色。
+        * alert、log、marquee、status、timer。
+* Window Roles 視窗
+    * 在應用程式中作為新視窗來展示資訊的角色。
+        * alertdialog、dialog。
 
 ## 參考文章
 
@@ -341,3 +541,4 @@ Twitter 允許你指定 `twitter:card`，這是你在展示你的網站時可以
 * [過度使用懶加載對 Web 性能的影響](https://mp.weixin.qq.com/s/4Oo4FtNO-mviTiS_dPT1Uw)
 * [今晚，我想來點 Web 前端效能優化大補帖！](https://medium.com/starbugs/%E4%BB%8A%E6%99%9A-%E6%88%91%E6%83%B3%E4%BE%86%E9%BB%9E-web-%E5%89%8D%E7%AB%AF%E6%95%88%E8%83%BD%E5%84%AA%E5%8C%96%E5%A4%A7%E8%A3%9C%E5%B8%96-e1a5805c1ca2)
 * [React 官網為什麼那麼快？](https://juejin.cn/post/7128369638794231839)
+* [實踐無障礙網頁設計（Web Accessibility） 系列](https://ithelp.ithome.com.tw/users/20108045/ironman/2454)
