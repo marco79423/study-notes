@@ -1,6 +1,6 @@
-FROM rust:1.59 as builder
+FROM rust:1.66 as builder
 
-RUN cargo install mdbook --vers "^0.4.21"
+RUN cargo install mdbook --vers "^0.4.25"
 
 WORKDIR /app
 COPY . .
