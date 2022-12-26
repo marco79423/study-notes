@@ -534,6 +534,31 @@ WAI-ARIA 中定義一系列的角色模型，每個角色有其定位與可以�
     * 在應用程式中作為新視窗來展示資訊的角色。
         * alertdialog、dialog。
 
+#### 屬性
+
+* aria-label
+    * 指定用作可訪問標籤的字，與 aria-labelledby 相同意思。
+    * 定義一字串作為元素的描述
+        ```html
+        <ul role="navigation" aria-label="This is a pagination list">...</ul>
+        ```
+* aria-labelledby
+    * 標示另一個元素的內容是此元素的敘述
+        ```html
+        <p id="paginglabel"></p>
+        <ul role="navigation" aria-labelledby="paginglabel">...</ul>
+        ```
+    * 用途雖與 aria-label 相同，但當兩個屬性都存在時，根據 accessible name 演算法，aria-labelledby 的權重比較高
+
+### 注意事項
+
+* DOM 順序就是一切。
+    * 大部分人用看的方式瀏覽網頁，有些人用聽的瞭解內容，這時確保元素順序與所呈現訊息的邏輯順序相符很重要，要簡單檢測最快的方式是刪除 CSS 樣式，並檢查內容的順序是否合理。
+* 絕對不要移除 outline 的樣式，除非..
+    * 我們絕對不該移除 outline 的樣式，比如說： outline: none 。因為元素被 focus 時，表示使用者正在使用的元件就是「它」，如果看不出任何差異，會有辨識的困難。 
+* .visually-hidden 影響資訊是否能被讀取
+    * 會有這個 class 的設定是因為 visibility: hidden & display: none 這兩種屬性的設定，都是在可視介面上隱藏元素，基本上會讓螢幕閱讀器的使用者受到影響，他們的輔助工具也將遺漏你設定隱藏的資訊。
+
 ## 參考文章
 
 * [連 OG 都不知道還好意思說自己開發過 H5？](https://mp.weixin.qq.com/s/DiLZZaJ8ru2VqOEzB1EIbA)
