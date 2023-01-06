@@ -9,6 +9,32 @@ CSS 是瀏覽器提供給開發者的描述界面的方式，而描述界面分�
 * 具體元素的渲染 - 內容怎麼繪制？
     * 具體內容相關，font、text、image 等分別有不同的樣式來描述如何渲染
 
+## 歷史
+
+於 1994 年由 Hakon Wium Lie 提出 CSS，將結構和樣式的表達分離，並由 W3C 於 1996 年發布 CSS（CSS1）第一條規範建議。
+
+全球資訊網協會（World Wide Web Consortium, W3C），又稱 W3C 理事會，由 Tim Berners-Lee 成立於 1994，是全球資訊網路的主要國際標準組織之一，以開放論壇 https://www.w3.org/ 的方式來促進開發互通技術，目的在使全球資訊網技術標準化，促進業界成員間的相容性，規範的標準囊括 HTML、CSS、DOM、SVG、XML 等。
+
+CSS 部分也有自己的工作團隊，又稱為 CSSWG（Cascading Style Sheets working group），工作團隊的組成通常是瀏覽器廠商、主流網站、大學、CSS專家、研究機構和技術公司等成員。
+
+制定流程：
+
+* 流程 1：編輯草案 ED（Editor’s Draft）
+    * 規範的開始階段，工作團隊會指定一個新的 CSS 屬性或選擇器的想法，並且在 CSSWG 內部進行討論及研究。如果工作團隊及會員同意將其發佈，將進入工作草案。
+* 流程 2：工作草案 FPWD（First Public Working Draft）
+    * 其實就是第一個發布的工作草案。
+* 流程 3：工作草案 WD（Working Draft）
+    * 工作團隊會依據 charter（章程） 發布一系列的工作草案（想看的可以到這邊 CSSWG charter），W3C 的會員和大眾可以提出評論和問題，並由工作團隊處理，一版接著一版的改進。
+    * 瀏覽器裡對於早期實驗性功能的支持最早通常是從這個階段開始。
+* 流程 4：最終工作草案 LCWD（Last Call Working Draft）
+    * 工作團隊完成工作，要求大眾和 W3C 會員提出最後評論，並同樣由工作團隊處理回饋。如果情況不 OK，會再回到工作草案階段。
+* 流程 5：候選推薦標準 CR（Candidate Recommendation）
+    * 當問題都解決，結束最終工作草案階段，將進入候選推薦標準階段。此時該規範已經有一個相對穩定的版本，可以展開測試，工作團隊會將實施所得到的回饋整合到規範中。如果狀況不 OK，同樣會再返回到工作草案階段。
+* 流程 6：建議推薦標準 PR（Proposed Recommendation）
+    * 如果測試沒有意外，規範將進入建議推薦標準階段。W3C 創辦人（Tim Berners-Lee）會正式請求 W3C 會員審閱這份建議推薦標準。如果不 OK，同樣會再返回到工作草案階段或回到候選推薦標準。
+* 流程 7：推薦標準 REC（Recommendation）
+    * 進入最終階段，審閱結果 OK，便由創辦人（Tim Berners-Lee）宣布該規範成為推薦標準，也就是成為 W3C 的標準。
+
 ## 語法
 
 CSS 規則集（rule-set）由選擇器(selector)和聲明塊組成。
@@ -352,6 +378,14 @@ display 是設置盒的類型，不同的盒有不同的佈局規則，比如 BF
 
 Flexbox 是CSS 彈性盒子佈局模塊（Flexible Box Layout Module）的縮寫，它被專門設計出來用於創建橫向或是縱向的一維頁面佈局。
 
+##### Flexbox 歷史
+
+早在 2008 年，CSS 的工作團隊其實已經對 "彈性框架模型" 有想法，隔年 2009 年便發布了第一版本的 flexbox 工作草案，然而草案中還有許多含糊的地方，而且在不同的瀏覽器會出現不同的外觀。
+
+在 2011 年，Tab Atkins 接下了 flexbox 規範的編輯。重新修訂語法。隔年 2012 年 Flexbox 的規範就被 W3C 作為候選推薦標準， flexbox 也在各瀏覽器中陸續受到支持。而後 Tab Atkins 也陸續的增強 flexbox 的功能。
+
+##### Flexbox 用法
+
 要使用 flexbox，需要在想要進行 flex 佈局的父元素上應用 display: flex，這樣所有直接子元素都將會按照 flex 進行佈局
 
 flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的。
@@ -360,11 +394,48 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
 
 ```css
 .container {
-  display: flex;
+  display: flex | inline-flex; /* 會成為彈性容器 */
+}
+
+.item {  /* 子層則變成彈性項目 */
+
 }
 ```
 
+彈性項目脫離了和標籤的關係，所以不論是 div、span、a 標籤等都會變成彈性項目，所以不會出現因為 div 是 block 要占據整行、span 和 a 是 inline 而沒有尺寸等這些特性。
+
+可以想像成你把它變成了一個彈性的大盒子（容器），裡面裝著很多彈性的小盒子（項目），而這些"彈性大小盒"擁有自己獨特的屬性和屬性值可以做有趣的操控。
+
+##### 彈性容器
+
+彈性容器之屬性值 flex 和 inline-flex 的差別
+
+```css
+{
+    display: flex;
+}
+```
+當在 display 屬性宣告 flex，如果沒有設定寬高，可以看到彈性容器像 block 一樣佔據了整行。但如果是 inline-flex 則是會變成子層彈性項目的尺寸撐開。
+
+如果是 flex，第二個彈性容器會移到下一行，而 inline-flex 則會變成併排。
+
+和 block / inline-blox 的差異：
+
+* float 和 clear 無法使用於彈性容器內
+* vertical-align 對彈性項目沒有效果（但對彈性項目裡面的內容還是有用的）
+* 偽元素 ::first-line 和 ::first-letter 無法使用於彈性容器本身
+
+軸向：
+
 ![flexbox-1](./images/flexbox-1.png)
+
+
+主軸（main axis） 和相交軸（cross axis）：
+
+* 主軸
+    * 表現上為彈性項目的"文字方向"。當宣告屬性值 flex 後，預設中主軸會朝向，文字方向相同的方向，如同我們常見的語言幾乎都是由左至右的方向。
+* 相交軸
+    * 又稱次軸，表現上為彈性項目的"換行方向"。也就是說如果彈性項目單行的數量多到超過容器，你想要讓它換行，預設中相交軸會以 彈性項目換到下一行的方向，常見的是由上而下。
 
 * 主軸相關
     * flex-direction
@@ -381,27 +452,6 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * column-reverse
                 * 主軸為直向，但反序排列。
                     ![flexbox-5](./images/flexbox-5.png)
-    * justify-content
-        * 主軸的對齊方式
-            * flex-start
-                * 靠左對齊。
-                    ![flexbox-6](./images/flexbox-6.png)
-            * flex-end
-                * 靠右對齊。
-                    ![flexbox-7](./images/flexbox-7.png)
-            * center
-                * 置中對齊。
-                    ![flexbox-8](./images/flexbox-8.png)
-            * space-between
-                * 每個小方塊擁有相同的間隔，但與父容器之間沒有間隔
-                    ![flexbox-9](./images/flexbox-9.png)
-                    * 此例會有 10px 的空隙是因為方塊預設設有 10px 的 margin
-            * space-around
-                * 每個小方塊之間與父容器有間隔，但小方塊與父容器之間的間隔是小方塊彼此間隔的一半
-                    ![flexbox-10](./images/flexbox-10.png)
-            * space-evenly
-                * 每個小方塊之間和與父容器之間擁有相同的間隔。
-                    ![flexbox-11](./images/flexbox-11.png)
     * flex-wrap
         * 設定小方塊是要強制排成一列或依照容器的包圍而排成多列。
             * wrap
@@ -413,6 +463,35 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * nowrap
                 * 小方塊排成一列不折行，可使用 flex-direction 調整主軸方向，即小方塊對齊的方向。
                     ![flexbox-20](./images/flexbox-20.png)
+    * flex-flow
+        * 就是 flex-direction 和 flex-wrap 的屬性寫在一起。
+            ```css
+            .container {
+                flex-flow: flex-direction + flex-wrap;  /* 預設：row nowrap */
+            }
+            ```
+    * justify-content
+        * 主軸的對齊方式
+            * flex-start
+                * 預設，對齊主軸的開頭 (通常是靠左對齊)。
+                    ![flexbox-6](./images/flexbox-6.png)
+            * center
+                * 對齊主軸的中間（常用來做置中處理）
+                    ![flexbox-8](./images/flexbox-8.png)
+            * flex-end
+                * 對齊主軸的尾巴 (通常是靠右對齊)。
+                    ![flexbox-7](./images/flexbox-7.png)
+            * space-between
+                * 將空白空間分配在東西之間(每個小方塊擁有相同的間隔，但與父容器之間沒有間隔)
+                    ![flexbox-9](./images/flexbox-9.png)
+                    * 此例會有 10px 的空隙是因為方塊預設設有 10px 的 margin
+            * space-around
+                * 將空白空間分配在東西兩側(每個小方塊之間與父容器有間隔，但小方塊與父容器之間的間隔是小方塊彼此間隔的一半)
+                    ![flexbox-10](./images/flexbox-10.png)
+            * space-evenly
+                * 將空白剩下的空間均勻分配(每個小方塊之間和與父容器之間擁有相同的間隔)
+                    ![flexbox-11](./images/flexbox-11.png)
+
     * flex-basis
         * 更改主軸 (main axis) 的預設屬性值，現在主軸是水平的，位於主軸上的屬性是 width。
         * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
@@ -1818,3 +1897,4 @@ PostCSS 主要做了三件事：
 * [圖解 Flexbox 進階屬性](https://cythilya.github.io/2017/04/06/flexbox-advance/)
 * [詳解 flex-grow 與 flex-shrink](https://github.com/xieranmaya/blog/issues/9)
 * [現代 CSS 顏色指南](https://mp.weixin.qq.com/s/ZnfbAvjRGUz0f-oUomKd1g)
+* [重新認識 Flex 和 Grid 系列](https://ithelp.ithome.com.tw/users/20128346/ironman/3396)
