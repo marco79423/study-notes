@@ -429,7 +429,6 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
 
 ![flexbox-1](./images/flexbox-1.png)
 
-
 主軸（main axis） 和相交軸（cross axis）：
 
 * 主軸
@@ -484,7 +483,6 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * space-between
                 * 將空白空間分配在東西之間(每個小方塊擁有相同的間隔，但與父容器之間沒有間隔)
                     ![flexbox-9](./images/flexbox-9.png)
-                    * 此例會有 10px 的空隙是因為方塊預設設有 10px 的 margin
             * space-around
                 * 將空白空間分配在東西兩側(每個小方塊之間與父容器有間隔，但小方塊與父容器之間的間隔是小方塊彼此間隔的一半)
                     ![flexbox-10](./images/flexbox-10.png)
@@ -537,23 +535,41 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
         * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
             * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
 * 交叉軸相關
-    * align-items
-        * 交叉軸 (cross axis) 的對齊方式
-            * flex-start
-                * 若小方塊不等高，則會依容器的頂端對齊，類似過去使用的 vertical-align: top。
+    * align-items / align-content
+        * 差異
+            * align-items 當交錯軸只有一行時的對齊方式
+                * align-items 屬性會操控彈性行中的每個彈性項目(items)，並且在相交軸上的彈性行內設定某條假想彈性線來做對齊
+            * align-content 交錯軸為多行時的的整體對齊方式
+                * align-content 屬性會操控整個內容(content)，並且在相交軸上以項目來做對齊，所以會發現同一行彈性項目的對齊方式都在那行的空間裡，像是在為整體位置做調整，而不是在對齊一條線。
+            * 最明顯的就是在定義屬性值 center 的時候了，align-content:center 時，所有彈性內容會以對齊"彈性容器的中間"為準。然而 align-items:center 時，所有的彈性項目都會對齊"它所在的那個彈性行的中線"，而不是整個容器的中間。
+        * flex-start
+            * 若小方塊不等高，則會依容器的頂端對齊，類似過去使用的 vertical-align: top。
+                * align-items: flex-start
                     ![flexbox-12](./images/flexbox-12.png)
-            * flex-end
-                * 若小方塊不等高，則會依容器底部對齊，類似過去使用的 vertical-align: bottom。
-                    ![flexbox-13](./images/flexbox-13.png)
-            * stretch
-                * 小方塊不設定寬、高、間距，充滿整個容器。
-                    ![flexbox-14](./images/flexbox-14.png)
-            * baseline
-                * 若小方塊不等高，則會依容器的基準線對齊，類似過去使用的 vertical-align: baseline。
-                    ![flexbox-15](./images/flexbox-15.png)
-            * center
-                * 若小方塊不等高，則會依容器的中線對齊，類似過去使用的 vertical-align: middle。
+                * align-content: flex-start
+                    ![flexbox-22](./images/flexbox-23.png)
+        * center
+            * 若小方塊不等高，則會依容器的中線對齊，類似過去使用的 vertical-align: middle。
+                * align-items: center
                     ![flexbox-16](./images/flexbox-16.png)
+                * align-content: center
+                    ![flexbox-24](./images/flexbox-24.png)
+        * flex-end
+            * 若小方塊不等高，則會依容器底部對齊，類似過去使用的 vertical-align: bottom。
+                * align-items: flex-end
+                    ![flexbox-13](./images/flexbox-13.png)
+                * align-content: flex-end
+                    ![flexbox-22](./images/flexbox-22.png)
+        * stretch
+            * 小方塊不設定寬、高、間距，充滿整個容器。
+                * align-items: stretch
+                    ![flexbox-14](./images/flexbox-14.png)
+                * align-content: stretch
+                    ![flexbox-21](./images/flexbox-21.png)
+        * baseline
+            * 若小方塊不等高，則會依容器的基準線對齊，類似過去使用的 vertical-align: baseline。
+                ![flexbox-15](./images/flexbox-15.png)
+
     * align-self
         * 設定單一元素的對齊方式，會覆寫父層 align-items 的設定。
             ![flexbox-17](./images/flexbox-17.png)
