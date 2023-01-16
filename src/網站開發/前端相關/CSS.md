@@ -493,8 +493,18 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
     * flex-basis
         * 更改主軸 (main axis) 的預設屬性值，現在主軸是水平的，位於主軸上的屬性是 width。
         * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
+        * flex-basis: auto
+            * 預設值，其實就是以原本的主軸尺寸 ( width 或 height ) 來當作初始值來做成長及壓縮係數的計算，如果 width 和 height 也是 auto，則會計算為內容尺寸，也就是內容的壓縮極限尺寸。
+        * flex-basis: `<length>`
+            * 用 "長度" 單位來當成 flex-basis 的初始值，原本的主軸尺寸初始值會被覆寫，如果拿掉成長和壓縮係數（將 flex-shrink 設為 0），flex-basis 才會真的會成為彈性項目的尺寸。
+                * 但還是會受到其他屬性如：min-width, min-height, max-width, max-height 的影響，這幾個屬性需要先被滿足
+        * flex-basis: `<percentage>`
+            * 用 "百分比" 單位來當成 flex-basis 的初始值，設為 100% 時便等於將尺寸初始值設為彈性容器的寬度，設為 N% 就是將尺寸初始值設為彈性容器的 N%，以此類推。
+        * flex-basis: 0
+            * 在使用 flex 縮寫時，如果只有寫前兩個數字( flex-grow 和 flex-shrink )，就等於將 flex-basis 設為 0。設為 0 可能看起來和 auto 的結果有點像，但其實還是有差別的。
+                * flex-basis 設為 0 時，彈性項目的主軸尺寸初始值不是 0 （如果是 0 就沒辦法計算下去了），而是會等於彈性容器的寬度，也就是說如果長度不足彈性容器而設定 flex-grow，則會依照 flex-grow 的比例去直接分配彈性項目的尺寸；如果長度超過彈性容器而設定 flex-shrink，就會依照 flex-shrink 的比值來直接分配。
     * flex-grow
-        * 每個區塊 (這裡是指小方塊) 可在主軸上佔容器的多少部份，或說是如何分配剩餘空間
+        * 數字使用規定要大於等於 0（小數點也可以），可以決定彈性容器在分配空間時，彈性項目"在主軸彈性行的剩餘空間中可以擴張的比例"。
         * 計算方式
             假設剩餘空間為 x，三個元素的 flex-grow 分別為 a，b，c。設 sum 為 a + b + c。那麼三個元素將得到剩餘空間分別是 `x * a / sum`、`x * b / sum`、`x * c / sum`
             * 例子：
@@ -534,6 +544,13 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
     * flex
         * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
             * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
+        * 特殊例子
+            * flex: auto
+                * 等於 flex: 1 1 auto，意思是未佈滿容器時項目會成長、超出容器時項目會壓縮
+            * flex: initial
+                * 等於 flex: 0 1 auto，意思是超出容器時項目會壓縮
+            * flex: none
+                * 等於 flex: 0 0 auto，意思是什麼都沒有做
 * 交叉軸相關
     * align-items / align-content
         * 差異
@@ -564,6 +581,7 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * 小方塊不設定寬、高、間距，充滿整個容器。
                 * align-items: stretch
                     ![flexbox-14](./images/flexbox-14.png)
+                    * 沒有設定尺寸就會被"拉伸"，但如果都有的話就不會被拉伸，然後就會長的和 flex-start 一樣。
                 * align-content: stretch
                     ![flexbox-21](./images/flexbox-21.png)
         * baseline
@@ -580,6 +598,7 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
                 align-self: flex-start;
             }
             ```
+        * 預設 auto 其實就是繼承 container 中的 align-items 所設定的屬性值
 
 ##### Flexbox 學習工具
 
@@ -590,6 +609,14 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
 #### Grid
 
 Flexbox 用於設計橫向或縱向的佈局，而 Grid 佈局則被設計用於同時在兩個維度上把元素按行和列排列整齊。
+
+##### Grid 歷史
+
+CSSWG （CSS工作團隊）對於網格系統早有各種想法，後來是由 Microsoft 的一組人在 2011 年左右提出比較完整的工作草案，並且在 IE10 中先實現了它。約到了 2016 年底才正式被候選為推薦標準，並逐漸被各大瀏覽器支持。
+
+自 CSS 問世以來，一直存在著排版的缺陷，為了排版使用了很多的特殊技巧來實現，雖然後來有 flexbox 填補了大部分的空缺，但 flexbox 原先只是針對導覽列所設計的功能，如果運用到較複雜的平面設計時，就必須大量使用 flexbox 來區劃每個線性空間，造成非常多巢狀式結構，不易閱讀。
+
+而 grid 本身就是以排版為目的性開發而生的系統，相較於適合操作一維的 flexbox，grid 更著重於行與列的二維操作，類似卻比 table 多了更多的彈性，這讓 grid 能更簡單的設計複雜的平面空間設計。
 
 ### position
 
