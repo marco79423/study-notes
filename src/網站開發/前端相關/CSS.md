@@ -406,8 +406,6 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
 
 可以想像成你把它變成了一個彈性的大盒子（容器），裡面裝著很多彈性的小盒子（項目），而這些"彈性大小盒"擁有自己獨特的屬性和屬性值可以做有趣的操控。
 
-##### 彈性容器
-
 彈性容器之屬性值 flex 和 inline-flex 的差別
 
 ```css
@@ -435,6 +433,8 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
     * 表現上為彈性項目的"文字方向"。當宣告屬性值 flex 後，預設中主軸會朝向，文字方向相同的方向，如同我們常見的語言幾乎都是由左至右的方向。
 * 相交軸
     * 又稱次軸，表現上為彈性項目的"換行方向"。也就是說如果彈性項目單行的數量多到超過容器，你想要讓它換行，預設中相交軸會以 彈性項目換到下一行的方向，常見的是由上而下。
+
+###### 彈性容器
 
 * 主軸相關
     * flex-direction
@@ -489,68 +489,6 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * space-evenly
                 * 將空白剩下的空間均勻分配(每個小方塊之間和與父容器之間擁有相同的間隔)
                     ![flexbox-11](./images/flexbox-11.png)
-
-    * flex-basis
-        * 更改主軸 (main axis) 的預設屬性值，現在主軸是水平的，位於主軸上的屬性是 width。
-        * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
-        * flex-basis: auto
-            * 預設值，其實就是以原本的主軸尺寸 ( width 或 height ) 來當作初始值來做成長及壓縮係數的計算，如果 width 和 height 也是 auto，則會計算為內容尺寸，也就是內容的壓縮極限尺寸。
-        * flex-basis: `<length>`
-            * 用 "長度" 單位來當成 flex-basis 的初始值，原本的主軸尺寸初始值會被覆寫，如果拿掉成長和壓縮係數（將 flex-shrink 設為 0），flex-basis 才會真的會成為彈性項目的尺寸。
-                * 但還是會受到其他屬性如：min-width, min-height, max-width, max-height 的影響，這幾個屬性需要先被滿足
-        * flex-basis: `<percentage>`
-            * 用 "百分比" 單位來當成 flex-basis 的初始值，設為 100% 時便等於將尺寸初始值設為彈性容器的寬度，設為 N% 就是將尺寸初始值設為彈性容器的 N%，以此類推。
-        * flex-basis: 0
-            * 在使用 flex 縮寫時，如果只有寫前兩個數字( flex-grow 和 flex-shrink )，就等於將 flex-basis 設為 0。設為 0 可能看起來和 auto 的結果有點像，但其實還是有差別的。
-                * flex-basis 設為 0 時，彈性項目的主軸尺寸初始值不是 0 （如果是 0 就沒辦法計算下去了），而是會等於彈性容器的寬度，也就是說如果長度不足彈性容器而設定 flex-grow，則會依照 flex-grow 的比例去直接分配彈性項目的尺寸；如果長度超過彈性容器而設定 flex-shrink，就會依照 flex-shrink 的比值來直接分配。
-    * flex-grow
-        * 數字使用規定要大於等於 0（小數點也可以），可以決定彈性容器在分配空間時，彈性項目"在主軸彈性行的剩餘空間中可以擴張的比例"。
-        * 計算方式
-            假設剩餘空間為 x，三個元素的 flex-grow 分別為 a，b，c。設 sum 為 a + b + c。那麼三個元素將得到剩餘空間分別是 `x * a / sum`、`x * b / sum`、`x * c / sum`
-            * 例子：
-                * 父元素寬度 500px，三個子元素的 width 分別為 100px，150px，100px。於是剩餘空間為 150px
-                * 三個元素的 flex-grow 分別是 1，2，3，於是 sum 為 6
-                * 則
-                    ```plain
-                    三個元素所得到的多餘空間分別是：
-                    150 * 1 / 6 = 25px
-                    150 * 2 / 6 = 50px
-                    150 * 3 / 6 = 75px
-
-                    三個元素最終的寬度分別為：
-                    100px + 25px = 125px
-                    150px + 50px = 200px
-                    100px + 75px = 175px
-                    ```
-    * flex-shrink
-        * 與 flex-grow 相反，flex-grow 是膨脹，flex-shrink 是縮小
-        * 元素本身的寬度也會影響收縮多少
-        * 例子：
-            * 父元素 500px。三個子元素分別設置為 150px，200px，300px (溢出 150px)。三個子元素的 flex-shrink 的值分別為 1，2，3。
-                * 具體的計算方式為：每個元素收縮的權重為其 flex-shrink 乘以其寬度。
-                    ```plain
-                    總權重為： 1 * 150 + 2 * 200 + 3 * 300 = 1450
-
-                    三個元素分別收縮：
-                    150 * 1(flex-shrink) * 150(width) / 1450 = -15.5
-                    150 * 2(flex-shrink) * 200(width) / 1450 = -41.4
-                    150 * 3(flex-shrink) * 300(width) / 1450 = -93.1
-                    
-                    最終寬度為：
-                    150 - 15.5 = 134.5
-                    200 - 41.4 = 158.6
-                    300 - 93.1 = 206.9
-                    ```
-    * flex
-        * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
-            * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
-        * 特殊例子
-            * flex: auto
-                * 等於 flex: 1 1 auto，意思是未佈滿容器時項目會成長、超出容器時項目會壓縮
-            * flex: initial
-                * 等於 flex: 0 1 auto，意思是超出容器時項目會壓縮
-            * flex: none
-                * 等於 flex: 0 0 auto，意思是什麼都沒有做
 * 交叉軸相關
     * align-items / align-content
         * 差異
@@ -588,6 +526,71 @@ flexbox 基本上都是靠主軸 (main axis) 和交叉軸 (cross axis) 運作的
             * 若小方塊不等高，則會依容器的基準線對齊，類似過去使用的 vertical-align: baseline。
                 ![flexbox-15](./images/flexbox-15.png)
 
+###### 彈性項目
+
+* 主軸相關
+    * flex-shrink
+        * 與 flex-grow 相反，flex-grow 是膨脹，flex-shrink 是縮小
+        * 元素本身的寬度也會影響收縮多少
+        * 例子：
+            * 父元素 500px。三個子元素分別設置為 150px，200px，300px (溢出 150px)。三個子元素的 flex-shrink 的值分別為 1，2，3。
+                * 具體的計算方式為：每個元素收縮的權重為其 flex-shrink 乘以其寬度。
+                    ```plain
+                    總權重為： 1 * 150 + 2 * 200 + 3 * 300 = 1450
+
+                    三個元素分別收縮：
+                    150 * 1(flex-shrink) * 150(width) / 1450 = -15.5
+                    150 * 2(flex-shrink) * 200(width) / 1450 = -41.4
+                    150 * 3(flex-shrink) * 300(width) / 1450 = -93.1
+                    
+                    最終寬度為：
+                    150 - 15.5 = 134.5
+                    200 - 41.4 = 158.6
+                    300 - 93.1 = 206.9
+                    ```
+    * flex-basis
+        * 更改主軸 (main axis) 的預設屬性值，現在主軸是水平的，位於主軸上的屬性是 width。
+        * 假設使用 flex-direction: column 讓主軸旋轉為直向，那 main axis 對應的屬性就是 height，會被更動到的屬性是方塊的高度。
+        * flex-basis: auto
+            * 預設值，其實就是以原本的主軸尺寸 ( width 或 height ) 來當作初始值來做成長及壓縮係數的計算，如果 width 和 height 也是 auto，則會計算為內容尺寸，也就是內容的壓縮極限尺寸。
+        * flex-basis: `<length>`
+            * 用 "長度" 單位來當成 flex-basis 的初始值，原本的主軸尺寸初始值會被覆寫，如果拿掉成長和壓縮係數（將 flex-shrink 設為 0），flex-basis 才會真的會成為彈性項目的尺寸。
+                * 但還是會受到其他屬性如：min-width, min-height, max-width, max-height 的影響，這幾個屬性需要先被滿足
+        * flex-basis: `<percentage>`
+            * 用 "百分比" 單位來當成 flex-basis 的初始值，設為 100% 時便等於將尺寸初始值設為彈性容器的寬度，設為 N% 就是將尺寸初始值設為彈性容器的 N%，以此類推。
+        * flex-basis: 0
+            * 在使用 flex 縮寫時，如果只有寫前兩個數字( flex-grow 和 flex-shrink )，就等於將 flex-basis 設為 0。設為 0 可能看起來和 auto 的結果有點像，但其實還是有差別的。
+                * flex-basis 設為 0 時，彈性項目的主軸尺寸初始值不是 0 （如果是 0 就沒辦法計算下去了），而是會等於彈性容器的寬度，也就是說如果長度不足彈性容器而設定 flex-grow，則會依照 flex-grow 的比例去直接分配彈性項目的尺寸；如果長度超過彈性容器而設定 flex-shrink，就會依照 flex-shrink 的比值來直接分配。
+    * flex-grow
+        * 數字使用規定要大於等於 0（小數點也可以），可以決定彈性容器在分配空間時，彈性項目"在主軸彈性行的剩餘空間中可以擴張的比例"。
+        * 計算方式
+            假設剩餘空間為 x，三個元素的 flex-grow 分別為 a，b，c。設 sum 為 a + b + c。那麼三個元素將得到剩餘空間分別是 `x * a / sum`、`x * b / sum`、`x * c / sum`
+            * 例子：
+                * 父元素寬度 500px，三個子元素的 width 分別為 100px，150px，100px。於是剩餘空間為 150px
+                * 三個元素的 flex-grow 分別是 1，2，3，於是 sum 為 6
+                * 則
+                    ```plain
+                    三個元素所得到的多餘空間分別是：
+                    150 * 1 / 6 = 25px
+                    150 * 2 / 6 = 50px
+                    150 * 3 / 6 = 75px
+
+                    三個元素最終的寬度分別為：
+                    100px + 25px = 125px
+                    150px + 50px = 200px
+                    100px + 75px = 175px
+                    ```
+    * flex
+        * 以上 flex 屬性的綜合設定 `flex: flex-grow flex-shrink flex-basis`
+            * 預設值分別是 flex-grow: 0、flex-shrink: 1、flex-basis: auto
+        * 特殊例子
+            * flex: auto
+                * 等於 flex: 1 1 auto，意思是未佈滿容器時項目會成長、超出容器時項目會壓縮
+            * flex: initial
+                * 等於 flex: 0 1 auto，意思是超出容器時項目會壓縮
+            * flex: none
+                * 等於 flex: 0 0 auto，意思是什麼都沒有做
+* 交叉軸相關
     * align-self
         * 設定單一元素的對齊方式，會覆寫父層 align-items 的設定。
             ![flexbox-17](./images/flexbox-17.png)
@@ -617,6 +620,94 @@ CSSWG （CSS工作團隊）對於網格系統早有各種想法，後來是由 M
 自 CSS 問世以來，一直存在著排版的缺陷，為了排版使用了很多的特殊技巧來實現，雖然後來有 flexbox 填補了大部分的空缺，但 flexbox 原先只是針對導覽列所設計的功能，如果運用到較複雜的平面設計時，就必須大量使用 flexbox 來區劃每個線性空間，造成非常多巢狀式結構，不易閱讀。
 
 而 grid 本身就是以排版為目的性開發而生的系統，相較於適合操作一維的 flexbox，grid 更著重於行與列的二維操作，類似卻比 table 多了更多的彈性，這讓 grid 能更簡單的設計複雜的平面空間設計。
+
+##### Grid 用法
+
+```css
+.container {
+  display: grid | inline-grid; /* 會成為網格容器 */
+}
+
+.item {  /* 子層則變成網格項目 */
+
+}
+```
+
+在 display 屬性的值為 grid 或 inline-grid，被宣告選擇的對象會成為 網格容器 並且建立彈性的環境，子層元素則變成 網格項目 並塞在網格容器中的每一個 網格單元格。
+
+就和 flexbox 一樣，這些網格項目脫離了他和標籤的關係。如圖中不論是 div、span、a 標籤等都變都成了網格項目。
+
+可以想像成你把它變成了一個大網格（網格容器），不同於 flexbox 的是裡面裝著是很多平均分配的小網格（網格單元格），其中網格項目被依序塞進網格單元格內，而這些"網格格式環境"擁有自己獨特的屬性和屬性值可以做許多有趣的操控。
+
+###### 網格容器
+
+差別上就如同 flexbox 中的 flex 和 inline-flex，不過因為項目的排列方式不同，會造成不一樣的容器外觀。
+
+雖然很像 block / inline-block，但仍舊是網格容器，其中和一般 block 的差別也幾乎和 flexbox 一樣。W3C grid-containers
+
+* float 和 clear 無法使用於彈性容器內
+* vertical-align 對彈性項目沒有效果（但對彈性項目裡面的內容還是有用的）
+* 偽元素 ::first-line 和 ::first-letter 無法使用於彈性容器本身
+* 不適用所有的 column 屬性
+
+![grid-1](./images/grid-1.png)
+
+* 網格線
+    * 網格裡面的線，制定網格內容的範圍，構成所有網格元件的重要元素。
+* 網格軌道
+    * 網格容器的某幾行（網格行）或列（網格列）。
+* 網格單元格
+    * 由四條網格線或邊緣組成的最小封閉區域，中間沒有任額的網格線穿過，也就是最小的區域單位。
+* 網格區域
+    * 由四條自定義的網格線或邊緣組成的某個封閉區域。
+
+###### 網格容器屬性
+
+```css
+.container {
+  grid-template-columns: 50px 50% 100px;
+  grid-template-rows: 50px 100px 50px;
+}
+```
+
+![grid-2](./images/grid-2.png)
+
+* 排版屬性，網格線與網格空間的佈置，又稱顯性屬性
+    * grid-template
+    * grid-template-rows
+    * grid-template-columns
+    * grid-template-areas
+* 自動網格屬性，又稱隱性屬性
+    * grid-auto-flow
+    * grid-auto-rows
+    * grid-auto-columns
+* 空隙屬性
+    * grid-row-gap
+    * grid-column-gap
+* 對齊屬性
+    * justify-content
+    * justify-items
+    * align-content
+    * align-items
+
+###### 網格項目屬性
+
+* 使用"行"網格線操控網格區域範圍
+    * grid-row
+    * grid-row-start
+    * grid-row-end
+* 使用"列"網格線操控網格區域範圍
+    * grid-column
+    * grid-column-start
+    * grid-column-end
+* 直接定義網格區域範圍和名稱
+    * grid-area
+* 對齊屬性
+    * justify-self
+    * align-self
+* 分層與順序
+    * order
+    * z-index
 
 ### position
 
