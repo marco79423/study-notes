@@ -155,6 +155,12 @@ LCP 會偵測的項目：
 * 透過 CSS 語法，為網頁中的元素提供預留的空位，避免載入後導致頁面中的內容移動
 * 透過 `<preload>` 的方式，將會導致頁面內容移動的元素提前載入 (字體、圖片等)
 
+#### Time To Interactive – TTI
+
+這個指摽被 Google 放棄了，他們認為  Largest Contentful Paint (LCP), Speed Index 和 Total Blocking Time together 這幾個指標的功用可以取代 TTI
+
+* 來源: [Lighthouse 10 Improves PageSpeed Insights Scores For 90% Of Pages](https://www.searchenginejournal.com/lighthouse-10-tti-removal/479789/)
+
 #### 測試 Core Web Vitals 的方式
 
 ![seo-7](./images/seo-7.webp)
