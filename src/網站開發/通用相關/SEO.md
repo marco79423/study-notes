@@ -555,6 +555,11 @@ Urchin Tracking Module (UTM) 是指一段可以自行定義編碼並加在網址
 
 * 如果要讓網站顯示於搜尋引擎的的顯示中文的搜尋結果，那就要讓搜尋引擎很清楚這個網站的語言就是中文如果網站的編碼用 Big5，那麼毫無疑問，網站的主要語言就是中文但如果用 UTF-8 編碼的中文網站，而且 url 本身也看不出地區(如非 .tw)，怎麼辦？可以在 html 指定語言 `<html lang="zh-tw">` 並不是說不寫，搜尋引擎就搜尋不出來，只是說搜尋引擎會比較懷疑你網站的資料是否一定是繁體中文，相對的搜尋引擎給你的評分自然會比較低。
 
+* 如果太多更改在同一時間進行，可能導致排名下降和流量損失。
+    * 為了降低風險，建議將網站移動分成較小的部分進行，特別是對於複雜的更改。
+    * 如果想在同一時間進行多個修改，例如更改域名和URL，建議將這些修改分成較小的部分進行，以降低風險。
+* 在網站移動時，應盡可能將域名更改與其他修改分開。
+
 ## 黑暗招式
 
 ### 在各大網站洗連結
@@ -634,3 +639,4 @@ SERP 為 Search Engine Results Page 縮寫，中文直譯為「搜尋引擎結�
 * [為什麼你開發的網頁不應該大於 14KB？](https://mp.weixin.qq.com/s/xY7jxCWQWnl869GZN-hmqA)
 * [SEO暗黑揭秘：明明「運彩賺錢」「娛樂城」廣告沒人會想點，為什麼還要在各大論壇一直洗留言？](https://www.thenewslens.com/article/170953)
 * [SEO 指南第6講 - 創建你的網站地圖](https://vocus.cc/article/5fed73b3fd897800011ceddf)
+* [Google: Don’t Combine Site Moves With Other Big Changes](https://www.searchenginejournal.com/google-dont-combine-site-moves-with-other-big-changes/481001/)
