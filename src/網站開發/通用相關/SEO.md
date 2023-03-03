@@ -377,6 +377,32 @@ Disallow: /wp-admin/
 Disallow: ^test*
 ```
 
+robots.txt 也有限制，它的限制包括：
+
+* 只有 txt 文本格式，而且必須以 UTF-8 的格式儲存
+* 設定的規則不能超過 1024 個規則
+* 整個檔案必須小於 500KB
+* robots.txt 只能有一個，不能有多個版本或是多份內容
+
+robots.txt 常出現的錯誤：
+
+* 存檔時輸入錯誤的檔名
+    * 檔名只能用 robots.txt，而不能用 ROBOTS.txt 或是 Robots.txt 的檔案名稱。
+    * 不要用 robot.txt，而要使用 robots.txt
+* 語法格式錯誤
+* 在一個命令之下輸入多個目錄
+    * 如果想在一個命令下指定多個目錄，那麼應該是一個命令，指定到一個目錄之下，而不應該寫成 Disallow: /css /images /cgi-bin
+* 忘了輸入 user-agent 之後的名稱
+    * 錯誤的寫法： User-agent:
+    * 正確的寫法應該是： User-agent:*
+* 除了不能用大寫字寫檔案名稱之外，在檔案內的文字描述也請改成用小寫文字替代。
+    * 錯誤的寫法： USER-AGENT: GOOGLE
+* 在主站目錄使用鏡像網站
+    雖然對絕大部分的用戶來說，使用 `https://www.site.com`、`https://site.com`、`http://site.com` 這幾種展現方式都是一樣的，但對搜尋引擎來說就不一樣。所以如果我們指定了主站目錄，但用了鏡像網站的頁面，就需要注意輸入的內容是否正確。
+* 在目錄當中列舉一個目錄當中的多個頁面
+    * robots.txt 指定的都是目錄，而不是單一的網頁
+* User-agent 指定內容與 host 網站不同
+
 ## Sitemap
 
 一個用 XML 架構的地圖「展示」給搜尋引擎的蜘蛛們看的資訊，
