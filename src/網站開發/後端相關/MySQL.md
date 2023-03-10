@@ -2,6 +2,10 @@
 
 ## 資料庫基礎
 
+### 歷史
+
+[Database 一代代的演化和傳承](https://tachunwu.github.io/posts/db-history/)
+
 ### 相關概念
 
 * DB：資料庫，保存有組織的資料的容器
