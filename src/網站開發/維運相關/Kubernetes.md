@@ -10,7 +10,7 @@ Kubernetes 這個單詞來自於希臘語，含義是舵手或領航員。K8S �
 
 ## 架構
 
-K8s 採用Master / Work Node（最初稱為Minion，後改名Node） 的結構，Master Node（主節點）控制整個集群，Work Node（從節點）為集群提供計算能力。使用者可以通過命令行或者 Web 控制台頁面的方式來操作集群。
+K8s 採用Master / Work Node（最初稱為 Minion，後改名 Node） 的結構，Master Node（主節點）控制整個集群，Work Node（從節點）為集群提供計算能力。使用者可以通過命令行或者 Web 控制台頁面的方式來操作集群。
 
 K8S 集群分為兩個部分：
 
@@ -30,6 +30,18 @@ K8S 集群分為兩個部分：
 下圖可以清楚地表示出 K8s 的整體架構
 
 ![k8s-5](./images/k8s-5.png)
+
+簡易概述就是當 Master 節點啟動時，會運行一個 Kube-apiserver 程式，它提供了叢集管理的 API 介面，是叢集中各個功能模組之間進行資料互動和通訊的中心樞紐，同時也提供了一個完善的叢集安全機制。
+
+而每個 Node 節點都會運行一個 kubelet 程式，負責向 Master 匯報本節點的運行狀態，如Node 節點註冊、終止、定期健康報告等等，並接收來自 Master 的命令並建立相應的 Pod。
+
+而 Master 其實是透過 由Kube-scheduler 將 Pod 調度到指定的 Node 上，整個調度過程通過執行一系列複雜的演算法，最終為每個Pod計算出一個最優的目標 Node，由Kube-scheduler 處理程序自動完成。
+
+最常見的是循環調度（RR），但用戶也可以直接透過節點的標籤（Label）與Pod的節點選擇器屬性進行匹配來將 Pod 調度到指定的 Node 上。
+
+而這些諸如節點和 Pod 的資訊，如每個Pod的資源使用情況、健康狀態和基本資訊，則統一在記錄在 etcd 上。該元件可以內建在Kubernetes中，也可以外部建構供Kubernetes使用。考慮到各個元件的相對獨立性和整體的可維護性，這些儲存的資料的增刪改查都是統一由Kube-apiserver來呼叫的，並且apiserver還提供了REST支援，不僅為各個內部元件提供服務但也向叢集外的使用者公開服務。
+
+![k8s-8](./images/k8s-8.jpg)
 
 ### Master 節點 (主節點)
 
@@ -163,6 +175,24 @@ Node 上的 k8s 代表，為該 Node 的管理員，負責管理該 Node 上的�
 想要運行在 k8s 生態裡的容器，只要實現 CRI （Container Runtime Interface） 即可，Container Runtime 會負責調用CRI 裡定義的方法完成容器管理，不單獨執行 docker run 之類的操作。這個也是 K8s 發現 Docker 制約了它的發展在 1.5 後引入的。
 
 ## 資源
+
+在 Kubernetes 中，Pod 是最基本的運行單元。它與 Docker 容器略有不同，因為 Pod 中可能包含一個或多個容器，這些容器內部共享網路資源，可以通過 localhost 相互訪問。
+
+實現網路共享的方式是每個Pod啟動，內部都會啟動一個 pause 容器（Google 的 image）。它使用默認的網路模式，其他容器的網路設定為它完成網路共享。
+
+![k8s-7](./images/k8s-7.jpg)
+
+由於在分佈式叢集中，服務往往由多個 Pod 提供以分擔訪問壓力，而這些 Pod 可能分佈在多個 Node 上，這就涉及到跨主機通訊。所以 Kubernetes 引入了 Service 的概念，將多個相同的 Pod 包裝成一個完整的服務，對外提供服務。至於獲取這些相同的 Pod，每個 Pod 在啟動時都會設定 labels 為 attribute。
+
+在服務中，我們傳遞選擇器 Selector，選擇與整體服務具有相同Name標籤屬性的Pod，將服務資訊通過Apiserver儲存到etcd中，由 Service Controller 完成。同時在每個節點上啟動一個kube-proxy處理程序，負責從服務地址到Pod地址的代理和負載平衡。
+
+![k8s-9](./images/k8s-9.jpg)
+
+Kubernetes 使用 Replication Controller 管理每個Pod設定一個預期的副本數。當實際副本數量不符合預期時，動態調整數量以達到預期值。
+
+上面的 Service Controller 和 Replication Controller 都是由 Kube-controller-manager 管理。作為一個守護處理程序，每個Controller都是一個控制回路，通過apiserver監控叢集的共享狀態，並嘗試將實際狀態中不符合預期的變化。關於Controller，管理器還包括Node Controller、ResourceQuota Controller、Namespace Controller 等。
+
+![k8s-10](./images/k8s-10.jpg)
 
 ### Pod
 
