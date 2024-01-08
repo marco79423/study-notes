@@ -7,3 +7,10 @@ src = "src"
 
 [output.html]
 git-repository-url = "https://github.com/marco79423/study-notes"
+no-section-label = true
+additional-css = ["theme/pagetoc.css", "theme/variables.css"]
+additional-js  = ["theme/pagetoc.js"]
+
+[output.html.fold]
+enable = true 
+level = 0
